@@ -4,10 +4,14 @@ import (
 	"github.com/rj45/nanogo/ir"
 )
 
+//go:generate enumer -type=Pass
+
 type Pass int
 
 const (
-	FirstPass Pass = iota
+	Elaboration Pass = iota
+	Simplification
+	Lowering
 	LastPass
 )
 
