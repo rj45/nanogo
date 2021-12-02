@@ -3,11 +3,13 @@ package arch
 import (
 	"github.com/rj45/nanogo/codegen"
 	"github.com/rj45/nanogo/ir/reg"
+	"github.com/rj45/nanogo/sizes"
 )
 
 type Architecture interface {
 	codegen.Arch
 	reg.Arch
+	sizes.Arch
 }
 
 var arch Architecture
@@ -31,4 +33,5 @@ func SetArch(name string) {
 	arch = arches[name]
 	reg.SetArch(arch)
 	codegen.SetArch(arch)
+	sizes.SetArch(arch)
 }
