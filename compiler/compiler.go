@@ -18,6 +18,7 @@ import (
 	"github.com/rj45/nanogo/xform"
 
 	// load the supported architectures so they register with the arch package
+	_ "github.com/rj45/nanogo/arch/a32"
 	_ "github.com/rj45/nanogo/arch/rj32"
 )
 
