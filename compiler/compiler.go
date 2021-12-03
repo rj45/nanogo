@@ -8,19 +8,28 @@ import (
 	"log"
 	"os"
 	"os/exec"
+	"path/filepath"
 	"strings"
 
 	"github.com/rj45/nanogo/codegen"
 	"github.com/rj45/nanogo/codegen/asm"
+	"github.com/rj45/nanogo/goenv"
 	"github.com/rj45/nanogo/html"
 	"github.com/rj45/nanogo/parser"
 	"github.com/rj45/nanogo/regalloc"
 	"github.com/rj45/nanogo/xform"
-
-	// load the supported architectures so they register with the arch package
-	_ "github.com/rj45/nanogo/arch/a32"
-	_ "github.com/rj45/nanogo/arch/rj32"
 )
+
+type Arch interface {
+	Name() string
+	AssemblerFormat() string
+}
+
+func SetArch(a Arch) {
+	arch = a
+}
+
+var arch Arch
 
 type dumper interface {
 	WritePhase(string, string)
@@ -91,7 +100,14 @@ func Compile(outname, dir string, patterns []string, assemble, run bool) int {
 		}
 		defer os.Remove(tempfile.Name())
 
-		asmcmd = exec.Command("customasm", "-q", "-p", "-f", "logisim16", "/home/rj45/rj32/programs/cpudef.asm", "/home/rj45/rj32/programs/rungo.asm", tempfile.Name())
+		root := goenv.Get("GORJROOT")
+		path := filepath.Join(root, "arch", arch.Name(), "customasm")
+		cpudef := filepath.Join(path, "cpudef.asm")
+		rungo := filepath.Join(path, "rungo.asm")
+
+		asmcmd = exec.Command("customasm", "-q", "-p",
+			"-f", arch.AssemblerFormat(),
+			cpudef, rungo, tempfile.Name())
 		asmcmd.Stderr = os.Stderr
 
 		asmcmd.Stdout = out
