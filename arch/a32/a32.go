@@ -12,6 +12,7 @@ import (
 	"github.com/rj45/nanogo/ir/op"
 	"github.com/rj45/nanogo/ir/reg"
 	"github.com/rj45/nanogo/sizes"
+	"github.com/rj45/nanogo/xform"
 )
 
 type cpuArch struct{}
@@ -20,6 +21,10 @@ var _ = arch.Register(cpuArch{})
 
 func (cpuArch) Name() string {
 	return "a32"
+}
+
+func (cpuArch) XformTags() []xform.Tag {
+	return nil
 }
 
 func (cpuArch) AssembleGlobal(glob *ir.Value) *asm.Global {
@@ -33,7 +38,7 @@ func (cpuArch) AssembleGlobal(glob *ir.Value) *asm.Global {
 	}
 
 	if glob.NumArgs() > 0 {
-		asmGlob.Section = asm.Data
+		asmGlob.Section = asm.Code
 	} else {
 		asmGlob.Section = asm.Bss
 	}

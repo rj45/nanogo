@@ -9,6 +9,7 @@ import (
 	"github.com/rj45/nanogo/ir/op"
 	"github.com/rj45/nanogo/ir/reg"
 	"github.com/rj45/nanogo/sizes"
+	"github.com/rj45/nanogo/xform"
 )
 
 const defaultArch = "rj32"
@@ -19,6 +20,7 @@ type Architecture interface {
 	sizes.Arch
 	op.Arch
 	compiler.Arch
+	xform.Arch
 }
 
 var arch Architecture
@@ -51,4 +53,5 @@ func SetArch(name string) {
 	sizes.SetArch(arch)
 	op.SetArch(arch)
 	compiler.SetArch(arch)
+	xform.SetArch(arch)
 }
