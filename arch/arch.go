@@ -8,6 +8,7 @@ import (
 	"github.com/rj45/nanogo/compiler"
 	"github.com/rj45/nanogo/ir/op"
 	"github.com/rj45/nanogo/ir/reg"
+	"github.com/rj45/nanogo/parser"
 	"github.com/rj45/nanogo/sizes"
 	"github.com/rj45/nanogo/xform"
 )
@@ -21,6 +22,7 @@ type Architecture interface {
 	op.Arch
 	compiler.Arch
 	xform.Arch
+	parser.Arch
 }
 
 var arch Architecture
@@ -54,4 +56,5 @@ func SetArch(name string) {
 	op.SetArch(arch)
 	compiler.SetArch(arch)
 	xform.SetArch(arch)
+	parser.SetArch(arch)
 }
