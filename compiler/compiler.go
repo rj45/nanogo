@@ -84,13 +84,13 @@ func Compile(outname, dir string, patterns []string, assemble, run bool) int {
 	var asmcmd *exec.Cmd
 	if assemble {
 		// todo: if specified, allow this to not be a temp file
-		asmtemp, err := os.CreateTemp("", "gorj_*.asm")
+		asmtemp, err := os.CreateTemp("", "nanogo_*.asm")
 		if err != nil {
 			log.Fatalln("failed to create temp asm file for customasm:", err)
 		}
 		defer os.Remove(asmtemp.Name())
 
-		bintemp, err := os.CreateTemp("", "gorj_*.bin")
+		bintemp, err := os.CreateTemp("", "nanogo_*.bin")
 		if err != nil {
 			log.Fatalln("failed to create temp bin file for customasm:", err)
 		}
@@ -98,7 +98,7 @@ func Compile(outname, dir string, patterns []string, assemble, run bool) int {
 		binfile = bintemp.Name()
 		// defer os.Remove(bintemp.Name())
 
-		root := goenv.Get("GORJROOT")
+		root := goenv.Get("NANOGOROOT")
 		path := filepath.Join(root, "arch", arch.Name(), "customasm")
 		cpudef := filepath.Join(path, "cpudef.asm")
 		rungo := filepath.Join(path, "rungo.asm")

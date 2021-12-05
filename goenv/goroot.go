@@ -1,14 +1,14 @@
-// Copyright (c) 2018-2021 gorj Authors. All rights reserved.
-// Licensed under a 3 clause BSD license. See LICENSE.gorj.
+// Copyright (c) 2018-2021 nanogo Authors. All rights reserved.
+// Licensed under a 3 clause BSD license. See LICENSE.nanogo.
 //
 // Copyright (c) 2021 rj45 (github.com/rj45), MIT Licensed, see LICENSE.
 
 package goenv
 
 // This file constructs a new temporary GOROOT directory by merging both the
-// standard Go GOROOT and the GOROOT from gorj using symlinks.
+// standard Go GOROOT and the GOROOT from nanogo using symlinks.
 //
-// The goal is to replace specific packages from Go with a gorj version. It's
+// The goal is to replace specific packages from Go with a nanogo version. It's
 // never a partial replacement, either a package is fully replaced or it is not.
 // This is important because if we did allow to merge packages (e.g. by adding
 // files to a package), it would lead to a dependency on implementation details
@@ -34,22 +34,22 @@ import (
 var gorootCreateMutex sync.Mutex
 
 // The boolean indicates whether to merge the subdirs. True means merge, false
-// means use the gorj version.
+// means use the nanogo version.
 var overridePaths = map[string]bool{
 	"/":        true,
 	"runtime/": false,
 }
 
 // GetCachedGoroot creates a new GOROOT by merging both the standard GOROOT and
-// the GOROOT from gorj using lots of symbolic links.
+// the GOROOT from nanogo using lots of symbolic links.
 func GetCachedGoroot() (string, error) {
 	goroot := Get("GOROOT")
 	if goroot == "" {
 		return "", errors.New("could not determine GOROOT")
 	}
-	gorjroot := Get("GORJROOT")
-	if gorjroot == "" {
-		return "", errors.New("could not determine GORJROOT")
+	nanogoroot := Get("NANOGOROOT")
+	if nanogoroot == "" {
+		return "", errors.New("could not determine NANOGOROOT")
 	}
 
 	// Determine the location of the cached GOROOT.
@@ -59,13 +59,13 @@ func GetCachedGoroot() (string, error) {
 	}
 	// This hash is really a cache key, that contains (hopefully) enough
 	// information to make collisions unlikely during development.
-	// By including the Go version and gorj version, cache collisions should
+	// By including the Go version and nanogo version, cache collisions should
 	// not happen outside of development.
 	hash := sha512.New512_256()
 	fmt.Fprintln(hash, goroot)
 	fmt.Fprintln(hash, version)
 	// fmt.Fprintln(hash, Version) // todo: replace with version
-	fmt.Fprintln(hash, gorjroot)
+	fmt.Fprintln(hash, nanogoroot)
 	gorootsHash := hash.Sum(nil)
 	gorootsHashHex := hex.EncodeToString(gorootsHash[:])
 	cachedgorootName := "goroot-" + version + "-" + gorootsHashHex
@@ -74,7 +74,7 @@ func GetCachedGoroot() (string, error) {
 	// Do not try to create the cached GOROOT in parallel, that's only a waste
 	// of I/O bandwidth and thus speed. Instead, use a mutex to make sure only
 	// one goroutine does it at a time.
-	// This is not a way to ensure atomicity (a different gorj invocation
+	// This is not a way to ensure atomicity (a different nanogo invocation
 	// could be creating the same directory), but instead a way to avoid
 	// creating it many times in parallel when running tests in parallel.
 	gorootCreateMutex.Lock()
@@ -102,14 +102,14 @@ func GetCachedGoroot() (string, error) {
 			return "", err
 		}
 	}
-	err = mergeDirectory(goroot, gorjroot, tmpgoroot, "", pathsToOverride())
+	err = mergeDirectory(goroot, nanogoroot, tmpgoroot, "", pathsToOverride())
 	if err != nil {
 		return "", err
 	}
 	err = os.Rename(tmpgoroot, cachedgoroot)
 	if err != nil {
 		if os.IsExist(err) {
-			// Another invocation of gorj also seems to have created a GOROOT.
+			// Another invocation of nanogo also seems to have created a GOROOT.
 			// Use that one instead. Our new GOROOT will be automatically
 			// deleted by the defer above.
 			return cachedgoroot, nil
@@ -129,21 +129,21 @@ func GetCachedGoroot() (string, error) {
 }
 
 // The boolean indicates whether to merge the subdirs. True means merge, false
-// means use the gorj version.
+// means use the nanogo version.
 func pathsToOverride() map[string]bool {
 	return overridePaths
 }
 
 // mergeDirectory merges two roots recursively. The tmpgoroot is the directory
 // that will be created by this call by either symlinking the directory from
-// goroot or gorjroot, or by creating the directory and merging the contents.
-func mergeDirectory(goroot, gorjroot, tmpgoroot, importPath string, overrides map[string]bool) error {
+// goroot or nanogoroot, or by creating the directory and merging the contents.
+func mergeDirectory(goroot, nanogoroot, tmpgoroot, importPath string, overrides map[string]bool) error {
 	if mergeSubdirs, ok := overrides[importPath+"/"]; ok {
 		if !mergeSubdirs {
-			// This directory and all subdirectories should come from the gorj
+			// This directory and all subdirectories should come from the nanogo
 			// root, so simply make a symlink.
 			newname := filepath.Join(tmpgoroot, "src", importPath)
-			oldname := filepath.Join(gorjroot, "src", importPath)
+			oldname := filepath.Join(nanogoroot, "src", importPath)
 			return symlink(oldname, newname)
 		}
 
@@ -153,33 +153,33 @@ func mergeDirectory(goroot, gorjroot, tmpgoroot, importPath string, overrides ma
 			return err
 		}
 
-		// Symlink all files from gorj, and symlink directories from gorj
+		// Symlink all files from nanogo, and symlink directories from nanogo
 		// that need to be overridden.
-		gorjEntries, err := ioutil.ReadDir(filepath.Join(gorjroot, "src", importPath))
+		nanogoEntries, err := ioutil.ReadDir(filepath.Join(nanogoroot, "src", importPath))
 		if err != nil {
 			return err
 		}
-		hasGorjFiles := false
-		for _, e := range gorjEntries {
+		hasNanoGoFiles := false
+		for _, e := range nanogoEntries {
 			if e.IsDir() {
 				// A directory, so merge this thing.
-				err := mergeDirectory(goroot, gorjroot, tmpgoroot, path.Join(importPath, e.Name()), overrides)
+				err := mergeDirectory(goroot, nanogoroot, tmpgoroot, path.Join(importPath, e.Name()), overrides)
 				if err != nil {
 					return err
 				}
 			} else {
 				// A file, so symlink this.
 				newname := filepath.Join(tmpgoroot, "src", importPath, e.Name())
-				oldname := filepath.Join(gorjroot, "src", importPath, e.Name())
+				oldname := filepath.Join(nanogoroot, "src", importPath, e.Name())
 				err := symlink(oldname, newname)
 				if err != nil {
 					return err
 				}
-				hasGorjFiles = true
+				hasNanoGoFiles = true
 			}
 		}
 
-		// Symlink all directories from $GOROOT that are not part of the gorj
+		// Symlink all directories from $GOROOT that are not part of the nanogo
 		// overrides.
 		gorootEntries, err := ioutil.ReadDir(filepath.Join(goroot, "src", importPath))
 		if err != nil {
@@ -199,10 +199,10 @@ func mergeDirectory(goroot, gorjroot, tmpgoroot, importPath string, overrides ma
 					return err
 				}
 			} else {
-				// Only merge files from Go if gorj does not have any files.
+				// Only merge files from Go if nanogo does not have any files.
 				// Otherwise we'd end up with a weird mix from both Go
 				// implementations.
-				if !hasGorjFiles {
+				if !hasNanoGoFiles {
 					newname := filepath.Join(tmpgoroot, "src", importPath, e.Name())
 					oldname := filepath.Join(goroot, "src", importPath, e.Name())
 					err := symlink(oldname, newname)
@@ -223,8 +223,8 @@ func mergeDirectory(goroot, gorjroot, tmpgoroot, importPath string, overrides ma
 // Note that while Windows 10 does support symlinks and allows them to be
 // created using os.Symlink, it requires developer mode to be enabled.
 // Therefore provide a fallback for when symlinking is not possible.
-// Unfortunately this fallback only works when gorj is installed on the same
-// filesystem as the gorj cache and the Go installation (which is usually the
+// Unfortunately this fallback only works when nanogo is installed on the same
+// filesystem as the nanogo cache and the Go installation (which is usually the
 // C drive).
 func symlink(oldname, newname string) error {
 	symlinkErr := os.Symlink(oldname, newname)

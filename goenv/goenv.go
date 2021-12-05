@@ -4,7 +4,7 @@
 // Copyright (c) 2021 rj45 (github.com/rj45), MIT Licensed, see LICENSE.
 
 // Package goenv returns environment variables that are used in various parts of
-// the compiler. You can query it manually with the `gorj env` subcommand.
+// the compiler. You can query it manually with the `nanogo env` subcommand.
 package goenv
 
 import (
@@ -24,7 +24,7 @@ var Keys = []string{
 	"GOPATH",
 	"GOCACHE",
 	"CGO_ENABLED",
-	"GORJROOT",
+	"NANOGOROOT",
 }
 
 func init() {
@@ -33,10 +33,10 @@ func init() {
 	}
 }
 
-// GORJROOT is the path to the final location for checking gorj files. If
+// NANOGOROOT is the path to the final location for checking nanogo files. If
 // unset (by a -X ldflag), then sourceDir() will fallback to the original build
 // directory.
-var GORJROOT string
+var NANOGOROOT string
 
 // Get returns a single environment variable, possibly calculating it on-demand.
 // The empty string is returned for unknown environment variables.
@@ -63,37 +63,37 @@ func Get(name string) string {
 		home := getHomeDir()
 		return filepath.Join(home, "go")
 	case "GOCACHE":
-		// Get the cache directory, usually ~/.cache/gorj
+		// Get the cache directory, usually ~/.cache/nanogo
 		dir, err := os.UserCacheDir()
 		if err != nil {
 			panic("could not find cache dir: " + err.Error())
 		}
-		return filepath.Join(dir, "gorj")
-	case "GORJROOT":
+		return filepath.Join(dir, "nanogo")
+	case "NANOGOROOT":
 		return sourceDir()
 	default:
 		return ""
 	}
 }
 
-// Return the GORJROOT, or exit with an error.
+// Return the NANOGOROOT, or exit with an error.
 func sourceDir() string {
-	// Use $GORJROOT as root, if available.
-	root := os.Getenv("GORJROOT")
+	// Use $NANOGOROOT as root, if available.
+	root := os.Getenv("NANOGOROOT")
 	if root != "" {
 		if !isSourceDir(root) {
-			fmt.Fprintln(os.Stderr, "error: $GORJROOT was not set to the correct root")
+			fmt.Fprintln(os.Stderr, "error: $NANOGOROOT was not set to the correct root")
 			os.Exit(1)
 		}
 		return root
 	}
 
-	if GORJROOT != "" {
-		if !isSourceDir(GORJROOT) {
-			fmt.Fprintln(os.Stderr, "error: GORJROOT was not set to the correct root")
+	if NANOGOROOT != "" {
+		if !isSourceDir(NANOGOROOT) {
+			fmt.Fprintln(os.Stderr, "error: NANOGOROOT was not set to the correct root")
 			os.Exit(1)
 		}
-		return GORJROOT
+		return NANOGOROOT
 	}
 
 	// Find root from executable path.
@@ -115,7 +115,7 @@ func sourceDir() string {
 		return root
 	}
 
-	fmt.Fprintln(os.Stderr, "error: could not autodetect root directory, set the GORJROOT environment variable to override")
+	fmt.Fprintln(os.Stderr, "error: could not autodetect root directory, set the NANOGOROOT environment variable to override")
 	os.Exit(1)
 	panic("unreachable")
 }

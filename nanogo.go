@@ -51,10 +51,10 @@ func main() {
 	}
 
 	if printUsage {
-		fmt.Fprintln(os.Stderr, "gorj - a go compiler for rj32")
+		fmt.Fprintln(os.Stderr, "NanoGo - A Go Compiler for Homebrew/Hobby CPUs")
 		fmt.Fprintln(os.Stderr, "https://github.com/rj45/nanogo")
 		fmt.Fprintln(os.Stderr, "")
-		fmt.Fprintln(os.Stderr, "Usage: gorj <flags> <command> <packages...>")
+		fmt.Fprintln(os.Stderr, "Usage: nanogo <flags> <command> <packages...>")
 		fmt.Fprintln(os.Stderr, "")
 		fmt.Fprintln(os.Stderr, "Commands:")
 		fmt.Fprintln(os.Stderr, "  build: compile and assemble with customasm")
