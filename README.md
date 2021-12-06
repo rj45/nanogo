@@ -111,6 +111,24 @@ After a final transformation pass, then finally [assembly code is generated](./c
 
 Some effort was put in to make this easy. See [the retargeting documentation](docs/retargeting.md).
 
+## Contributing
+
+Contributions are welcome!
+
+Please open an issue if you intend to submit a PR if you want to make sure the contribution would be welcome beforehand. This is optional, but recommended if you're going to spend more than a few hours on it.
+
+For PRs, please at least describe the purpose of the PR, and a brief explanation of what changes you made and why. Why is quite important, and will serve as documentation for others.
+
+Contributions of your own architecture are welcome, but please ensure you have a working customasm cpudef and a publicly accessible emulator with install instructions. Other documentation on how your architecture works is also quite useful for those maintaining it as features are added.
+
+Please be kind to one another and put effort into determining a kind way to share criticism.
+
+## Forking, commercial use and permission
+
+If you want to fork this project or use it commercially you do not need my permission nor do you need to inform me. But if you feel like letting me know, I would appreciate it, and you can do so via opening an issue.
+
+If you do fork this project, all I ask is that the LICENSE file be kept intact and that your own copyright line be added to it. It's also polite to change the name if the fork should be made public.
+
 ## License
 
 Copyright (c) 2021 rj45 ([github.com/rj45](https://github.com/rj45))
