@@ -68,7 +68,7 @@ func (ra *RegAlloc) Verify() {
 }
 
 func (ra *RegAlloc) writeDotFile(list []*ir.Block) {
-	dot, _ := os.Create(ra.Func.Name + ".dot")
+	dot, _ := os.Create(ra.Func.Name + ".cfg.dot")
 	defer dot.Close()
 
 	fmt.Fprintln(dot, "digraph G {")
@@ -80,10 +80,10 @@ func (ra *RegAlloc) writeDotFile(list []*ir.Block) {
 
 		for i := 0; i < blk.NumPreds(); i++ {
 			pred := blk.Pred(i)
-			pinfo := &ra.blockInfo[pred.ID()]
-			outs := maptolist(pinfo.liveOuts) + " - " + maptolist(pinfo.phiOuts[blk])
-			ins := maptolist(info.liveIns) + " - " + maptolist(info.phiIns[pred])
-			fmt.Fprintf(dot, "%s -> %s [headlabel=%q, taillabel=%q];\n", pred, blk, outs, ins)
+			// pinfo := &ra.blockInfo[pred.ID()]
+			// outs := maptolist(pinfo.liveOuts) + " - " + maptolist(pinfo.phiOuts[blk])
+			// ins := maptolist(info.liveIns) + " - " + maptolist(info.phiIns[pred])
+			fmt.Fprintf(dot, "%s -> %s;\n", pred, blk)
 		}
 
 		liveInKills := ""
@@ -138,7 +138,7 @@ func maptolist(l map[*ir.Value]bool) string {
 }
 
 func (ra *RegAlloc) writeExplodedDotFile(list []*ir.Block) {
-	dot, _ := os.Create(ra.Func.Name + ".ex.dot")
+	dot, _ := os.Create(ra.Func.Name + ".vfg.dot")
 	defer dot.Close()
 
 	fmt.Fprintln(dot, "digraph G {")
