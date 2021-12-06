@@ -29,7 +29,7 @@ As well, Go has a parser and type checker right in the the standard library. Fur
 
 ## Installing
 
-Install [Go](https://golang.org/) for your system, then there are [releases](./releases) with prebuilt binaries and the runtime library source, plus some example programs.
+Install [Go](https://golang.org/) for your system, then there are [releases](https://github.com/rj45/nanogo/releases) with prebuilt binaries and the runtime library source, plus some example programs.
 
 Or you can install with go's installer:
 
@@ -40,6 +40,8 @@ go install github.com/rj45/nanogo@latest
 You will also want to install [customasm](https://github.com/hlorenzi/customasm).
 
 You may also want to install [emurj](https://github.com/rj45/rj32/emurj) if you want to be able to run programs in an `rj32` emulator.
+
+You may need to set up a `NANOGOROOT` if you get errors about not being able to find the standard library code. Set it to the folder containing the `src` folder.
 
 ## Running
 
