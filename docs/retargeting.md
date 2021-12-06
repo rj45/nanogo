@@ -1,6 +1,6 @@
 # Retargeting
 
-You can start by copying an [existing arch](./arch) and modifying it for your instruction set. You may want to pick the one that's closest to your architecture to make this easier.
+You can start by copying an [existing arch](../arch/) and modifying it for your instruction set. You may want to pick the one that's closest to your architecture to make this easier.
 
 The architecture calls `var _ = arch.Register(cpuArch{})` to register with the arch package, but that won't trigger unless the package is imported somewhere. [compiler_test.go](../compiler/compiler_test.go) is one such place. [nanogo.go](../nanogo.go) is the other.
 
