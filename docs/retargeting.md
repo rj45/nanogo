@@ -6,7 +6,7 @@ The architecture calls `var _ = arch.Register(cpuArch{})` to register with the a
 
 ## Tagging and transforms
 
-The transforms have a [tagging system](../xform/xform.go) in place for being able to turn them on/off for specific architectures. If a xform func has no tags, it is always active. Otherwise all of its tags must be present in the architecture's `XformTags()` list. Make sure not to break other architectures when adding new tags to xform functions.
+The transforms have a [tagging system](../xform/tag.go) in place for being able to turn them on/off for specific architectures. If a xform func has no tags, it is always active. Otherwise all of its tags must be present in the architecture's `XformTags()` list. Make sure not to break other architectures when adding new tags to xform functions.
 
 Do note: Many bugs are caught in the register allocator's verifier, but that does not necessarily mean the allocator is broken. Often it can be a bad xform or an unimplemented feature. The verifier is just analyzing the value flow, so that is why it catches these sorts of issues.
 
@@ -27,4 +27,3 @@ You will also want to have a working emulator that will be able to exit with an 
 You will want to add some assembly for outputting to the console. Extern funcs trigger a scan of the containing folder to check if there are .asm files tagged with the arch that might have assembly for those funcs. You can find examples in the [runtime library](../src/runtime/).
 
 For automated testing, I have been using integration tests in the [testdata](../testdata/) folder, and adding them to [compiler_test.go](../compiler/compiler_test.go). The [coverall](../coverall.sh) script can be used to generate a coverage report. If you prefer to write unit tests rather than integration tests, that is welcome as well.
-
