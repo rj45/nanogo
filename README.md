@@ -32,7 +32,7 @@ As well, Go has a parser and type checker right in the the standard library. Fur
 Install [Go](https://golang.org/) for your system, then:
 
 ```sh
-go get -u github.com/rj45/nanogo
+go install github.com/rj45/nanogo@latest
 ```
 
 You will also want to install [customasm](https://github.com/hlorenzi/customasm).
