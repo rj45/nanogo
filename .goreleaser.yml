@@ -1,0 +1,52 @@
+# Documentation at https://goreleaser.com
+before:
+  hooks:
+    - go mod tidy
+    - go generate ./...
+    - go test compiler/compiler_test.go
+builds:
+  - env:
+      - CGO_ENABLED=0
+    targets:
+      - windows_amd64
+      - linux_amd64
+      - darwin_amd64
+      - darwin_arm64
+    main: ./nanogo.go
+    binary: nanogo
+
+archives:
+  - replacements:
+      darwin: MacOS
+      linux: Linux
+      windows: Windows
+      386: i386
+      amd64: x86_64
+    wrap_in_directory: true
+    format_overrides:
+      - goos: windows
+        format: zip
+    files:
+      - LICENSE*
+      - README.md
+      - docs/*
+      - src/*
+      - testdata/*
+
+checksum:
+  name_template: 'checksums.txt'
+snapshot:
+  name_template: "{{ incpatch .Version }}-next"
+changelog:
+  sort: asc
+  filters:
+    exclude:
+      - '^docs:'
+      - '^test:'
+      - 'typo'
+  groups:
+    - title: 'Bug fixes'
+      regexp: "^.*[fF]ix$"
+      order: 999
+    - title: Changes
+      order: 0

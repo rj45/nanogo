@@ -29,7 +29,9 @@ As well, Go has a parser and type checker right in the the standard library. Fur
 
 ## Installing
 
-Install [Go](https://golang.org/) for your system, then:
+Install [Go](https://golang.org/) for your system, then there are [releases](./releases) with prebuilt binaries and the runtime library source, plus some example programs.
+
+Or you can install with go's installer:
 
 ```sh
 go install github.com/rj45/nanogo@latest
