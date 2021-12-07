@@ -14,7 +14,7 @@ func (pkg *Package) Funcs() []*Func {
 // if there is no match, by short name.
 func (pkg *Package) Func(name string) *Func {
 	for _, fn := range pkg.funcs {
-		if fn.name == name {
+		if fn.Name == name {
 			return fn
 		}
 	}
@@ -24,7 +24,7 @@ func (pkg *Package) Func(name string) *Func {
 // AddFunc adds a func to the list
 func (pkg *Package) NewFunc(name string) {
 	fn := &Func{
-		name:     name,
+		Name:     name,
 		FullName: pkg.genUniqueName(name),
 	}
 	fn.pkg = pkg

@@ -46,15 +46,17 @@ type Package struct {
 // Func is a collection of Blocks, which comprise
 // a function or method in a Program.
 type Func struct {
-	name     string
+	Name     string
 	FullName string
 
 	pkg *Package
 
-	// ID to node mappings
 	blocks []*Block
-	values []*Value
-	instrs []*Instr
+
+	// ID to node mappings
+	idBlocks []*Block
+	idValues []*Value
+	idInstrs []*Instr
 
 	// allocate in slabs so related
 	// stuff is close together in memory
@@ -124,14 +126,17 @@ const (
 type Value struct {
 	ID
 
-	def *Instr
+	// Type is the type of the Value
+	Type types.Type
 
-	loc   ValueLoc
-	index int
+	// Loc is the location of the Value
+	Loc ValueLoc
 
+	// Index is the index in the location
+	Index int
+
+	def  *Instr
 	uses []*Instr
-
-	typ types.Type
 
 	usestorage [2]*Instr
 }

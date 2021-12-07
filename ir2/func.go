@@ -3,34 +3,27 @@ package ir2
 import (
 	"fmt"
 	"go/types"
+	"log"
 
 	"github.com/rj45/nanogo/ir/op"
 )
 
+// slab allocation sizes
 const valueSlabSize = 16
 const instrSlabSize = 16
 const blockSlabSize = 4
 
-func (fn *Func) Name() string {
-	return fn.name
-}
-
+// Package returns the Func's Package
 func (fn *Func) Package() *Package {
 	return fn.pkg
 }
 
-func (fn *Func) Block(b ID) *Block {
-	return fn.blocks[b]
+// ValueForID returns the Value for the ID
+func (fn *Func) ValueForID(v ID) *Value {
+	return fn.idValues[v]
 }
 
-func (fn *Func) Value(v ID) *Value {
-	return fn.values[v]
-}
-
-func (fn *Func) Instr(i ID) *Instr {
-	return fn.instrs[i]
-}
-
+// NewValue creates a new Value of type typ
 func (fn *Func) NewValue(typ types.Type) *Value {
 	// allocate values in contiguous slabs in memory
 	// to increase data locality
@@ -40,13 +33,32 @@ func (fn *Func) NewValue(typ types.Type) *Value {
 	fn.valueslab = append(fn.valueslab, Value{})
 	val := &fn.valueslab[len(fn.valueslab)-1]
 
-	val.init(ID(len(fn.values)), typ)
+	val.init(ID(len(fn.idValues)), typ)
 
-	fn.values = append(fn.values, val)
+	fn.idValues = append(fn.idValues, val)
 
 	return val
 }
 
+// ValueFor looks up an existing Value
+func (fn *Func) ValueFor(v interface{}) *Value {
+	switch v := v.(type) {
+	// todo: add constants and funcs
+	case *Value:
+		return v
+	}
+
+	panic(fmt.Sprintf("can't get value %#v", v))
+}
+
+// Instrs
+
+// InstrForID returns the Instr for the ID
+func (fn *Func) InstrForID(i ID) *Instr {
+	return fn.idInstrs[i]
+}
+
+// NewInstr creates an unbound Instr
 func (fn *Func) NewInstr(op op.Op, typ types.Type, args ...interface{}) *Instr {
 	// allocate instrs in contiguous slabs in memory
 	// to increase data locality
@@ -56,9 +68,9 @@ func (fn *Func) NewInstr(op op.Op, typ types.Type, args ...interface{}) *Instr {
 	fn.instrslab = append(fn.instrslab, Instr{})
 	instr := &fn.instrslab[len(fn.instrslab)-1]
 
-	instr.init(ID(len(fn.instrs)))
+	instr.init(ID(len(fn.idInstrs)))
 
-	fn.instrs = append(fn.instrs, instr)
+	fn.idInstrs = append(fn.idInstrs, instr)
 
 	for _, a := range args {
 		arg := fn.ValueFor(a)
@@ -80,6 +92,14 @@ func (fn *Func) NewInstr(op op.Op, typ types.Type, args ...interface{}) *Instr {
 	return instr
 }
 
+// Blocks
+
+// BlockForID returns a Block by ID
+func (fn *Func) BlockForID(b ID) *Block {
+	return fn.idBlocks[b]
+}
+
+// NewBlock adds a new block
 func (fn *Func) NewBlock() *Block {
 	// allocate blocks in contiguous slabs in memory
 	// to increase data locality
@@ -89,18 +109,43 @@ func (fn *Func) NewBlock() *Block {
 	fn.blockslab = append(fn.blockslab, Block{})
 	blk := &fn.blockslab[len(fn.blockslab)-1]
 
-	blk.init(fn, ID(len(fn.blocks)))
+	blk.init(fn, ID(len(fn.idBlocks)))
 
-	fn.blocks = append(fn.blocks, blk)
+	fn.idBlocks = append(fn.idBlocks, blk)
 
 	return blk
 }
 
-func (fn *Func) ValueFor(v interface{}) *Value {
-	switch v := v.(type) {
-	case *Value:
-		return v
+// InsertBlock inserts the block at the specific
+// location in the list
+func (fn *Func) InsertBlock(i int, blk *Block) {
+	if blk.fn != fn {
+		log.Panicf("inserting block %v from %v int another func %v not supported", blk, blk.fn, fn)
 	}
 
-	panic(fmt.Sprintf("can't get value %#v", v))
+	if i < 0 || i >= len(fn.blocks) {
+		fn.blocks = append(fn.blocks, blk)
+		return
+	}
+
+	fn.blocks = append(fn.blocks[:i+1], fn.blocks[i:]...)
+	fn.blocks[i] = blk
+}
+
+// BlockIndex returns the index of the Block in the list
+func (fn *Func) BlockIndex(blk *Block) int {
+	for i, b := range fn.blocks {
+		if b == blk {
+			return i
+		}
+	}
+	return -1
+}
+
+// RemoveBlock removes the Block from the list but
+// does not remove it from succ/pred lists. See blk.Unlink()
+func (fn *Func) RemoveBlock(blk *Block) {
+	i := fn.BlockIndex(blk)
+
+	fn.blocks = append(fn.blocks[:i], fn.blocks[i+1:]...)
 }
