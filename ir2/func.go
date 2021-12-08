@@ -4,8 +4,6 @@ import (
 	"fmt"
 	"go/types"
 	"log"
-
-	"github.com/rj45/nanogo/ir/op"
 )
 
 // slab allocation sizes
@@ -59,7 +57,7 @@ func (fn *Func) InstrForID(i ID) *Instr {
 }
 
 // NewInstr creates an unbound Instr
-func (fn *Func) NewInstr(op op.Op, typ types.Type, args ...interface{}) *Instr {
+func (fn *Func) NewInstr(op Op, typ types.Type, args ...interface{}) *Instr {
 	// allocate instrs in contiguous slabs in memory
 	// to increase data locality
 	if len(fn.instrslab) == cap(fn.instrslab) {

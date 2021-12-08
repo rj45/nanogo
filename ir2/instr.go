@@ -3,8 +3,6 @@ package ir2
 import (
 	"go/types"
 	"log"
-
-	"github.com/rj45/nanogo/ir/op"
 )
 
 func (in *Instr) init(id ID) {
@@ -33,7 +31,7 @@ func (in *Instr) Index() int {
 }
 
 // Update changes the op, type and number of defs and the args
-func (in *Instr) Update(op op.Op, typ types.Type, args ...interface{}) {
+func (in *Instr) Update(op Op, typ types.Type, args ...interface{}) {
 	in.Op = op
 	fn := in.blk.fn
 

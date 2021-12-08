@@ -20,8 +20,6 @@ package ir2
 import (
 	"go/token"
 	"go/types"
-
-	"github.com/rj45/nanogo/ir/op"
 )
 
 // Program is a collection of packages,
@@ -88,11 +86,18 @@ type Block struct {
 	succstorage  [2]*Block
 }
 
+type Op interface {
+	String() string
+	IsCompare() bool
+	IsCopy() bool
+	IsCommutative() bool
+}
+
 // Instr is an instruction that may define one or more Values,
 // and take as Args (operands) one or more Values.
 type Instr struct {
 	ID
-	op.Op
+	Op
 
 	blk *Block
 

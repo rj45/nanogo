@@ -2,8 +2,6 @@ package ir2
 
 import (
 	"go/types"
-
-	"github.com/rj45/nanogo/ir/op"
 )
 
 /// in-block iterator
@@ -64,7 +62,7 @@ func (it *BlockIter) Prev() bool {
 }
 
 // Insert inserts an instruction at the cursor position and increments the position
-func (it *BlockIter) Insert(op op.Op, typ types.Type, args ...interface{}) *Instr {
+func (it *BlockIter) Insert(op Op, typ types.Type, args ...interface{}) *Instr {
 	instr := it.blk.fn.NewInstr(op, typ, args...)
 
 	it.blk.InsertInstr(it.insIdx, instr)
@@ -88,7 +86,7 @@ func (it *BlockIter) Remove() *Instr {
 }
 
 // Update updates the instruction at the cursor position
-func (it *BlockIter) Update(op op.Op, typ types.Type, args ...interface{}) *Instr {
+func (it *BlockIter) Update(op Op, typ types.Type, args ...interface{}) *Instr {
 	instr := it.blk.instrs[it.insIdx]
 
 	instr.Update(op, typ, args...)
