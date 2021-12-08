@@ -1,7 +1,10 @@
 package ir2
 
 import (
+	"go/types"
 	"log"
+
+	"github.com/rj45/nanogo/ir/op"
 )
 
 func (in *Instr) init(id ID) {
@@ -27,6 +30,33 @@ func (in *Instr) Index() int {
 		log.Panicf("bad index on %v", in)
 	}
 	return in.index
+}
+
+// Update changes the op, type and number of defs and the args
+func (in *Instr) Update(op op.Op, typ types.Type, args ...interface{}) {
+	in.Op = op
+	fn := in.blk.fn
+
+	for i, a := range args {
+		arg := fn.ValueFor(a)
+
+		in.ReplaceArg(i, arg)
+	}
+
+	for len(in.args) > len(args) {
+		// todo: replace with in.RemoveArgAt()?
+		in.RemoveArg(in.args[len(in.args)-1])
+	}
+
+	if tuple, ok := typ.(*types.Tuple); ok {
+		for i := 0; i < tuple.Len(); i++ {
+			v := tuple.At(i)
+
+			in.UpdateDef(i, v.Type())
+		}
+	} else {
+		in.UpdateDef(0, typ)
+	}
 }
 
 // MoveBefore moves this instruction before other
@@ -64,6 +94,15 @@ func (in *Instr) AddDef(val *Value) *Value {
 	in.defs = append(in.defs, val)
 	val.def = in
 	return val
+}
+
+// UpdateDef updates an existing def or adds one if necessary
+func (in *Instr) UpdateDef(i int, typ types.Type) *Value {
+	if len(in.defs) < i {
+		in.defs[i].Type = typ
+		return in.defs[i]
+	}
+	return in.AddDef(in.blk.fn.NewValue(typ))
 }
 
 // Arguments (Args) / Operands
@@ -121,6 +160,11 @@ func (in *Instr) RemoveArg(arg *Value) {
 func (in *Instr) ReplaceArg(i int, arg *Value) {
 	if in.ArgIndex(arg) != -1 {
 		panic("tried to replace already existing arg")
+	}
+
+	if len(in.args) == i {
+		in.InsertArg(i, arg)
+		return
 	}
 
 	in.args[i].removeUse(in)

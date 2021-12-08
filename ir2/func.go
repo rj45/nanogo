@@ -72,22 +72,7 @@ func (fn *Func) NewInstr(op op.Op, typ types.Type, args ...interface{}) *Instr {
 
 	fn.idInstrs = append(fn.idInstrs, instr)
 
-	for _, a := range args {
-		arg := fn.ValueFor(a)
-
-		instr.InsertArg(-1, arg)
-	}
-
-	if tuple, ok := typ.(*types.Tuple); ok {
-		for i := 0; i < tuple.Len(); i++ {
-			v := tuple.At(i)
-			val := fn.NewValue(v.Type())
-			instr.AddDef(val)
-		}
-	} else {
-		val := fn.NewValue(typ)
-		instr.AddDef(val)
-	}
+	instr.Update(op, typ, args...)
 
 	return instr
 }
