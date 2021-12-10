@@ -12,6 +12,8 @@ type (
 	stringConst  string
 	intConst     int64
 	funcConst    struct{ fn *Func }
+	globalConst  struct{ glob *Global }
+	literalConst struct{ lit *Literal }
 )
 
 func (unknownConst) Kind() ConstKind { return UnknownConst }
@@ -38,6 +40,14 @@ func (c funcConst) Kind() ConstKind { return FuncConst }
 func (c funcConst) String() string  { return c.fn.FullName }
 func (c funcConst) private()        {}
 
+func (c globalConst) Kind() ConstKind { return GlobalConst }
+func (c globalConst) String() string  { return c.glob.FullName }
+func (c globalConst) private()        {}
+
+func (c literalConst) Kind() ConstKind { return LiteralConst }
+func (c literalConst) String() string  { return c.lit.Name }
+func (c literalConst) private()        {}
+
 // Return a Const for a value
 func ConstFor(v interface{}) Const {
 	switch v := v.(type) {
@@ -53,6 +63,10 @@ func ConstFor(v interface{}) Const {
 		return intConst(v)
 	case *Func:
 		return funcConst{v}
+	case *Global:
+		return globalConst{v}
+	case *Literal:
+		return literalConst{v}
 	case constant.Value:
 		// convert constants
 		switch v.Kind() {
@@ -116,4 +130,12 @@ func FuncValue(c Const) (*Func, bool) {
 		return nil, false
 	}
 	return c.(funcConst).fn, true
+}
+
+// GlobalValue returns a *Func for a GlobalConst
+func GlobalValue(c Const) (*Global, bool) {
+	if c.Kind() != GlobalConst {
+		return nil, false
+	}
+	return c.(globalConst).glob, true
 }

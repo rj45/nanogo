@@ -3,6 +3,7 @@ package frontend
 import (
 	"bytes"
 	"go/token"
+	"go/types"
 	"log"
 	"os"
 	"strings"
@@ -53,14 +54,7 @@ func (fe *FrontEnd) Scan() {
 			main := fn.Pkg.Pkg.Name() == "main"
 			referenced := main && (name == "main" || name == "init")
 
-			pkg := fe.prog.Package(fn.Pkg.Pkg.Path())
-			if pkg == nil {
-				pkg = &ir2.Package{
-					Name: fn.Pkg.Pkg.Name(),
-					Path: fn.Pkg.Pkg.Path(),
-				}
-				fe.prog.AddPackage(pkg)
-			}
+			pkg := fe.getPackage(fn.Pkg.Pkg)
 
 			irFunc := pkg.NewFunc(fn.Name(), fn.Signature)
 			irFunc.Referenced = referenced
@@ -68,8 +62,9 @@ func (fe *FrontEnd) Scan() {
 			fe.ssaFuncs[irFunc] = fn
 
 		case token.VAR:
-			// name := genName(member.Package().Pkg.Name(), member.Name())
-			// fe.pkg.AddGlobal(name, member.Type())
+			pkg := fe.getPackage(member.Package().Pkg)
+			pkg.NewGlobal(member.Name(), member.Type())
+
 		case token.TYPE:
 		case token.CONST:
 		default:
@@ -77,6 +72,18 @@ func (fe *FrontEnd) Scan() {
 		}
 	}
 	fe.parsed = make(map[*ir2.Func]bool)
+}
+
+func (fe *FrontEnd) getPackage(typPkg *types.Package) *ir2.Package {
+	pkg := fe.prog.Package(typPkg.Path())
+	if pkg == nil {
+		pkg = &ir2.Package{
+			Name: typPkg.Name(),
+			Path: typPkg.Path(),
+		}
+		fe.prog.AddPackage(pkg)
+	}
+	return pkg
 }
 
 func (fe *FrontEnd) Program() *ir2.Program {

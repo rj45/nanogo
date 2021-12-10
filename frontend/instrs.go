@@ -1,6 +1,7 @@
 package frontend
 
 import (
+	"go/constant"
 	"go/token"
 	"go/types"
 	"log"
@@ -44,6 +45,8 @@ func (fe *FrontEnd) translateInstrs(irBlock *ir2.Block, ssaBlock *ssa.BasicBlock
 			} else {
 				opcode = op.Local
 			}
+		case *ssa.Slice:
+			opcode = op.Slice
 		case *ssa.Call:
 			opcode = op.Call
 			switch call := ins.Call.Value.(type) {
@@ -213,36 +216,16 @@ func (fe *FrontEnd) translateArgs(it *ir2.BlockIter, instr ssa.Instruction) {
 			ok = true
 			switch con := (*val).(type) {
 			case *ssa.Const:
-				// if con.Type().Underlying().String() == "string" {
-				// 	str := constant.StringVal(con.Value)
-				// 	pkg := block.Func().Pkg
-				// 	val, found := pkg.Strings[str]
-				// 	if !found {
-				// 		// generate a name
-				// 		name := fmt.Sprintf("%s_str%d", block.Func().Name, pkg.NextStringNum)
-				// 		pkg.NextStringNum++
+				if con.Type().Underlying().String() == "string" {
+					str := constant.StringVal(con.Value)
+					fn := it.Block().Func()
+					prog := fn.Package().Program()
+					name := prog.MakeUnique(fn.FullName)
 
-				// 		// create a global
-				// 		arg = pkg.AddGlobal(name, con.Type())
-
-				// 		// attach string to global as its value
-				// 		arg.InsertArg(-1, block.Func().Const(con.Type(), con.Value))
-
-				// 		// reuse string
-				// 		if pkg.Strings == nil {
-				// 			pkg.Strings = make(map[string]*ir.Value)
-				// 		}
-				// 		pkg.Strings[str] = arg
-				// 	} else {
-				// 		arg = val
-				// 	}
-
-				// 	block.Func().Globals = append(block.Func().Globals, arg)
-				// } else {
-
-				// 	arg = block.Func().Const(con.Type(), con.Value)
-				// }
-				arg = con.Value
+					arg = prog.StringLiteral(str, name)
+				} else {
+					arg = con.Value
+				}
 
 			case *ssa.Function:
 				pkg := block.Func().Package()
@@ -262,32 +245,33 @@ func (fe *FrontEnd) translateArgs(it *ir2.BlockIter, instr ssa.Instruction) {
 				block.Func().NumCalls++
 
 			case *ssa.Global:
-				// name := fmt.Sprintf("\"%s\"", genName(con.Pkg.Pkg.Name(), con.Name()))
-				// ok = false
-				// for _, glob := range block.Func().Pkg.Globals {
-				// 	if glob.Value.String() == name {
-				// 		arg = glob
-				// 		ok = true
-				// 		break
-				// 	}
-				// }
-				// if !ok {
-				// 	name := genName(con.Pkg.Pkg.Name(), con.Name())
-				// 	arg = block.Func().Pkg.AddGlobal(name, con.Type())
-				// 	ok = true
-				// }
-				// block.Func().Globals = append(block.Func().Globals, arg)
-				ok = false
+				pkg := block.Func().Package()
+				pkg = pkg.Program().Package(con.Pkg.Pkg.Path())
+				glob := pkg.Global(con.Name())
+				if glob == nil {
+					log.Fatalf("reference to unknown global %s in function %s", con.Name(), block.Func().Name)
+				}
+				glob.Referenced = true
+				arg = glob
+
+			case nil:
+				// slice positions can be nil :-/
+				arg = ir2.ConstFor(nil)
 
 			default:
+
 				ok = false
 			}
 		}
 		if ok && arg != nil {
-			v := it.Block().Func().ValueFor((*val).Type(), arg)
+			var typ types.Type
+			if *val != nil {
+				typ = (*val).Type()
+			}
+			v := it.Block().Func().ValueFor(typ, arg)
 			it.Instr().InsertArg(-1, v)
 		} else {
-			log.Printf("Unmapped value: %#v\n", *val)
+			log.Printf("Unmapped value: %#v for %s\n", *val, instr)
 		}
 	}
 }

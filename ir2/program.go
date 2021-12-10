@@ -1,5 +1,7 @@
 package ir2
 
+import "fmt"
+
 // Packages returns a copy of the package list
 func (prog *Program) Packages() []*Package {
 	return append([]*Package(nil), prog.packages...)
@@ -25,6 +27,29 @@ func (prog *Program) Package(name string) *Package {
 		}
 	}
 	return nil
+}
+
+func (prog *Program) StringLiteral(str string, name string) *Literal {
+	if lit, ok := prog.strings[str]; ok {
+		return lit
+	}
+	if prog.strings == nil {
+		prog.strings = make(map[string]*Literal)
+	}
+	prog.claimName(name)
+	lit := &Literal{Name: name, Value: ConstFor(str)}
+	prog.strings[str] = lit
+	return lit
+}
+
+func (prog *Program) MakeUnique(name string) string {
+	for i := 1; ; i++ {
+		uniq := fmt.Sprintf("%s_%d", name, i)
+		if prog.takenNames[uniq] {
+			continue
+		}
+		return uniq
+	}
 }
 
 func (prog *Program) claimName(name string) {

@@ -166,6 +166,38 @@
     - [x] Fix several bugs with strings and byte addressing
     - [x] Add A32 to test suite to make sure it doesn't break
 
+
+- [ ] Rework IR (ir2)
+  - [x] Split globals into Literals (strings) and Globals (bss data)
+  - [x] Split values into Values and Instructions
+  - [x] Instructions can return multiple values
+  - [x] Iterators with support for better xforms
+  - [x] Slab based allocation so pointers are not invalidated
+  - [x] Fully documented with doc comments
+  - [x] Blocks no longer have block ops, last instr is control instr
+  - [x] Proper generation of program-wide unique names for functions, globals and literals
+  - [x] Make a copy of the `parser` package named `frontend`
+    - [x] Get it to parse programs to ir2
+    - [x] Handle translating tuples to multiple return values
+  - [x] Can emit IR code in a way that simplifies text, assembly and html generation
+  - [ ] Implement a simplified type system
+    - [ ] integer types i/u 8,16,32,64
+    - [ ] bool type
+    - [ ] cpu flags
+    - [ ] pointers
+    - [ ] const
+    - [ ] tuples?
+    - [ ] Map from go types to type system
+    - [ ] Use types in frontend translation to IR
+    - [ ] Output them in textual format as def annotations
+  - [ ] Ability to parse text form of IR back into IR
+    - [ ] Can lex tokens
+    - [ ] Values parsed
+    - [ ] Constants parsed
+    - [ ] Instructions parsed
+    - [ ] EBB label and parameters parsed
+    - [ ] func labels, parameters, results parsed
+
 - [ ] Rework xform system
   - [ ] Have a better way to track which rules have run to trigger what code to be generated
     - [ ] Instrument SSA dump with code location that generated the code
