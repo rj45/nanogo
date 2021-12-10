@@ -7,6 +7,7 @@ func (prog *Program) Packages() []*Package {
 
 // AddPackage adds a package to the list
 func (prog *Program) AddPackage(pkg *Package) {
+	pkg.prog = prog
 	prog.packages = append(prog.packages, pkg)
 }
 
@@ -14,12 +15,12 @@ func (prog *Program) AddPackage(pkg *Package) {
 // if there is no match, by short name.
 func (prog *Program) Package(name string) *Package {
 	for _, pkg := range prog.packages {
-		if pkg.FullName == name {
+		if pkg.Path == name {
 			return pkg
 		}
 	}
 	for _, pkg := range prog.packages {
-		if pkg.ShortName == name {
+		if pkg.Name == name {
 			return pkg
 		}
 	}

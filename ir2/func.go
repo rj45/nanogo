@@ -39,14 +39,36 @@ func (fn *Func) NewValue(typ types.Type) *Value {
 }
 
 // ValueFor looks up an existing Value
-func (fn *Func) ValueFor(v interface{}) *Value {
+func (fn *Func) ValueFor(typ types.Type, v interface{}) *Value {
 	switch v := v.(type) {
-	// todo: add constants and funcs
 	case *Value:
-		return v
+		if v != nil {
+			return v
+		}
+	case *Instr:
+		if v != nil && len(v.defs) == 1 {
+			return v.defs[0]
+		}
 	}
 
-	panic(fmt.Sprintf("can't get value %#v", v))
+	con := ConstFor(v)
+	if con.Kind() != UnknownConst {
+		if conval, ok := fn.consts[con]; ok {
+			return conval
+		}
+		conval := fn.NewValue(typ)
+		conval.Const = con
+
+		if fn.consts == nil {
+			fn.consts = make(map[Const]*Value)
+		}
+
+		fn.consts[con] = conval
+
+		return conval
+	}
+
+	panic(fmt.Sprintf("can't get value for %T %#v", v, v))
 }
 
 // Instrs
@@ -70,12 +92,22 @@ func (fn *Func) NewInstr(op Op, typ types.Type, args ...interface{}) *Instr {
 
 	fn.idInstrs = append(fn.idInstrs, instr)
 
-	instr.Update(op, typ, args...)
+	instr.update(fn, op, typ, args)
 
 	return instr
 }
 
 // Blocks
+
+// NumBlocks returns the number of Blocks
+func (fn *Func) NumBlocks() int {
+	return len(fn.blocks)
+}
+
+// Block returns the ith Block
+func (fn *Func) Block(i int) *Block {
+	return fn.blocks[i]
+}
 
 // BlockForID returns a Block by ID
 func (fn *Func) BlockForID(b ID) *Block {

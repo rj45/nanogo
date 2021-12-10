@@ -23,6 +23,9 @@ func (blk *Block) InstrIter() *BlockIter {
 
 // Instr returns the current instruction
 func (it *BlockIter) Instr() *Instr {
+	if uint(it.insIdx) >= uint(len(it.blk.instrs)) {
+		return nil
+	}
 	return it.blk.instrs[it.insIdx]
 }
 
@@ -41,6 +44,11 @@ func (it *BlockIter) BlockIndex() int {
 	return it.blk.fn.BlockIndex(it.blk)
 }
 
+// HasNext returns whether Next() will succeed
+func (it *BlockIter) HasNext() bool {
+	return it.insIdx < len(it.blk.instrs)
+}
+
 // Next increments the position and returns whether that was successful
 func (it *BlockIter) Next() bool {
 	if it.insIdx >= len(it.blk.instrs) {
@@ -48,7 +56,7 @@ func (it *BlockIter) Next() bool {
 	}
 
 	it.insIdx++
-	return true
+	return it.insIdx < len(it.blk.instrs)
 }
 
 // Prev decrements the position and returns whether that was successful
@@ -59,6 +67,11 @@ func (it *BlockIter) Prev() bool {
 
 	it.insIdx--
 	return true
+}
+
+// HasPrev returns whether Prev() will succeed
+func (it *BlockIter) HasPrev() bool {
+	return it.insIdx >= 0 // todo: there is a bug here
 }
 
 // Insert inserts an instruction at the cursor position and increments the position
@@ -113,6 +126,11 @@ func (fn *Func) InstrIter() *CrossBlockIter {
 	}
 }
 
+// HasNext returns whether Next() will succeed
+func (it *CrossBlockIter) HasNext() bool {
+	return it.insIdx < len(it.blk.instrs) && it.blkIdx < len(it.fn.blocks)
+}
+
 // Next increments the position and returns whether that was successful
 func (it *CrossBlockIter) Next() bool {
 	if it.insIdx >= len(it.blk.instrs) {
@@ -127,7 +145,12 @@ func (it *CrossBlockIter) Next() bool {
 	}
 
 	it.insIdx++
-	return true
+	return it.insIdx < len(it.blk.instrs)
+}
+
+// HasPrev returns whether Prev() will succeed
+func (it *CrossBlockIter) HasPrev() bool {
+	return it.insIdx >= 0 && it.blkIdx >= 0
 }
 
 // Prev decrements the position and returns whether that was successful

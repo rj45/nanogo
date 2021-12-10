@@ -32,11 +32,14 @@ func (in *Instr) Index() int {
 
 // Update changes the op, type and number of defs and the args
 func (in *Instr) Update(op Op, typ types.Type, args ...interface{}) {
+	in.update(in.blk.fn, op, typ, args)
+}
+
+func (in *Instr) update(fn *Func, op Op, typ types.Type, args []interface{}) {
 	in.Op = op
-	fn := in.blk.fn
 
 	for i, a := range args {
-		arg := fn.ValueFor(a)
+		arg := fn.ValueFor(typ, a)
 
 		in.ReplaceArg(i, arg)
 	}
@@ -50,10 +53,10 @@ func (in *Instr) Update(op Op, typ types.Type, args ...interface{}) {
 		for i := 0; i < tuple.Len(); i++ {
 			v := tuple.At(i)
 
-			in.UpdateDef(i, v.Type())
+			in.updateDef(fn, i, v.Type())
 		}
 	} else {
-		in.UpdateDef(0, typ)
+		in.updateDef(fn, 0, typ)
 	}
 }
 
@@ -94,13 +97,13 @@ func (in *Instr) AddDef(val *Value) *Value {
 	return val
 }
 
-// UpdateDef updates an existing def or adds one if necessary
-func (in *Instr) UpdateDef(i int, typ types.Type) *Value {
+// updateDef updates an existing def or adds one if necessary
+func (in *Instr) updateDef(fn *Func, i int, typ types.Type) *Value {
 	if len(in.defs) < i {
 		in.defs[i].Type = typ
 		return in.defs[i]
 	}
-	return in.AddDef(in.blk.fn.NewValue(typ))
+	return in.AddDef(fn.NewValue(typ))
 }
 
 // Arguments (Args) / Operands

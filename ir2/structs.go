@@ -35,8 +35,8 @@ type Program struct {
 type Package struct {
 	prog *Program
 
-	ShortName string
-	FullName  string
+	Name string
+	Path string
 
 	funcs []*Func
 }
@@ -46,10 +46,16 @@ type Package struct {
 type Func struct {
 	Name     string
 	FullName string
+	Sig      *types.Signature
+
+	Referenced bool
+	NumCalls   int
 
 	pkg *Package
 
 	blocks []*Block
+
+	consts map[Const]*Value
 
 	// ID to node mappings
 	idBlocks []*Block
@@ -134,6 +140,8 @@ type Value struct {
 	// Type is the type of the Value
 	Type types.Type
 
+	Const Const
+
 	// Loc is the location of the Value
 	Loc ValueLoc
 
@@ -144,4 +152,30 @@ type Value struct {
 	uses []*Instr
 
 	usestorage [2]*Instr
+}
+
+type ConstKind uint8
+
+const (
+	UnknownConst ConstKind = iota
+
+	NilConst
+
+	// non-numeric values
+	BoolConst
+	StringConst
+
+	// numeric values
+	IntConst
+
+	// funcs and globals
+	FuncConst
+	GlobalConst
+)
+
+// Const is a constant value of some sort
+type Const interface {
+	Kind() ConstKind
+	String() string
+	private()
 }

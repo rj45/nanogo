@@ -118,6 +118,21 @@ const (
 	Negate
 	Load
 	Invert
+
+	// control flow instrs
+
+	Jump2
+	If2
+	Return2
+	Panic2
+
+	IfEqual2
+	IfNotEqual2
+	IfLess2
+	IfLessEqual2
+	IfGreater2
+	IfGreaterEqual2
+
 	NumOps
 )
 
@@ -178,6 +193,17 @@ var opDefs = []Def{
 	{Op: Negate, Asm: "neg", ClobArg: true},
 	{Op: Load},
 	{Op: Invert, Asm: "not", ClobArg: true},
+
+	{Op: Jump2},
+	{Op: If2},
+	{Op: Return2},
+	{Op: Panic2},
+	{Op: IfEqual2},
+	{Op: IfNotEqual2},
+	{Op: IfLess2},
+	{Op: IfLessEqual2},
+	{Op: IfGreater2},
+	{Op: IfGreaterEqual2},
 }
 
 // sort opDefs so we don't have to worry about that

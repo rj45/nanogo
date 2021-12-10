@@ -7,11 +7,11 @@ import (
 	"strings"
 )
 
-const _OpName = "invalidbuiltincallcallBuiltinchangeInterfacechangeTypeconstconvertcopyextractfieldfieldAddrfreeVarfuncglobalindexindexAddrinlineAsmlocallookupmakeInterfacemakeSlicenextnewparameterphiphiCopyrangeregslicesliceToArrayPointerstoreswapInswapOuttypeAssertaddsubmuldivremandorxorshiftLeftshiftRightandNotequalnotEquallesslessEqualgreatergreaterEqualnotnegateloadinvertnumOps"
+const _OpName = "invalidbuiltincallcallBuiltinchangeInterfacechangeTypeconstconvertcopyextractfieldfieldAddrfreeVarfuncglobalindexindexAddrinlineAsmlocallookupmakeInterfacemakeSlicenextnewparameterphiphiCopyrangeregslicesliceToArrayPointerstoreswapInswapOuttypeAssertaddsubmuldivremandorxorshiftLeftshiftRightandNotequalnotEquallesslessEqualgreatergreaterEqualnotnegateloadinvertjump2if2return2panic2ifEqual2ifNotEqual2ifLess2ifLessEqual2ifGreater2ifGreaterEqual2numOps"
 
-var _OpIndex = [...]uint16{0, 7, 14, 18, 29, 44, 54, 59, 66, 70, 77, 82, 91, 98, 102, 108, 113, 122, 131, 136, 142, 155, 164, 168, 171, 180, 183, 190, 195, 198, 203, 222, 227, 233, 240, 250, 253, 256, 259, 262, 265, 268, 270, 273, 282, 292, 298, 303, 311, 315, 324, 331, 343, 346, 352, 356, 362, 368}
+var _OpIndex = [...]uint16{0, 7, 14, 18, 29, 44, 54, 59, 66, 70, 77, 82, 91, 98, 102, 108, 113, 122, 131, 136, 142, 155, 164, 168, 171, 180, 183, 190, 195, 198, 203, 222, 227, 233, 240, 250, 253, 256, 259, 262, 265, 268, 270, 273, 282, 292, 298, 303, 311, 315, 324, 331, 343, 346, 352, 356, 362, 367, 370, 377, 383, 391, 402, 409, 421, 431, 446, 452}
 
-const _OpLowerName = "invalidbuiltincallcallbuiltinchangeinterfacechangetypeconstconvertcopyextractfieldfieldaddrfreevarfuncglobalindexindexaddrinlineasmlocallookupmakeinterfacemakeslicenextnewparameterphiphicopyrangeregsliceslicetoarraypointerstoreswapinswapouttypeassertaddsubmuldivremandorxorshiftleftshiftrightandnotequalnotequallesslessequalgreatergreaterequalnotnegateloadinvertnumops"
+const _OpLowerName = "invalidbuiltincallcallbuiltinchangeinterfacechangetypeconstconvertcopyextractfieldfieldaddrfreevarfuncglobalindexindexaddrinlineasmlocallookupmakeinterfacemakeslicenextnewparameterphiphicopyrangeregsliceslicetoarraypointerstoreswapinswapouttypeassertaddsubmuldivremandorxorshiftleftshiftrightandnotequalnotequallesslessequalgreatergreaterequalnotnegateloadinvertjump2if2return2panic2ifequal2ifnotequal2ifless2iflessequal2ifgreater2ifgreaterequal2numops"
 
 func (i Op) String() string {
 	if i < 0 || i >= Op(len(_OpIndex)-1) {
@@ -80,10 +80,20 @@ func _OpNoOp() {
 	_ = x[Negate-(53)]
 	_ = x[Load-(54)]
 	_ = x[Invert-(55)]
-	_ = x[NumOps-(56)]
+	_ = x[Jump2-(56)]
+	_ = x[If2-(57)]
+	_ = x[Return2-(58)]
+	_ = x[Panic2-(59)]
+	_ = x[IfEqual2-(60)]
+	_ = x[IfNotEqual2-(61)]
+	_ = x[IfLess2-(62)]
+	_ = x[IfLessEqual2-(63)]
+	_ = x[IfGreater2-(64)]
+	_ = x[IfGreaterEqual2-(65)]
+	_ = x[NumOps-(66)]
 }
 
-var _OpValues = []Op{Invalid, Builtin, Call, CallBuiltin, ChangeInterface, ChangeType, Const, Convert, Copy, Extract, Field, FieldAddr, FreeVar, Func, Global, Index, IndexAddr, InlineAsm, Local, Lookup, MakeInterface, MakeSlice, Next, New, Parameter, Phi, PhiCopy, Range, Reg, Slice, SliceToArrayPointer, Store, SwapIn, SwapOut, TypeAssert, Add, Sub, Mul, Div, Rem, And, Or, Xor, ShiftLeft, ShiftRight, AndNot, Equal, NotEqual, Less, LessEqual, Greater, GreaterEqual, Not, Negate, Load, Invert, NumOps}
+var _OpValues = []Op{Invalid, Builtin, Call, CallBuiltin, ChangeInterface, ChangeType, Const, Convert, Copy, Extract, Field, FieldAddr, FreeVar, Func, Global, Index, IndexAddr, InlineAsm, Local, Lookup, MakeInterface, MakeSlice, Next, New, Parameter, Phi, PhiCopy, Range, Reg, Slice, SliceToArrayPointer, Store, SwapIn, SwapOut, TypeAssert, Add, Sub, Mul, Div, Rem, And, Or, Xor, ShiftLeft, ShiftRight, AndNot, Equal, NotEqual, Less, LessEqual, Greater, GreaterEqual, Not, Negate, Load, Invert, Jump2, If2, Return2, Panic2, IfEqual2, IfNotEqual2, IfLess2, IfLessEqual2, IfGreater2, IfGreaterEqual2, NumOps}
 
 var _OpNameToValueMap = map[string]Op{
 	_OpName[0:7]:          Invalid,
@@ -198,8 +208,28 @@ var _OpNameToValueMap = map[string]Op{
 	_OpLowerName[352:356]: Load,
 	_OpName[356:362]:      Invert,
 	_OpLowerName[356:362]: Invert,
-	_OpName[362:368]:      NumOps,
-	_OpLowerName[362:368]: NumOps,
+	_OpName[362:367]:      Jump2,
+	_OpLowerName[362:367]: Jump2,
+	_OpName[367:370]:      If2,
+	_OpLowerName[367:370]: If2,
+	_OpName[370:377]:      Return2,
+	_OpLowerName[370:377]: Return2,
+	_OpName[377:383]:      Panic2,
+	_OpLowerName[377:383]: Panic2,
+	_OpName[383:391]:      IfEqual2,
+	_OpLowerName[383:391]: IfEqual2,
+	_OpName[391:402]:      IfNotEqual2,
+	_OpLowerName[391:402]: IfNotEqual2,
+	_OpName[402:409]:      IfLess2,
+	_OpLowerName[402:409]: IfLess2,
+	_OpName[409:421]:      IfLessEqual2,
+	_OpLowerName[409:421]: IfLessEqual2,
+	_OpName[421:431]:      IfGreater2,
+	_OpLowerName[421:431]: IfGreater2,
+	_OpName[431:446]:      IfGreaterEqual2,
+	_OpLowerName[431:446]: IfGreaterEqual2,
+	_OpName[446:452]:      NumOps,
+	_OpLowerName[446:452]: NumOps,
 }
 
 var _OpNames = []string{
@@ -259,7 +289,17 @@ var _OpNames = []string{
 	_OpName[346:352],
 	_OpName[352:356],
 	_OpName[356:362],
-	_OpName[362:368],
+	_OpName[362:367],
+	_OpName[367:370],
+	_OpName[370:377],
+	_OpName[377:383],
+	_OpName[383:391],
+	_OpName[391:402],
+	_OpName[402:409],
+	_OpName[409:421],
+	_OpName[421:431],
+	_OpName[431:446],
+	_OpName[446:452],
 }
 
 // OpString retrieves an enum value from the enum constants string name.

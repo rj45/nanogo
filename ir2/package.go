@@ -2,6 +2,7 @@ package ir2
 
 import (
 	"fmt"
+	"go/types"
 	"strings"
 )
 
@@ -21,20 +22,26 @@ func (pkg *Package) Func(name string) *Func {
 	return nil
 }
 
+// Program that the package belongs to
+func (pkg *Package) Program() *Program {
+	return pkg.prog
+}
+
 // AddFunc adds a func to the list
-func (pkg *Package) NewFunc(name string) {
+func (pkg *Package) NewFunc(name string, sig *types.Signature) *Func {
 	fn := &Func{
 		Name:     name,
 		FullName: pkg.genUniqueName(name),
+		Sig:      sig,
 	}
 	fn.pkg = pkg
-	pkg.funcs = append(pkg.funcs, pkg.funcs...)
+	pkg.funcs = append(pkg.funcs, fn)
+	return fn
 }
 
 func (pkg *Package) genUniqueName(name string) string {
-	parts := strings.Split(pkg.FullName, "/")
-	fullName := fmt.Sprintf("%s__%s", parts[len(parts)-1], name)
-	parts = parts[:len(parts)-1]
+	parts := strings.Split(pkg.Path, "/")
+	fullName := fmt.Sprintf("%s__%s", pkg.Name, name)
 	for pkg.prog.takenNames[fullName] {
 		fullName = parts[len(parts)-1] + "_" + fullName
 		parts = parts[:len(parts)-1]

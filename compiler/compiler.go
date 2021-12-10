@@ -13,6 +13,7 @@ import (
 
 	"github.com/rj45/nanogo/codegen"
 	"github.com/rj45/nanogo/codegen/asm"
+	"github.com/rj45/nanogo/frontend"
 	"github.com/rj45/nanogo/goenv"
 	"github.com/rj45/nanogo/html"
 	"github.com/rj45/nanogo/parser"
@@ -63,8 +64,11 @@ var _ io.WriteCloser = nopWriteCloser{}
 
 var dump = flag.String("dump", "", "Dump a function to ssa.html")
 var trace = flag.Bool("trace", false, "debug program with tracing info")
+var ir2 = flag.Bool("ir2", false, "test ir2 on program (WIP)")
 
 func Compile(outname, dir string, patterns []string, assemble, run bool) int {
+	log.SetFlags(log.Lshortfile)
+
 	var finalout io.WriteCloser
 	var asmout io.WriteCloser
 
@@ -126,7 +130,13 @@ func Compile(outname, dir string, patterns []string, assemble, run bool) int {
 		runcmd.Stdin = os.Stdin
 	}
 
-	log.SetFlags(log.Lshortfile)
+	if *ir2 {
+		fe := frontend.NewFrontEnd(dir, patterns...)
+		fe.Scan()
+		for fn := fe.NextUnparsedFunc(); fn != nil; fn = fe.NextUnparsedFunc() {
+			fe.ParseFunc(fn)
+		}
+	}
 
 	parser := parser.NewParser(dir, patterns...)
 	parser.Scan()

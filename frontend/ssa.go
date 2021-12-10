@@ -1,4 +1,4 @@
-package parser
+package frontend
 
 import (
 	"fmt"

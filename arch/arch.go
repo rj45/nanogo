@@ -6,6 +6,7 @@ import (
 
 	"github.com/rj45/nanogo/codegen"
 	"github.com/rj45/nanogo/compiler"
+	"github.com/rj45/nanogo/frontend"
 	"github.com/rj45/nanogo/ir/op"
 	"github.com/rj45/nanogo/ir/reg"
 	"github.com/rj45/nanogo/parser"
@@ -23,6 +24,7 @@ type Architecture interface {
 	compiler.Arch
 	xform.Arch
 	parser.Arch
+	frontend.Arch
 }
 
 var arch Architecture
@@ -57,4 +59,5 @@ func SetArch(name string) {
 	compiler.SetArch(arch)
 	xform.SetArch(arch)
 	parser.SetArch(arch)
+	frontend.SetArch(arch)
 }
