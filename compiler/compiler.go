@@ -121,7 +121,7 @@ func Compile(outname, dir string, patterns []string, assemble, run bool) int {
 		}
 		bintemp.Close() // customasm will write to it
 		binfile = bintemp.Name()
-		// defer os.Remove(bintemp.Name())
+		defer os.Remove(bintemp.Name())
 
 		root := goenv.Get("NANOGOROOT")
 		path := filepath.Join(root, "arch", arch.Name(), "customasm")
