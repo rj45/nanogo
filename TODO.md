@@ -191,12 +191,18 @@
     - [ ] Use types in frontend translation to IR
     - [ ] Output them in textual format as def annotations
   - [ ] Ability to parse text form of IR back into IR
-    - [ ] Can lex tokens
-    - [ ] Values parsed
+    - [x] Can lex tokens
+    - [x] Values parsed
+    - [ ] Types parsed
     - [ ] Constants parsed
-    - [ ] Instructions parsed
-    - [ ] EBB label and parameters parsed
-    - [ ] func labels, parameters, results parsed
+      - [ ] function references
+      - [ ] literal references
+      - [ ] global references
+      - [x] numbers
+    - [x] Instructions parsed
+    - [x] block labels parsed
+    - [x] func labels parsed
+    - [ ] parameters, results parsed
 
 - [ ] Rework xform system
   - [ ] Have a better way to track which rules have run to trigger what code to be generated

@@ -16,6 +16,8 @@ import (
 	"github.com/rj45/nanogo/frontend"
 	"github.com/rj45/nanogo/goenv"
 	"github.com/rj45/nanogo/html"
+	"github.com/rj45/nanogo/ir2"
+	"github.com/rj45/nanogo/ir2/parseir"
 	"github.com/rj45/nanogo/parser"
 	"github.com/rj45/nanogo/regalloc"
 	"github.com/rj45/nanogo/xform"
@@ -64,13 +66,32 @@ var _ io.WriteCloser = nopWriteCloser{}
 
 var dump = flag.String("dump", "", "Dump a function to ssa.html")
 var trace = flag.Bool("trace", false, "debug program with tracing info")
-var ir2 = flag.Bool("ir2", false, "test ir2 on program (WIP)")
+var ir2p = flag.Bool("ir2", false, "test ir2 on program (WIP)")
+var ngir = flag.String("ngir", "", "Read ngir file")
 
 func Compile(outname, dir string, patterns []string, assemble, run bool) int {
 	log.SetFlags(log.Lshortfile)
 
 	var finalout io.WriteCloser
 	var asmout io.WriteCloser
+
+	if *ngir != "" {
+		f, err := os.Open(*ngir)
+		if err != nil {
+			panic(err)
+		}
+		defer f.Close()
+
+		prog := &ir2.Program{}
+		p := parseir.NewParser(f, prog)
+
+		err = p.Parse()
+		if err != nil {
+			panic(err)
+		}
+
+		return 0
+	}
 
 	if outname == "-" {
 		finalout = nopWriteCloser{os.Stdout}
@@ -130,7 +151,7 @@ func Compile(outname, dir string, patterns []string, assemble, run bool) int {
 		runcmd.Stdin = os.Stdin
 	}
 
-	if *ir2 {
+	if *ir2p {
 		fe := frontend.NewFrontEnd(dir, patterns...)
 		fe.Scan()
 		for fn := fe.NextUnparsedFunc(); fn != nil; fn = fe.NextUnparsedFunc() {

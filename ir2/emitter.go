@@ -20,7 +20,7 @@ type Decorator interface {
 func (fn *Func) Emit(out io.Writer, dec Decorator) {
 	dec.Begin(out, fn)
 	fmt.Fprintf(out, "; %s\n", dec.WrapType(fn.Sig.String()))
-	fmt.Fprintf(out, "%s:\n", dec.WrapLabel(fn.FullName, fn))
+	fmt.Fprintf(out, "func %s:\n", dec.WrapLabel(fn.FullName, fn))
 	for _, blk := range fn.blocks {
 		blk.Emit(out, dec)
 	}
