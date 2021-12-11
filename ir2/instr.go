@@ -55,7 +55,7 @@ func (in *Instr) update(fn *Func, op Op, typ types.Type, args []interface{}) {
 
 			in.updateDef(fn, i, v.Type())
 		}
-	} else {
+	} else if typ != nil {
 		in.updateDef(fn, 0, typ)
 	}
 }
@@ -137,7 +137,9 @@ func (in *Instr) Arg(i int) *Value {
 // InsertArg inserts the Value in the argument
 // list at position i, or appending if i is -1
 func (in *Instr) InsertArg(i int, arg *Value) {
-	arg.addUse(in)
+	if arg != nil {
+		arg.addUse(in)
+	}
 
 	if i < 0 || i >= len(in.args) {
 		in.args = append(in.args, arg)
@@ -159,7 +161,7 @@ func (in *Instr) RemoveArg(arg *Value) {
 // ReplaceArg replaces the ith argument with the
 // value specified
 func (in *Instr) ReplaceArg(i int, arg *Value) {
-	if in.ArgIndex(arg) != -1 {
+	if in.ArgIndex(arg) == i {
 		panic("tried to replace already existing arg")
 	}
 
@@ -168,7 +170,9 @@ func (in *Instr) ReplaceArg(i int, arg *Value) {
 		return
 	}
 
-	in.args[i].removeUse(in)
+	if in.args[i] != nil {
+		in.args[i].removeUse(in)
+	}
 	in.args[i] = arg
 	in.args[i].addUse(in)
 }

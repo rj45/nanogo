@@ -1,17 +1,18 @@
-package main
+package runtime "runtime"
+
+package main "github.com/rj45/nanogo/testdata/literals"
 
 func main__init:
 .b0:
   v0 = load   main__init_guard
-  v1 = if2    v0, b1, b2
+  if2    v0, b1, b2
 .b1:
-  v2 = jump2 b3
+  jump2 b3
 .b2:
-  v3 = store  main__init_guard, true
-  v4 = jump2 b3
+  v1 = store  main__init_guard, true
+  jump2 b3
 .b3:
   return2
-
 
 func main__main:
 .b0:

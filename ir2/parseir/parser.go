@@ -1,8 +1,12 @@
+// Copyright (c) 2014 Ben Johnson; MIT Licensed; Similar to LICENSE
+// Copyright (c) 2021 rj45 (github.com/rj45); MIT Licensed
+
 package parseir
 
 import (
 	"fmt"
 	"io"
+	"regexp"
 	"strings"
 
 	"github.com/rj45/nanogo/ir/op"
@@ -27,6 +31,12 @@ type Parser struct {
 	// context maps
 	blkLabels map[string]*ir2.Block
 	values    map[string]*ir2.Value
+
+	blkLinks map[*ir2.Block]string
+	valLinks map[*ir2.Instr]struct {
+		label string
+		pos   int
+	}
 }
 
 // NewParser returns a new instance of Parser.
@@ -35,25 +45,48 @@ func NewParser(r io.Reader, prog *ir2.Program) *Parser {
 }
 
 func (p *Parser) Parse() error {
-	tok, lit := p.scanIgnoreWhitespace()
-	if tok != PACKAGE {
-		return fmt.Errorf("found %q, expected package", lit)
-	}
+	for {
+		if tok, lit := p.scanIgnoreWhitespace(); tok != PACKAGE {
+			if tok == EOF {
+				return nil
+			}
+			return fmt.Errorf("found %q, expected package", lit)
+		}
 
-	tok, lit = p.scanIgnoreWhitespace()
+		if err := p.parsePackage(); err != nil {
+			return err
+		}
+	}
+}
+
+func (p *Parser) parsePackage() error {
+	tok, lit := p.scanIgnoreWhitespace()
 	if tok != IDENT {
 		return fmt.Errorf("found %q, expected package name", lit)
 	}
 
-	p.pkg = p.prog.Package(lit)
+	name := lit
+
+	tok, lit = p.scanIgnoreWhitespace()
+	if tok != STR {
+		return fmt.Errorf("found %q, expected package path string", lit)
+	}
+
+	path := lit
+
+	p.pkg = p.prog.Package(path)
 	if p.pkg == nil {
-		p.pkg = &ir2.Package{Name: lit, Path: "todo"}
+		p.pkg = &ir2.Package{Name: name, Path: path}
 		p.prog.AddPackage(p.pkg)
 	}
 
 	for {
 		if tok, lit := p.scanIgnoreWhitespace(); tok != FUNC {
 			if tok == EOF {
+				return nil
+			}
+			if tok == PACKAGE {
+				p.unscan()
 				return nil
 			}
 			return fmt.Errorf("found %q, expected func", lit)
@@ -72,13 +105,20 @@ func (p *Parser) parseFunc() error {
 		return err
 	}
 
+	parts := strings.Split(name, "__")
+	name = parts[len(parts)-1]
+
 	p.fn = p.pkg.NewFunc(name, nil)
+	p.fn.Referenced = true // todo: fixme with correct value
 	p.blk = nil
 
 	p.blkLabels = make(map[string]*ir2.Block)
 	p.values = make(map[string]*ir2.Value)
-
-	fmt.Println("func:", name)
+	p.blkLinks = make(map[*ir2.Block]string)
+	p.valLinks = make(map[*ir2.Instr]struct {
+		label string
+		pos   int
+	})
 
 	for {
 		tok, lit := p.scanIgnoreWhitespace()
@@ -90,10 +130,12 @@ func (p *Parser) parseFunc() error {
 			}
 
 		case FUNC:
+			p.resolveLinks()
 			p.unscan()
 			return nil
 
 		case EOF:
+			p.resolveLinks()
 			p.unscan()
 			return nil
 
@@ -103,31 +145,44 @@ func (p *Parser) parseFunc() error {
 	}
 }
 
+func (p *Parser) resolveLinks() error {
+	for a, label := range p.blkLinks {
+		b, ok := p.blkLabels[label]
+		if !ok {
+			return fmt.Errorf("unable to resolve block link %s from %s", b, a)
+		}
+		a.AddSucc(b)
+		b.AddPred(a)
+	}
+
+	for ins, arg := range p.valLinks {
+		v, ok := p.values[arg.label]
+		if !ok {
+			return fmt.Errorf("unable to resolve value link %s from %s in %s", arg.label, ins, p.fn.FullName)
+		}
+		ins.ReplaceArg(arg.pos, v)
+	}
+	return nil
+}
+
 func (p *Parser) parseBlock() error {
-	// Read a func label
+	// Read a block label
 	name, err := p.parseLabel()
 	if err != nil {
 		return err
 	}
 
-	p.fn = p.pkg.NewFunc(name, nil)
-	p.blk = nil
-
-	p.blkLabels = make(map[string]*ir2.Block)
+	p.blk = p.fn.NewBlock()
+	p.blkLabels[name] = p.blk
+	p.fn.InsertBlock(-1, p.blk)
 
 	for {
 		tok, lit := p.scanIgnoreWhitespace()
 
 		switch tok {
 		case DOT:
-			// block label
-			name, err := p.parseLabel()
-			if err != nil {
-				return err
-			}
-
-			p.blk = p.fn.NewBlock()
-			p.blkLabels[name] = p.blk
+			p.unscan()
+			return nil
 
 		case FUNC:
 			p.unscan()
@@ -213,12 +268,16 @@ func (p *Parser) parseInstr() error {
 	}
 }
 
+var blockRefRe = regexp.MustCompile(`^b\d+$`)
+var valueRefRe = regexp.MustCompile(`^v\d+$`)
+
 func (p *Parser) addInstr(defs []string, opcode string, args []string) error {
 	opv, err := op.OpString(opcode)
 	if err != nil {
 		return fmt.Errorf("unknown instruction %q found: %w", opcode, err)
 	}
 
+	// todo: fix type here
 	ins := p.fn.NewInstr(opv, nil)
 
 	for _, def := range defs {
@@ -228,18 +287,32 @@ func (p *Parser) addInstr(defs []string, opcode string, args []string) error {
 	}
 
 	for _, arg := range args {
+		if blockRefRe.MatchString(arg) {
+			p.blkLinks[p.blk] = arg
+			continue
+		}
+
 		val, ok := p.values[arg]
 		if !ok {
-			if strings.HasPrefix(arg, "v") {
-				panic("need to implement deferred resolution")
+			if valueRefRe.MatchString(arg) {
+				p.valLinks[ins] = struct {
+					label string
+					pos   int
+				}{
+					label: arg,
+					pos:   ins.NumArgs(),
+				}
+				val = nil
+			} else {
+				// todo: fix type here
+				val = p.fn.ValueFor(nil, arg)
 			}
-
-			val = p.fn.ValueFor(nil, arg)
 		}
 		ins.InsertArg(-1, val)
 	}
 
-	fmt.Println(defs, opcode, args)
+	p.blk.InsertInstr(-1, ins)
+
 	return nil
 }
 
@@ -268,14 +341,14 @@ func (p *Parser) parseLabel() (label string, err error) {
 	// read the func name
 	tok, lit := p.scanIgnoreWhitespace()
 	if tok != IDENT {
-		return "", fmt.Errorf("found %q, expected func label", lit)
+		return "", fmt.Errorf("found %q, expected label", lit)
 	}
 
 	label = lit
 
 	tok, lit = p.scanIgnoreWhitespace()
 	if tok != COLON {
-		return "", fmt.Errorf("found %q, expected func label", lit)
+		return "", fmt.Errorf("found %q, expected label", lit)
 	}
 
 	return

@@ -13,6 +13,7 @@ const (
 	// Literals
 	IDENT
 	NUM
+	STR
 
 	// Misc characters
 	ASTERISK // *

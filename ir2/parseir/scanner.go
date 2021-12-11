@@ -1,3 +1,6 @@
+// Copyright (c) 2014 Ben Johnson; MIT Licensed; Similar to LICENSE
+// Copyright (c) 2021 rj45 (github.com/rj45); MIT Licensed
+
 package parseir
 
 import (
@@ -45,6 +48,12 @@ func (s *Scanner) Scan() (tok Token, lit string) {
 	} else if isDigit(ch) {
 		s.unread()
 		return s.scanNumber()
+	} else if ch == '-' {
+		tok, lit = s.scanNumber()
+		return tok, "-" + lit
+	} else if ch == '"' {
+		s.unread()
+		return s.scanString()
 	}
 
 	// Otherwise read the individual character.
@@ -141,6 +150,45 @@ func (s *Scanner) scanNumber() (tok Token, lit string) {
 	}
 
 	return NUM, buf.String()
+}
+
+func (s *Scanner) scanEscape(quote rune) rune {
+	ch := s.read() // read character after '/'
+
+	switch ch {
+	case 'n':
+		return '\n'
+	case 'r':
+		return '\r'
+	case 't':
+		return '\t'
+	case '\\', quote:
+		return ch
+	}
+	s.unread()
+	return '\\'
+}
+
+func (s *Scanner) scanString() (tok Token, lit string) {
+	// Create a buffer and read the current character into it.
+	var buf bytes.Buffer
+	quote := s.read()
+
+	// Read every subsequent whitespace character into the buffer.
+	// Non-whitespace characters and EOF will cause the loop to exit.
+	for {
+		ch := s.read()
+		if ch == eof || ch == '\n' {
+			break
+		} else if ch == quote {
+			break
+		} else if ch == '\\' {
+			ch = s.scanEscape(quote)
+		}
+		buf.WriteRune(ch)
+	}
+
+	return STR, buf.String()
 }
 
 func isWhitespace(ch rune) bool {

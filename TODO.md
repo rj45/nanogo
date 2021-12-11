@@ -202,7 +202,10 @@
     - [x] Instructions parsed
     - [x] block labels parsed
     - [x] func labels parsed
-    - [ ] parameters, results parsed
+      - [ ] parameters, results parsed
+    - [x] packages parsed
+    - [x] parses block references and links them
+    - [x] parses value references and links them
 
 - [ ] Rework xform system
   - [ ] Have a better way to track which rules have run to trigger what code to be generated

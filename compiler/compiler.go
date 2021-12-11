@@ -66,7 +66,7 @@ var _ io.WriteCloser = nopWriteCloser{}
 
 var dump = flag.String("dump", "", "Dump a function to ssa.html")
 var trace = flag.Bool("trace", false, "debug program with tracing info")
-var ir2p = flag.Bool("ir2", false, "test ir2 on program (WIP)")
+var ffir2 = flag.Bool("ir2", false, "test ir2 on program (WIP)")
 var ngir = flag.String("ngir", "", "Read ngir file")
 
 func Compile(outname, dir string, patterns []string, assemble, run bool) int {
@@ -90,6 +90,8 @@ func Compile(outname, dir string, patterns []string, assemble, run bool) int {
 			panic(err)
 		}
 
+		prog.Emit(os.Stdout, ir2.SSAString{})
+
 		return 0
 	}
 
@@ -101,6 +103,18 @@ func Compile(outname, dir string, patterns []string, assemble, run bool) int {
 			log.Fatal(err)
 		}
 		finalout = f
+	}
+
+	if *ffir2 {
+		fe := frontend.NewFrontEnd(dir, patterns...)
+		fe.Scan()
+		for fn := fe.NextUnparsedFunc(); fn != nil; fn = fe.NextUnparsedFunc() {
+			fe.ParseFunc(fn)
+		}
+
+		fe.Program().Emit(finalout, ir2.SSAString{})
+
+		return 0
 	}
 
 	asmout = finalout
@@ -149,14 +163,6 @@ func Compile(outname, dir string, patterns []string, assemble, run bool) int {
 		runcmd.Stderr = os.Stderr
 		runcmd.Stdout = finalout
 		runcmd.Stdin = os.Stdin
-	}
-
-	if *ir2p {
-		fe := frontend.NewFrontEnd(dir, patterns...)
-		fe.Scan()
-		for fn := fe.NextUnparsedFunc(); fn != nil; fn = fe.NextUnparsedFunc() {
-			fe.ParseFunc(fn)
-		}
 	}
 
 	parser := parser.NewParser(dir, patterns...)

@@ -17,9 +17,35 @@ type Decorator interface {
 	SSAForm() bool
 }
 
+func (prog *Program) Emit(out io.Writer, dec Decorator) {
+	dec.Begin(out, prog)
+	for i, pkg := range prog.packages {
+		if i != 0 {
+			fmt.Fprintln(out)
+		}
+		pkg.Emit(out, dec)
+	}
+	dec.End(out, prog)
+}
+
+func (pkg *Package) Emit(out io.Writer, dec Decorator) {
+	dec.Begin(out, pkg)
+	fmt.Fprintf(out, "package %s %q\n", pkg.Name, pkg.Path)
+	for _, fn := range pkg.funcs {
+		if !fn.Referenced {
+			continue
+		}
+
+		fmt.Fprintln(out)
+		fn.Emit(out, dec)
+	}
+	dec.End(out, pkg)
+}
+
 func (fn *Func) Emit(out io.Writer, dec Decorator) {
 	dec.Begin(out, fn)
-	fmt.Fprintf(out, "; %s\n", dec.WrapType(fn.Sig.String()))
+
+	// fmt.Fprintf(out, "; %s\n", dec.WrapType(fn.Sig.String()))
 	fmt.Fprintf(out, "func %s:\n", dec.WrapLabel(fn.FullName, fn))
 	for _, blk := range fn.blocks {
 		blk.Emit(out, dec)
@@ -42,13 +68,13 @@ func (blk *Block) Emit(out io.Writer, dec Decorator) {
 
 	fmt.Fprintf(out, ".%s:", dec.WrapLabel(blk.String(), blk))
 
-	if len(blk.preds) > 0 {
-		fmt.Fprintf(out, " ; <=")
+	// if len(blk.preds) > 0 {
+	// 	fmt.Fprintf(out, " ; <=")
 
-		for _, pred := range blk.preds {
-			fmt.Fprintf(out, " %s", dec.WrapRef(pred.String(), pred))
-		}
-	}
+	// 	for _, pred := range blk.preds {
+	// 		fmt.Fprintf(out, " %s", dec.WrapRef(pred.String(), pred))
+	// 	}
+	// }
 
 	fmt.Fprintln(out)
 
@@ -79,6 +105,7 @@ func (in *Instr) Emit(out io.Writer, dec Decorator) {
 			typstr += def.Type.String()
 		}
 	}
+	_ = typstr
 
 	argstr := ""
 	for i, arg := range in.args {
@@ -99,7 +126,7 @@ func (in *Instr) Emit(out io.Writer, dec Decorator) {
 		if len(defstr) > 0 {
 			str += fmt.Sprintf("  %s = ", defstr)
 		} else {
-			str += "            "
+			str += "  "
 		}
 		str += fmt.Sprintf("%-6s", opstr)
 	} else {
@@ -128,11 +155,11 @@ func (in *Instr) Emit(out io.Writer, dec Decorator) {
 		}
 	}
 
-	if dec.SSAForm() && len(typstr) > 0 {
-		fmt.Fprintf(out, "%-30s %s", str, dec.WrapType(fmt.Sprintf("<%s>", typstr)))
-	} else {
-		fmt.Fprint(out, str)
-	}
+	// if dec.SSAForm() && len(typstr) > 0 {
+	// 	fmt.Fprintf(out, "%-30s %s", str, dec.WrapType(fmt.Sprintf("<%s>", typstr)))
+	// } else {
+	fmt.Fprint(out, str)
+	// }
 
 	fmt.Fprintln(out)
 

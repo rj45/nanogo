@@ -167,8 +167,6 @@ func (fe *FrontEnd) translateFunc(irFunc *ir2.Func, ssaFunc *ssa.Function) {
 			// }
 		}
 	}
-
-	log.Println(irFunc.LongString())
 }
 
 func genName(pkg, name string) string {
