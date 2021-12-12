@@ -70,38 +70,40 @@ const (
 
 type Type uint16
 
+const Unknown Type = 0
+
 type Context struct {
-	types []info
+	types  []info
 	arrays []arrayInfo
-	elems []Type
-	maps []mapInfo
+	elems  []Type
+	maps   []mapInfo
 	fields [][]Type
-	funcs []funcInfo
-	
-	sizes [17]uint8
+	funcs  []funcInfo
+
+	sizes     [17]uint8
 	wordBytes uint8
 }
 
 type info struct {
 	kind TypeKind
-	
+
 	extra uint16
 }
 
-type arrayInfo struct{
-	len int
+type arrayInfo struct {
+	len  int
 	elem Type
 }
 
-type mapInfo struct{
-	key Type
+type mapInfo struct {
+	key  Type
 	elem Type
 }
 
-type funcInfo struct{
+type funcInfo struct {
 	receiver Type
-	results []Type
-	params []Type
+	results  []Type
+	params   []Type
 }
 
 func (c *Context) TypeKind(typ Type) TypeKind {
@@ -114,7 +116,7 @@ func (c *Context) Bytes(typ Type) int {
 }
 
 func (c *Context) Words(typ Type) int {
-	return int(c.sizes[typ]/c.wordBytes)
+	return int(c.sizes[typ] / c.wordBytes)
 }
 
 func (c *Context) Elem(typ Type) Type {
@@ -131,11 +133,10 @@ func (c *Context) Elem(typ Type) Type {
 
 func (c *Context) Key(typ Type) Type {
 	if c.types[typ].kind != Map {
-		return Invalid
+		return Unknown
 	}
 	return c.maps[c.types[typ].extra].key
 }
-
 
 func (c *Context) ArrayLen(typ Type) int {
 	if c.types[typ].kind != Array {
@@ -153,21 +154,21 @@ func (c *Context) Fields(typ Type) []Type {
 
 func (c *Context) Receiver(typ Type) Type {
 	if c.types[typ].kind != Func {
-		return Invalid
+		return Unknown
 	}
 	return c.funcs[c.types[typ].extra].receiver
 }
 
 func (c *Context) Results(typ Type) []Type {
 	if c.types[typ].kind != Func {
-		return Invalid
+		return nil
 	}
 	return c.funcs[c.types[typ].extra].results
 }
 
-func (c *Context) Args(typ Type) []Type {
+func (c *Context) Params(typ Type) []Type {
 	if c.types[typ].kind != Func {
-		return Invalid
+		return nil
 	}
-	return c.funcs[c.types[typ].extra].args
+	return c.funcs[c.types[typ].extra].params
 }
