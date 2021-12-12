@@ -9,7 +9,7 @@ const kindStrings = "invalidbii8i16i32i64uu8u16u32u64uptrf32f64complex64complex1
 var _TypeKindIndex = [...]uint8{0, 7, 8, 9, 11, 14, 17, 20, 21, 23, 26, 29, 32, 36, 39, 42, 51, 61, 64, 73, 75, 77, 79, 81, 89, 93, 97, 100, 103, 108, 111, 115, 120, 125, 131, 134, 143, 147, 155}
 
 // String returns the string form of the type
-func (i TypeKind) String() string {
+func (i Kind) String() string {
 	if i >= NumTypes {
 		// todo: replace with different impl
 		return fmt.Sprintf("TypeKind(%d)", i)
@@ -17,7 +17,7 @@ func (i TypeKind) String() string {
 	return kindStrings[_TypeKindIndex[i]:_TypeKindIndex[i+1]]
 }
 
-var kindMap = map[string]TypeKind{
+var kindMap = map[string]Kind{
 	kindStrings[0:7]:     Invalid,
 	kindStrings[7:8]:     B,
 	kindStrings[8:9]:     I,
@@ -59,7 +59,7 @@ var kindMap = map[string]TypeKind{
 
 // TypeKindString retrieves an enum value from the enum constants string name.
 // Throws an error if the param is not part of the enum.
-func TypeKindString(s string) (TypeKind, error) {
+func TypeKindString(s string) (Kind, error) {
 	if val, ok := kindMap[s]; ok {
 		return val, nil
 	}

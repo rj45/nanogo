@@ -83,11 +83,15 @@ func Compile(outname, dir string, patterns []string, assemble, run bool) int {
 		defer f.Close()
 
 		prog := &ir2.Program{}
-		p := parseir.NewParser(f, prog)
+		p, err := parseir.NewParser(*ngir, f, prog)
+		if err != nil {
+			panic(err)
+		}
 
 		err = p.Parse()
 		if err != nil {
-			panic(err)
+			p.PrintErrors()
+			return 1
 		}
 
 		prog.Emit(os.Stdout, ir2.SSAString{})

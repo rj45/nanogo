@@ -1,19 +1,22 @@
 // experimental simplified type system
+//
+// Defintions:
+// - A `byte` is the smallest addressable unit in the CPU, this does not
+//   need to be 8 bits, though it usually is. In rj32 it's 16 bits.
+// - A `word` is the largest value that can fit in a register. This can
+//   be the the same as the word size, as it is in rj32 (16 bits)
+// - A `pointer` can be larger than 1 word, if it is, generally an `int`
+//   will also be larger than 1 word. This is common on 8-bit systems.
+// - In general, though, you will want `int` and `uint` to be the same
+//   size as a word, but at least 16 bits.
 package typ
 
-type TypeKind uint8
+type Kind uint8
 
-//go:generate enumer -type=TypeKind -transform lower -output types_enumer.go
-
-// type Type interface {
-// 	Kind() TypeKind
-// 	String() string
-// 	Words() int
-// 	Bytes() int
-// }
+//go:generate enumer -type=Kind -transform lower -output types_enumer.go
 
 const (
-	Invalid TypeKind = iota
+	Invalid Kind = iota
 
 	// the initial set of the following are in the same order as go/types package BasicKind list
 
@@ -85,7 +88,7 @@ type Context struct {
 }
 
 type info struct {
-	kind TypeKind
+	kind Kind
 
 	extra uint16
 }
@@ -106,7 +109,13 @@ type funcInfo struct {
 	params   []Type
 }
 
-func (c *Context) TypeKind(typ Type) TypeKind {
+// fieldInfo represents a field, method, or func result/param
+type fieldInfo struct {
+	name string
+	typ  Type
+}
+
+func (c *Context) TypeKind(typ Type) Kind {
 	return c.types[typ].kind
 }
 
