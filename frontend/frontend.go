@@ -2,6 +2,8 @@ package frontend
 
 import (
 	"bytes"
+	"flag"
+	"fmt"
 	"go/token"
 	"go/types"
 	"log"
@@ -10,6 +12,7 @@ import (
 
 	"github.com/rj45/nanogo/ir2"
 	"golang.org/x/tools/go/ssa"
+	"golang.org/x/tools/go/types/typeutil"
 )
 
 type Arch interface {
@@ -43,7 +46,15 @@ func NewFrontEnd(dir string, patterns ...string) *FrontEnd {
 	return &FrontEnd{prog: &ir2.Program{}, members: members}
 }
 
+var dumptypes = flag.Bool("dumptypes", false, "Dump all types in a program")
+
 func (fe *FrontEnd) Scan() {
+
+	if *dumptypes {
+		pkg := fe.members[0].Package()
+		fe.dumpTypes(pkg.Prog)
+	}
+
 	fe.ssaFuncs = make(map[*ir2.Func]*ssa.Function)
 	for _, member := range fe.members {
 		switch member.Token() {
@@ -84,6 +95,18 @@ func (fe *FrontEnd) getPackage(typPkg *types.Package) *ir2.Package {
 		fe.prog.AddPackage(pkg)
 	}
 	return pkg
+}
+
+func (fe *FrontEnd) dumpTypes(prog *ssa.Program) {
+	tm := &TypeMapper{
+		tmap: &typeutil.Map{},
+	}
+	tm.scan(prog)
+
+	tm.tmap.Iterate(func(key types.Type, value interface{}) {
+		info := value.(*typeInfo)
+		fmt.Fprintf(os.Stderr, "%d: %s\n", info.count, key)
+	})
 }
 
 func (fe *FrontEnd) Program() *ir2.Program {

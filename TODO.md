@@ -20,7 +20,7 @@
   - [x] can invoke emulator to run the .hex files
   - [x] set up a test runner
   - [x] start writing some simple test programs inspired by c-test-suite
-- [x] storing a const needs a register `store  [gp, main__init_guard], 1`
+- [x] storing a const needs a register `store [gp, main__init_guard], 1`
 - [x] implement function parameters
   - [x] add parameters to function entry
   - [x] handle register ABI for parameters
@@ -51,6 +51,7 @@
 ## milestone get: min useful compiler
 
 - now has ability to compile simple programs that use only word data
+
   - global structs and arrays supported
   - allocator does not support spills
     - crashes if it needs more registers than available
@@ -133,6 +134,7 @@
   - [ ] string concatenation
   - [ ] string slicing / substring
 - [x] Add support for a second CPU to make adding more easier
+
   - [x] Artentus' A32
     - [x] Add arch abstraction with an rj32 implementation
     - [x] Abstract away registers and their use classes
@@ -166,8 +168,8 @@
     - [x] Fix several bugs with strings and byte addressing
     - [x] Add A32 to test suite to make sure it doesn't break
 
-
 - [ ] Rework IR (ir2)
+
   - [x] Split globals into Literals (strings) and Globals (bss data)
   - [x] Split values into Values and Instructions
   - [x] Instructions can return multiple values
@@ -187,6 +189,7 @@
     - [ ] pointers
     - [ ] const
     - [ ] tuples?
+    - [x] Scan program for types used & print diagnostics
     - [ ] Map from go types to type system
     - [ ] Use types in frontend translation to IR
     - [ ] Output them in textual format as def annotations
@@ -208,6 +211,7 @@
     - [x] parses value references and links them
 
 - [ ] Rework xform system
+
   - [ ] Have a better way to track which rules have run to trigger what code to be generated
     - [ ] Instrument SSA dump with code location that generated the code
     - [ ] A way to allow debugging of rule matching conditions inputs outputs and generated code in the ssa.html

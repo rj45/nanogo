@@ -91,7 +91,7 @@ var valueRefRe = regexp.MustCompile(`^v\d+$`)
 func (p *Parser) addInstr(defs []string, opcode string, args []string) {
 	opv, err := op.OpString(opcode)
 	if err != nil {
-		p.errorf("unknown instruction %q found: %w", opcode, err)
+		p.errorf("unknown instruction %q found: %s", opcode, err)
 	}
 
 	// todo: fix type here

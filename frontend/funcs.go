@@ -1,35 +1,14 @@
 package frontend
 
 import (
-	"bytes"
 	"fmt"
-	"go/constant"
-	"io/fs"
 	"log"
-	"os"
-	"path/filepath"
 	"strings"
 
-	"github.com/rj45/nanogo/ir"
 	"github.com/rj45/nanogo/ir/op"
 	"github.com/rj45/nanogo/ir2"
 	"golang.org/x/tools/go/ssa"
 )
-
-type virtualBlock struct {
-	crit bool // virtual crit block
-	ret  bool // virtual ret block
-
-	// if both above are false, this is a real block
-	realBlock *ssa.BasicBlock
-
-	// if this is a critical block
-	pred *ssa.BasicBlock
-	succ *ssa.BasicBlock
-
-	preds []*virtualBlock
-	succs []*virtualBlock
-}
 
 func (fe *FrontEnd) translateFunc(irFunc *ir2.Func, ssaFunc *ssa.Function) {
 	if ssaFunc.Blocks == nil {
@@ -321,104 +300,104 @@ func genName(pkg, name string) string {
 // 	}
 // }
 
-func handleExternFunc(function *ir.Func, fn *ssa.Function) {
-	filename := fn.Prog.Fset.File(fn.Pos()).Name()
-	folder, err := filepath.EvalSymlinks(filepath.Dir(filename))
-	if err != nil {
-		log.Fatalf("could not follow symlinks for folder %s", folder)
-	}
-	asm := ""
-	filepath.WalkDir(folder, func(path string, d fs.DirEntry, err error) error {
-		ext := filepath.Ext(d.Name())
-		if ext == ".asm" || ext == ".s" || ext == ".S" {
-			noext := strings.TrimSuffix(d.Name(), ext)
-			parts := strings.Split(noext, "_")
+// func handleExternFunc(function *ir.Func, fn *ssa.Function) {
+// 	filename := fn.Prog.Fset.File(fn.Pos()).Name()
+// 	folder, err := filepath.EvalSymlinks(filepath.Dir(filename))
+// 	if err != nil {
+// 		log.Fatalf("could not follow symlinks for folder %s", folder)
+// 	}
+// 	asm := ""
+// 	filepath.WalkDir(folder, func(path string, d fs.DirEntry, err error) error {
+// 		ext := filepath.Ext(d.Name())
+// 		if ext == ".asm" || ext == ".s" || ext == ".S" {
+// 			noext := strings.TrimSuffix(d.Name(), ext)
+// 			parts := strings.Split(noext, "_")
 
-			if len(parts) > 1 && parts[len(parts)-1] != arch.Name() {
-				// skip files with an underscore and the last part of the name
-				// does not match the arch.Name()
-				return nil
-			}
+// 			if len(parts) > 1 && parts[len(parts)-1] != arch.Name() {
+// 				// skip files with an underscore and the last part of the name
+// 				// does not match the arch.Name()
+// 				return nil
+// 			}
 
-			buf, err := os.ReadFile(path)
-			if err != nil {
-				log.Fatalln(err)
-			}
+// 			buf, err := os.ReadFile(path)
+// 			if err != nil {
+// 				log.Fatalln(err)
+// 			}
 
-			// TODO: find build tags and ensure they match
+// 			// TODO: find build tags and ensure they match
 
-			lines := bytes.Split(buf, []byte("\n"))
-			startLine := -1
-			label := []byte(fmt.Sprintf("%s:", fn.Name()))
-			for i, line := range lines {
-				if bytes.HasPrefix(bytes.TrimSpace(line), label) {
-					startLine = i + 1
-					break
-				}
-			}
+// 			lines := bytes.Split(buf, []byte("\n"))
+// 			startLine := -1
+// 			label := []byte(fmt.Sprintf("%s:", fn.Name()))
+// 			for i, line := range lines {
+// 				if bytes.HasPrefix(bytes.TrimSpace(line), label) {
+// 					startLine = i + 1
+// 					break
+// 				}
+// 			}
 
-			if startLine == -1 {
-				return nil
-			}
+// 			if startLine == -1 {
+// 				return nil
+// 			}
 
-			endLine := -1
-			for i := startLine; i < len(lines); i++ {
-				trimmed := bytes.TrimSpace(lines[i])
-				lines[i] = trimmed
-				// if doesn't start with a dot, but does end in a colon
-				if !bytes.HasPrefix(trimmed, []byte(".")) && bytes.HasSuffix(trimmed, []byte(":")) {
-					endLine = i + 1
-					break
-				}
-			}
+// 			endLine := -1
+// 			for i := startLine; i < len(lines); i++ {
+// 				trimmed := bytes.TrimSpace(lines[i])
+// 				lines[i] = trimmed
+// 				// if doesn't start with a dot, but does end in a colon
+// 				if !bytes.HasPrefix(trimmed, []byte(".")) && bytes.HasSuffix(trimmed, []byte(":")) {
+// 					endLine = i + 1
+// 					break
+// 				}
+// 			}
 
-			if endLine == -1 {
-				endLine = len(lines)
-			}
+// 			if endLine == -1 {
+// 				endLine = len(lines)
+// 			}
 
-			if asm != "" {
-				log.Fatalf("found duplicate of extern func %s in %s", fn.Name(), path)
-			}
+// 			if asm != "" {
+// 				log.Fatalf("found duplicate of extern func %s in %s", fn.Name(), path)
+// 			}
 
-			asm = string(bytes.Join(lines[startLine:endLine], []byte("\n")))
-		}
-		return nil
-	})
-	if asm == "" {
-		log.Fatalf("could not find assembly for extern func %s path %s", fn.Name(), folder)
-	}
-	genInlineAsmFunc(function, asm)
-}
+// 			asm = string(bytes.Join(lines[startLine:endLine], []byte("\n")))
+// 		}
+// 		return nil
+// 	})
+// 	if asm == "" {
+// 		log.Fatalf("could not find assembly for extern func %s path %s", fn.Name(), folder)
+// 	}
+// 	genInlineAsmFunc(function, asm)
+// }
 
-func genInlineAsmFunc(fn *ir.Func, asm string) {
-	entry := fn.NewBlock(ir.Block{
-		Comment: "entry",
-		Op:      op.Jump,
-	})
-	body := fn.NewBlock(ir.Block{
-		Comment: "inline.asm",
-		Op:      op.Jump,
-	})
-	exit := fn.NewBlock(ir.Block{
-		Comment: "exit",
-		Op:      op.Return,
-	})
+// func genInlineAsmFunc(fn *ir.Func, asm string) {
+// 	entry := fn.NewBlock(ir.Block{
+// 		Comment: "entry",
+// 		Op:      op.Jump,
+// 	})
+// 	body := fn.NewBlock(ir.Block{
+// 		Comment: "inline.asm",
+// 		Op:      op.Jump,
+// 	})
+// 	exit := fn.NewBlock(ir.Block{
+// 		Comment: "exit",
+// 		Op:      op.Return,
+// 	})
 
-	entry.AddSucc(body)
-	body.AddSucc(exit)
+// 	entry.AddSucc(body)
+// 	body.AddSucc(exit)
 
-	exit.AddPred(body)
-	body.AddPred(entry)
+// 	exit.AddPred(body)
+// 	body.AddPred(entry)
 
-	fn.InsertBlock(-1, entry)
-	fn.InsertBlock(-1, body)
-	fn.InsertBlock(-1, exit)
-	blk := fn.Blocks()[1]
+// 	fn.InsertBlock(-1, entry)
+// 	fn.InsertBlock(-1, body)
+// 	fn.InsertBlock(-1, exit)
+// 	blk := fn.Blocks()[1]
 
-	val := fn.NewValue(op.InlineAsm, fn.Type.Results())
-	val.Value = constant.MakeString(asm)
-	blk.InsertInstr(-1, val)
-}
+// 	val := fn.NewValue(op.InlineAsm, fn.Type.Results())
+// 	val.Value = constant.MakeString(asm)
+// 	blk.InsertInstr(-1, val)
+// }
 
 func reverseSSASuccessorSort(block *ssa.BasicBlock, list []*ssa.BasicBlock, visited map[*ssa.BasicBlock]bool) []*ssa.BasicBlock {
 	visited[block] = true

@@ -2,7 +2,7 @@ module github.com/rj45/nanogo
 
 go 1.17
 
-require golang.org/x/tools v0.1.7
+require golang.org/x/tools v0.1.8
 
 require (
 	golang.org/x/mod v0.5.1 // indirect
