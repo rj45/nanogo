@@ -50,15 +50,22 @@
 //
 package typ
 
+import "fmt"
+
 var ctx *Context
 
 type Type uint16
 
+const Unknown Type = 0
+
+const typeBits = 16
+const extraInfoShift = 10
+
 func (t Type) Kind() Kind {
 	if t&1 == 0 {
-		return Kind(t >> 1)
+		return Kind(t>>1) & 0b11111
 	}
-	return Kind((t>>1)&7) + Chan
+	return Kind((t>>1)&7) + firstDecoratorType
 }
 
 func (t Type) isExtended() bool {
@@ -68,6 +75,13 @@ func (t Type) isExtended() bool {
 	return t&0b10000 != 0
 }
 
+func (t Type) isSimple() bool {
+	if t&1 == 0 {
+		return t < Type(NumTypes)
+	}
+	return t&0b10000 == 0
+}
+
 func (t Type) index() int {
 	if t&1 == 0 {
 		return int(t >> 6)
@@ -75,213 +89,65 @@ func (t Type) index() int {
 	if t&0b10000 != 0 {
 		return int(t >> 5)
 	}
-	return 0
+	return -1
 }
 
-func (t Type) elem() Type {
+func (t Type) Elem() Type {
 	if t&1 == 0 {
 		return (t >> 1) & 0b11111
 	}
 	if t&0b10000 == 0 {
-		return t >> 5
+		return t >> 4
 	}
 	return ctx.Elem(t)
 }
 
+func (t Type) Dir() ChanDir {
+	if t.Kind() == Chan {
+		if t.isSimple() {
+			return ChanDir(t >> extraInfoShift)
+		}
+	}
+	return ctx.Dir(t)
+}
+
+func (t Type) Len() int {
+	if t.Kind() == Array {
+		if t.isSimple() {
+			return int(t >> extraInfoShift)
+		}
+	}
+	return ctx.Len(t)
+}
+
+func (t Type) Key() Type {
+	if t.Kind() == Map {
+		if t.isSimple() {
+			return Type(t >> extraInfoShift)
+		}
+	}
+	return ctx.Key(t)
+}
+
 func (t Type) String() string {
-	return ""
-}
-
-type Kind uint8
-
-//go:generate enumer -type=Kind -transform lower -output types_enumer.go
-
-const (
-	Invalid Kind = iota
-
-	// the initial set of the following are in the same order as go/types package BasicKind list
-
-	// basic types
-	B // bool
-	I // int
-	I8
-	I16
-	I32
-	I64
-	U // uint
-	U8
-	U16
-	U32
-	U64
-	Uptr // uintptr
-	F32  // float
-	F64
-	Complex64
-	Complex128
-	Str       // string
-	UnsafePtr // unsafe.Pointer
-
-	// types for untyped (constant) values
-	CB       // constant bool
-	CI       // constant int
-	CR       // constant rune
-	CF       // constant float
-	CComplex // constant complex
-	CStr     // constant string
-	CNil     // constant nil
-
-	CSR // flags
-	Mem // memory
-
-	Blank // blank variable _
-
-	// composite types
-	Chan
-	Interface
-	Ptr // pointer
-	Slice
-	Array
-	Func
-	Map
-	Struct
-
-	NumTypes
-
-	// aliases
-	Byte = U8
-	Rune = I32
-)
-
-const Unknown Type = 0
-
-type Context struct {
-	types  []info
-	arrays []arrayInfo
-	elems  []Type
-	maps   []mapInfo
-	fields [][]Type
-	funcs  []funcInfo
-
-	sizes     [17]uint8
-	wordBytes uint8
-}
-
-type info struct {
-	kind Kind
-
-	extra uint16
-}
-
-type arrayInfo struct {
-	len  int
-	elem Type
-}
-
-type mapInfo struct {
-	key  Type
-	elem Type
-}
-
-type funcInfo struct {
-	receiver Type
-	results  []Type
-	params   []Type
-}
-
-// fieldInfo represents a field, method, or func result/param
-type fieldInfo struct {
-	name string
-	typ  Type
-}
-
-// todo: finish this
-// func (c *Context) TypeFor(typ types.Type) Type {
-// 	switch t := typ.(type) {
-// 	case *types.Basic:
-// 		// basic types will not have side tables mapped to them unless
-// 		// they are named/defined
-// 		return Type(t.Kind()<<1)
-// 	case *types.Slice, *types.Pointer, *types.Chan:
-// 		e := typ.(interface{ Elem() types.Type }).Elem()
-// 		if _, isBasic := e.(*types.Basic); isBasic {
-// 			// a slice/pointer to a basic type also doesn't need a side
-// 			// table
-// 			return nil
-// 		}
-// 	case *types.Map:
-// 		_, basicKey := t.Key().(*types.Basic)
-// 		_, basicValue := t.Elem().(*types.Basic)
-// 		if basicKey && basicValue {
-// 			// a slice/pointer to a basic type also doesn't need a side
-// 			// table
-// 			return nil
-// 		}
-// 	}
-// }
-
-func (c *Context) TypeKind(typ Type) Kind {
-	return c.types[typ].kind
-}
-
-func (c *Context) Bytes(typ Type) int {
-	// todo: calc sizes of composite types
-	return int(c.sizes[typ])
-}
-
-func (c *Context) Words(typ Type) int {
-	return int(c.sizes[typ] / c.wordBytes)
-}
-
-func (c *Context) Elem(typ Type) Type {
-	switch c.types[typ].kind {
+	switch t.Kind() {
+	case Chan:
+		switch t.Dir() {
+		case SendRecv:
+			return "chan " + t.Elem().String()
+		case RecvOnly:
+			return "<-chan " + t.Elem().String()
+		case SendOnly:
+			return "chan<- " + t.Elem().String()
+		}
+	case Slice:
+		return "[]" + t.Elem().String()
+	case Ptr:
+		return "*" + t.Elem().String()
 	case Array:
-		return c.arrays[c.types[typ].extra].elem
-	case Slice, Ptr:
-		return c.elems[c.types[typ].extra]
+		return fmt.Sprintf("[%d]%s", t.Len(), t.Elem().String())
 	case Map:
-		return c.maps[c.types[typ].extra].elem
+		return fmt.Sprintf("map[%s]%s", t.Key().String(), t.Elem().String())
 	}
-	return typ
-}
-
-func (c *Context) Key(typ Type) Type {
-	if c.types[typ].kind != Map {
-		return Unknown
-	}
-	return c.maps[c.types[typ].extra].key
-}
-
-func (c *Context) ArrayLen(typ Type) int {
-	if c.types[typ].kind != Array {
-		return 0
-	}
-	return c.arrays[c.types[typ].extra].len
-}
-
-func (c *Context) Fields(typ Type) []Type {
-	if c.types[typ].kind != Struct {
-		return nil
-	}
-	return c.fields[c.types[typ].extra]
-}
-
-func (c *Context) Receiver(typ Type) Type {
-	if c.types[typ].kind != Func {
-		return Unknown
-	}
-	return c.funcs[c.types[typ].extra].receiver
-}
-
-func (c *Context) Results(typ Type) []Type {
-	if c.types[typ].kind != Func {
-		return nil
-	}
-	return c.funcs[c.types[typ].extra].results
-}
-
-func (c *Context) Params(typ Type) []Type {
-	if c.types[typ].kind != Func {
-		return nil
-	}
-	return c.funcs[c.types[typ].extra].params
+	return t.Kind().String()
 }
