@@ -1,0 +1,19 @@
+linters:
+  enable:
+    - bodyclose # make sure the http body is closed
+    - contextcheck # check proper use of context.Context
+    - durationcheck # check for multiplying durations (bug)
+    - errorlint # check error wrapping is properly done
+    - exhaustive # check enum switches are exhaustive
+    - exportloopref # loop vars are handled properly
+    - goerr113 # error comparisons are done properly
+    - gosec # finds some security issues
+    - misspell # find common misspellings in comments
+    - nestif # if statements nested too deeply
+    - noctx # finds some cases where a context should be passed
+    - prealloc # finds a performance optimization that could be done
+    - unconvert # finds unnecessary type conversions
+    # - wrapcheck # finds unwrapped errors
+linters-settings:
+  exhaustive:
+    default-signifies-exhaustive: true
