@@ -3,25 +3,17 @@ package frontend
 import (
 	"go/types"
 
-	"github.com/rj45/nanogo/ir2/typ"
 	"golang.org/x/tools/go/ssa"
 	"golang.org/x/tools/go/types/typeutil"
 )
 
 type TypeMapper struct {
 	tmap *typeutil.Map
-
-	// ctx *typ.Context
 }
 
 type typeInfo struct {
 	count   int
 	runtime bool
-}
-
-func (tm *TypeMapper) IRTypeFor(t types.Type) typ.Type {
-	// todo: fill this out
-	return typ.Unknown
 }
 
 func (tm *TypeMapper) scan(prog *ssa.Program) {
