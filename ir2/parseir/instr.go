@@ -5,18 +5,27 @@ package parseir
 
 import (
 	"go/token"
+	"go/types"
 	"regexp"
 
 	"github.com/rj45/nanogo/ir/op"
 )
 
-func (p *Parser) parseInstr() {
-	var list []string
-	var opcode string
-	var last string
-	var defs []string
+type typedToken struct {
+	tok token.Token
+	lit string
+	typ types.Type
+}
 
-	nextNegate := false
+func (p *Parser) parseInstr() {
+	if p.trace {
+		defer un(trace(p, "instr"))
+	}
+
+	var list []typedToken
+	var opcode string
+	var last typedToken
+	var defs []typedToken
 
 	for {
 		tok, lit := p.scan()
@@ -33,9 +42,9 @@ func (p *Parser) parseInstr() {
 
 		switch tok {
 		case token.ASSIGN:
-			if last != "" {
+			if last.tok != token.ILLEGAL {
 				list = append(list, last)
-				last = ""
+				last.tok = token.ILLEGAL
 			}
 
 			if len(list) == 0 {
@@ -46,33 +55,27 @@ func (p *Parser) parseInstr() {
 			defs = list
 			list = nil
 
-		case token.SUB:
-			nextNegate = true
+		case token.SUB, token.INT, token.IDENT:
+			p.unscan()
 
-		case token.IDENT, token.INT:
-			if nextNegate {
-				nextNegate = false
-				lit = "-" + lit
-			}
-
-			if last == "" {
-				last = lit
+			if last.tok == token.ILLEGAL {
+				last = p.parseVar()
 			} else if opcode == "" {
-				opcode = last
-				last = lit
+				opcode = last.lit
+				last = p.parseVar()
 			} else {
-				p.errorf("found %q, expected newline %q %q", lit, last, opcode)
+				return
 			}
 
 		case token.COMMA:
 			p.unscan()
 			list = p.parseList(last)
-			last = ""
+			last.tok = token.ILLEGAL
 
 		case token.SEMICOLON:
 			if opcode == "" {
-				opcode = last
-			} else if last != "" {
+				opcode = last.lit
+			} else if last.tok != token.ILLEGAL {
 				list = append(list, last)
 			}
 
@@ -85,10 +88,65 @@ func (p *Parser) parseInstr() {
 	}
 }
 
+func (p *Parser) parseVar() typedToken {
+	if p.trace {
+		defer un(trace(p, "var"))
+	}
+
+	tok, lit := p.scan()
+
+	switch tok {
+	case token.SUB, token.INT:
+		p.unscan()
+		return p.parseIntVar()
+
+	case token.IDENT:
+		next, _ := p.scan()
+		p.unscan()
+		var typ types.Type
+		if next == token.COLON {
+			typ = p.parseColonType()
+		}
+
+		return typedToken{
+			tok: tok, lit: lit, typ: typ}
+	default:
+	}
+
+	p.errorf("expected identifier or literal; got %q %s", lit, tok)
+	return typedToken{}
+}
+
+func (p *Parser) parseIntVar() typedToken {
+	if p.trace {
+		defer un(trace(p, "intVar"))
+	}
+
+	tok, _ := p.scan()
+
+	negate := false
+	if tok == token.SUB {
+		negate = true
+		p.scan()
+	}
+
+	p.unscan()
+	tok, lit := p.expect(token.INT, "int variable")
+	if negate {
+		lit = "-" + lit
+	}
+
+	return typedToken{tok: tok, lit: lit, typ: types.Typ[types.UntypedInt]}
+}
+
 var blockRefRe = regexp.MustCompile(`^b\d+$`)
 var valueRefRe = regexp.MustCompile(`^v\d+$`)
 
-func (p *Parser) addInstr(defs []string, opcode string, args []string) {
+func (p *Parser) addInstr(defs []typedToken, opcode string, args []typedToken) {
+	if p.trace {
+		defer un(trace(p, "addInstr"))
+	}
+
 	opv, err := op.OpString(opcode)
 	if err != nil {
 		p.errorf("unknown instruction %q found: %s", opcode, err)
@@ -98,41 +156,84 @@ func (p *Parser) addInstr(defs []string, opcode string, args []string) {
 	ins := p.fn.NewInstr(opv, nil)
 
 	for _, def := range defs {
-		// todo: fix type here
-		v := ins.AddDef(p.fn.NewValue(nil))
-		p.values[def] = v
+		if def.typ == nil {
+			p.errorf("def %s is missing a type for instruction %s", def.lit, opcode)
+		}
+		v := ins.AddDef(p.fn.NewValue(def.typ))
+		p.values[def.lit] = v
 	}
 
 	for _, arg := range args {
-		if blockRefRe.MatchString(arg) {
-			p.blkLinks[p.blk] = arg
+		if arg.tok == token.IDENT && blockRefRe.MatchString(arg.lit) {
+			p.blkLinks[p.blk] = arg.lit
 			continue
 		}
 
-		val, ok := p.values[arg]
-		if !ok {
-			if valueRefRe.MatchString(arg) {
-				p.valLinks[ins] = struct {
-					label string
-					pos   int
-				}{
-					label: arg,
-					pos:   ins.NumArgs(),
-				}
-				val = nil
-			} else {
-				// todo: fix type here
-				val = p.fn.ValueFor(nil, arg)
+		if val, ok := p.values[arg.lit]; ok {
+			if p.trace {
+				p.printTrace("arg type: value", val)
 			}
+			ins.InsertArg(-1, val)
+			continue
 		}
-		ins.InsertArg(-1, val)
+
+		if arg.typ != nil {
+			if p.trace {
+				p.printTrace("arg type: given type", arg.typ)
+			}
+			val := p.fn.ValueFor(arg.typ, arg.lit)
+			ins.InsertArg(-1, val)
+			continue
+		}
+
+		if valueRefRe.MatchString(arg.lit) {
+			p.valLinks[ins] = struct {
+				label string
+				pos   int
+			}{
+				label: arg.lit,
+				pos:   ins.NumArgs(),
+			}
+			ins.InsertArg(-1, nil)
+			if p.trace {
+				p.printTrace("arg type: placeholder")
+			}
+			continue
+		}
+
+		builtin := types.Universe.Lookup(arg.lit)
+		if builtin != nil && builtin.Type() != nil && builtin.Type() != types.Typ[types.Invalid] {
+			val := p.fn.ValueFor(builtin.Type(), arg.lit)
+			ins.InsertArg(-1, val)
+			if p.trace {
+				p.printTrace("arg type: builtin", builtin.Type().String())
+			}
+			continue
+		}
+
+		if len(defs) == 1 && defs[0].typ != nil {
+			typ := defs[0].typ
+			if p.trace {
+				p.printTrace("arg type: def", defs[0])
+			}
+
+			val := p.fn.ValueFor(typ, arg.lit)
+			ins.InsertArg(-1, val)
+			continue
+		}
+
+		p.errorf("type is required on arg %s for instruction %s", arg.lit, opcode)
 	}
 
 	p.blk.InsertInstr(-1, ins)
 }
 
-func (p *Parser) parseList(first string) (list []string) {
-	if first != "" {
+func (p *Parser) parseList(first typedToken) (list []typedToken) {
+	if p.trace {
+		defer un(trace(p, "list"))
+	}
+
+	if first.tok != token.ILLEGAL {
 		list = append(list, first)
 	}
 	for {
@@ -141,13 +242,6 @@ func (p *Parser) parseList(first string) (list []string) {
 			return
 		}
 
-		tok, lit := p.scan()
-
-		if tok != token.IDENT {
-			p.unscan()
-			return
-		}
-
-		list = append(list, lit)
+		list = append(list, p.parseVar())
 	}
 }

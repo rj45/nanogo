@@ -2,12 +2,17 @@ package parseir
 
 import (
 	"go/token"
+	"go/types"
 	"strconv"
 
 	"github.com/rj45/nanogo/ir2"
 )
 
 func (p *Parser) parse() {
+	if p.trace {
+		defer un(trace(p, "parse"))
+	}
+
 	for {
 		if tok, lit := p.scan(); tok != token.PACKAGE {
 			if tok == token.EOF {
@@ -21,6 +26,10 @@ func (p *Parser) parse() {
 }
 
 func (p *Parser) parsePackage() {
+	if p.trace {
+		defer un(trace(p, "package"))
+	}
+
 	tok, lit := p.scan()
 	if tok != token.IDENT {
 		p.errorf("found %q, expected package name", lit)
@@ -45,7 +54,12 @@ func (p *Parser) parsePackage() {
 
 	p.pkg = p.prog.Package(path)
 	if p.pkg == nil {
-		p.pkg = &ir2.Package{Name: name, Path: path}
+		p.pkg = &ir2.Package{
+			Name: name,
+			Path: path,
+			Type: types.NewPackage(path, name),
+		}
+
 		p.prog.AddPackage(p.pkg)
 	}
 

@@ -1,46 +1,46 @@
-package runtime "runtime"
-
 package main "github.com/rj45/nanogo/testdata/literals"
 
 func main__init:
 .b0:
-  v0 = load   main__init_guard
+  v0:bool = load   main__init_guard:*bool
   if2    v0, b1, b2
 .b1:
   jump2 b3
 .b2:
-  v1 = store  main__init_guard, true
+  v1:bool = store  main__init_guard:*bool, true
   jump2 b3
 .b3:
   return2
 
 func main__main:
 .b0:
-  callBuiltin builtin__print, main__main_1
-  v0 = local  arraylit
-  v2 = indexAddr v0, 0
-  v3 = indexAddr v0, 1
-  v4 = indexAddr v0, 2
-  v5 = indexAddr v0, 3
-  v6 = indexAddr v0, 4
-  v7 = store  v2, 1
-  v8 = store  v3, 2
-  v9 = store  v4, 3
-  v10 = store  v5, 4
-  v11 = store  v6, 5
-  v12 = load   v0
-  callBuiltin builtin__print, v12
-  v13 = new    slicelit
-  v15 = indexAddr v13, 0
-  v16 = store  v15, 1
-  v17 = indexAddr v13, 1
-  v18 = store  v17, 2
-  v19 = indexAddr v13, 2
-  v20 = store  v19, 3
-  v21 = indexAddr v13, 3
-  v22 = store  v21, 4
-  v23 = indexAddr v13, 4
-  v24 = store  v23, 5
-  v25 = slice  v13, nil, nil, nil
-  callBuiltin builtin__print, v25
+  callBuiltin print:func(string), main__main_1:string
+  v0:*[5]int = local  arraylit:*[5]int
+  v2:*int = indexAddr v0, 0
+  v3:*int = indexAddr v0, 1
+  v4:*int = indexAddr v0, 2
+  v5:*int = indexAddr v0, 3
+  v6:*int = indexAddr v0, 4
+  v7:int = store  v2, 1
+  v8:int = store  v3, 2
+  v9:int = store  v4, 3
+  v10:int = store  v5, 4
+  v11:int = store  v6, 5
+  v12:[5]int = load   v0
+  callBuiltin print:func(string), v12
+  v13:*[5]int = new    slicelit:*[5]int
+  v15:*int = indexAddr v13, 0
+  v16:int = store  v15, 1
+  v17:*int = indexAddr v13, 1
+  v18:int = store  v17, 2
+  v19:*int = indexAddr v13, 2
+  v20:int = store  v19, 3
+  v21:*int = indexAddr v13, 3
+  v22:int = store  v21, 4
+  v23:*int = indexAddr v13, 4
+  v24:int = store  v23, 5
+  v25:[]int = slice  v13, nil, nil, nil
+  callBuiltin print:func(string), v25
   return2
+
+package runtime "runtime"

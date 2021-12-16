@@ -4,126 +4,126 @@ package main "github.com/rj45/nanogo/testdata/muldiv"
 
 func main__init:
 .b0:
-  v0 = load   main__init_guard
+  v0:bool = load   main__init_guard:*bool
   if2    v0, b1, b2
 .b1:
   jump2 b3
 .b2:
-  v1 = store  main__init_guard, true
+  v1:bool = store  main__init_guard:*bool, true
   jump2 b3
 .b3:
   return2
 
 func main__mulu:
 .b0:
-  v1 = parameter a
-  v3 = parameter b
+  v1:uint = parameter a
+  v3:uint = parameter b
   jump2 b1
 .b1:
-  v4 = phi    v1, v12
-  v5 = phi    v3, v13
-  v6 = phi    0, v11
-  v7 = greater v5, 0
+  v4:uint = phi    v1, v12
+  v5:uint = phi    v3, v13
+  v6:uint = phi    0, v11
+  v7:bool = greater v5, 0
   if2    v7, b2, b6
 .b2:
-  v8 = and    v5, 1
-  v9 = notEqual v8, 0
+  v8:uint = and    v5, 1
+  v9:bool = notEqual v8, 0
   if2    v9, b4, b3
 .b3:
   jump2 b5
 .b4:
-  v10 = add    v6, v4
+  v10:uint = add    v6, v4
   jump2 b5
 .b5:
-  v11 = phi    v6, v10
-  v12 = shiftLeft v4, 1
-  v13 = shiftRight v5, 1
+  v11:uint = phi    v6, v10
+  v12:uint = shiftLeft v4, 1
+  v13:uint = shiftRight v5, 1
   jump2 b1
 .b6:
   return2 v6
 
 func main__divu:
 .b0:
-  v1 = parameter dividend
-  v3 = parameter divisor
-  v4 = equal  v3, 0
+  v1:uint = parameter dividend
+  v3:uint = parameter divisor
+  v4:bool = equal  v3, 0
   if2    v4, b1, b2
 .b1:
-  v5 = makeInterface -255
+  v5:interface{} = makeInterface -255
   panic2 v5
 .b2:
   jump2 b3
 .b3:
-  v6 = phi    0, v21
-  v7 = phi    0, v22
-  v8 = phi    15, v23
-  v9 = greaterEqual v8, 0
+  v6:uint = phi    0, v21
+  v7:uint = phi    0, v22
+  v8:int = phi    15, v23
+  v9:bool = greaterEqual v8, 0
   if2    v9, b4, b8
 .b4:
-  v10 = shiftLeft v6, 1
-  v11 = shiftLeft v7, 1
-  v12 = convert v8
-  v13 = shiftLeft 1, v12
-  v14 = and    v1, v13
-  v15 = convert v8
-  v16 = shiftRight v14, v15
-  v17 = or     v11, v16
-  v18 = greaterEqual v17, v3
+  v10:uint = shiftLeft v6, 1
+  v11:uint = shiftLeft v7, 1
+  v12:uint = convert v8
+  v13:uint = shiftLeft 1, v12
+  v14:uint = and    v1, v13
+  v15:uint = convert v8
+  v16:uint = shiftRight v14, v15
+  v17:uint = or     v11, v16
+  v18:bool = greaterEqual v17, v3
   if2    v18, b6, b5
 .b5:
   jump2 b7
 .b6:
-  v19 = sub    v17, v3
-  v20 = or     v10, 1
+  v19:uint = sub    v17, v3
+  v20:uint = or     v10, 1
   jump2 b7
 .b7:
-  v21 = phi    v10, v20
-  v22 = phi    v17, v19
-  v23 = sub    v8, 1
+  v21:uint = phi    v10, v20
+  v22:uint = phi    v17, v19
+  v23:int = sub    v8, 1
   jump2 b3
 .b8:
   return2 v6, v7
 
 func main__main:
 .b0:
-  v0 = call   main__mulu, 2, 5
-  v1 = notEqual v0, 10
+  v0:uint = call   main__mulu:func(a uint, b uint) (res uint), 2, 5
+  v1:bool = notEqual v0, 10
   if2    v1, b1, b2
 .b1:
-  v2 = makeInterface v0
+  v2:interface{} = makeInterface v0
   panic2 v2
 .b2:
-  v3 = call   main__mulu, 49, 1234
-  v4 = notEqual v3, 60466
+  v3:uint = call   main__mulu:func(a uint, b uint) (res uint), 49, 1234
+  v4:bool = notEqual v3, 60466
   if2    v4, b3, b4
 .b3:
-  v5 = makeInterface v3
+  v5:interface{} = makeInterface v3
   panic2 v5
 .b4:
-  v6, v7 = call   main__divu, 10, 5
-  v8 = notEqual v6, 2
+  v6:uint, v7:uint = call   main__divu:func(dividend uint, divisor uint) (quotient uint, remainder uint), 10, 5
+  v8:bool = notEqual v6, 2
   if2    v8, b5, b6
 .b5:
-  v9 = makeInterface v6
+  v9:interface{} = makeInterface v6
   panic2 v9
 .b6:
-  v10 = notEqual v7, 0
+  v10:bool = notEqual v7, 0
   if2    v10, b7, b8
 .b7:
-  v11 = makeInterface v7
+  v11:interface{} = makeInterface v7
   panic2 v11
 .b8:
-  v12, v13 = call   main__divu, 1234, 13
-  v14 = notEqual v12, 94
+  v12:uint, v13:uint = call   main__divu:func(dividend uint, divisor uint) (quotient uint, remainder uint), 1234, 13
+  v14:bool = notEqual v12, 94
   if2    v14, b9, b10
 .b9:
-  v15 = makeInterface v12
+  v15:interface{} = makeInterface v12
   panic2 v15
 .b10:
-  v16 = notEqual v13, 12
+  v16:bool = notEqual v13, 12
   if2    v16, b11, b12
 .b11:
-  v17 = makeInterface v13
+  v17:interface{} = makeInterface v13
   panic2 v17
 .b12:
   return2

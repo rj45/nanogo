@@ -197,6 +197,22 @@
     - [x] Can lex tokens
     - [x] Values parsed
     - [ ] Types parsed
+      - [ ] Types interned to reduce memory
+      - [x] Array types
+      - [x] Slice types
+      - [x] Pointer types
+      - [x] Func types
+        - [x] Param lists
+        - [x] Result lists
+        - [ ] Receivers
+      - [x] Empty interfaces
+      - [ ] Full interfaces
+      - [ ] Named types
+      - [ ] Struct types
+      - [ ] Map types
+      - [ ] Chan types
+      - [ ] Tuple types?
+      - [ ] Type defs
     - [ ] Constants parsed
       - [ ] function references
       - [ ] literal references
@@ -209,6 +225,8 @@
     - [x] packages parsed
     - [x] parses block references and links them
     - [x] parses value references and links them
+    - [ ] Global vars
+    - [ ] Global/Func forward references
 
 - [ ] Rework xform system
 

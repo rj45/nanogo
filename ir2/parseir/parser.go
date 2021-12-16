@@ -32,15 +32,20 @@ type Parser struct {
 	blkLabels map[string]*ir2.Block
 	values    map[string]*ir2.Value
 
+	// forward reference links
 	blkLinks map[*ir2.Block]string
 	valLinks map[*ir2.Instr]struct {
 		label string
 		pos   int
 	}
+
+	// debugging / diagnostics
+	indent int
+	trace  bool
 }
 
 // NewParser returns a new instance of Parser.
-func NewParser(filename string, r io.Reader, prog *ir2.Program) (*Parser, error) {
+func NewParser(filename string, r io.Reader, prog *ir2.Program, trace bool) (*Parser, error) {
 	buf, err := io.ReadAll(r)
 	if err != nil {
 		return nil, fmt.Errorf("unable to read %s: %w", filename, err)
@@ -51,16 +56,16 @@ func NewParser(filename string, r io.Reader, prog *ir2.Program) (*Parser, error)
 	s := &scanner.Scanner{}
 	s.Init(file, buf, errs.Add, 0)
 
-	return &Parser{fset: fset, s: s, errs: errs, prog: prog}, nil
+	return &Parser{fset: fset, s: s, errs: errs, prog: prog, trace: trace}, nil
 }
 
 func (p *Parser) Parse() error {
-	defer func() {
-		if r := recover(); r != nil {
-			p.PrintErrors()
-			panic(r)
-		}
-	}()
+	// defer func() {
+	// 	if r := recover(); r != nil {
+	// 		p.PrintErrors()
+	// 		log.Fatal(r)
+	// 	}
+	// }()
 	p.parse()
 
 	if p.errs.Len() < 1 {
@@ -73,8 +78,49 @@ func (p *Parser) PrintErrors() {
 	scanner.PrintError(os.Stderr, p.errs)
 }
 
+func (p *Parser) printTrace(a ...interface{}) {
+	const dots = ". . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . "
+	const n = len(dots)
+	pos := p.fset.Position(p.buf.pos)
+	fmt.Printf("%5d:%3d: ", pos.Line, pos.Column)
+	i := 2 * p.indent
+	for i > n {
+		fmt.Print(dots)
+		i -= n
+	}
+	// i <= n
+	fmt.Print(dots[0:i])
+	fmt.Println(a...)
+}
+
+func trace(p *Parser, msg string) *Parser {
+	p.printTrace(msg, "(")
+	p.indent++
+	return p
+}
+
+// Usage pattern: defer un(trace(p, "..."))
+func un(p *Parser) {
+	p.indent--
+	p.printTrace(")")
+}
+
+// expect checks if the next token is expected, erroring if not
+func (p *Parser) expect(expected token.Token, what string) (tok token.Token, lit string) {
+	tok, lit = p.scan()
+	if tok != expected {
+		p.errorf("expected %s parsing %s, got %s:%q", expected, what, tok, lit)
+	}
+
+	return
+}
+
 // errorf records an error at the current token scan position
 func (p *Parser) errorf(format string, args ...interface{}) {
+	if p.trace {
+		p.printTrace(fmt.Sprintf("error: "+format, args...))
+	}
+
 	pos := p.fset.Position(p.buf.pos)
 	p.errs.Add(pos, fmt.Sprintf(format, args...))
 }
@@ -86,6 +132,18 @@ func (p *Parser) scan() (tok token.Token, lit string) {
 	if p.buf.n != 0 {
 		p.buf.n = 0
 		return p.buf.tok, p.buf.lit
+	}
+
+	if p.trace && p.buf.pos.IsValid() {
+		s := p.buf.tok.String()
+		switch {
+		case p.buf.tok.IsLiteral():
+			p.printTrace(s, p.buf.lit)
+		case p.buf.tok.IsOperator(), p.buf.tok.IsKeyword():
+			p.printTrace("\"" + s + "\"")
+		default:
+			p.printTrace(s)
+		}
 	}
 
 	// Otherwise read the next token from the scanner.

@@ -3,6 +3,7 @@ package ir2
 import (
 	"bytes"
 	"fmt"
+	"go/types"
 	"io"
 )
 
@@ -94,18 +95,16 @@ func (in *Instr) Emit(out io.Writer, dec Decorator) {
 	dec.Begin(out, in)
 
 	defstr := ""
-	typstr := ""
 	for i, def := range in.defs {
 		if i != 0 {
 			defstr += ", "
-			typstr += ", "
 		}
 		defstr += dec.WrapLabel(def.String(), def)
 		if def.Type != nil {
-			typstr += def.Type.String()
+			typstr := dec.WrapType(def.Type.String())
+			defstr += fmt.Sprintf(":%s", typstr)
 		}
 	}
-	_ = typstr
 
 	argstr := ""
 	for i, arg := range in.args {
@@ -113,6 +112,15 @@ func (in *Instr) Emit(out io.Writer, dec Decorator) {
 			argstr += ", "
 		}
 		argstr += dec.WrapRef(arg.String(), arg)
+
+		// todo: remove this when globals are being emitted properly
+		if arg.Const != nil && (arg.Const.Kind() == FuncConst || arg.Const.Kind() == GlobalConst || arg.Const.Kind() == LiteralConst || arg.Const.Kind() == StringConst) {
+			basic, ok := arg.Type.(*types.Basic)
+			if !ok || (basic.Info()&types.IsUntyped) == 0 {
+				argstr += ":"
+				argstr += dec.WrapType(arg.Type.String())
+			}
+		}
 	}
 
 	str := ""

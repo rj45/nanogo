@@ -8,6 +8,10 @@ import (
 )
 
 func (p *Parser) parseFunc() {
+	if p.trace {
+		defer un(trace(p, "func"))
+	}
+
 	// Read a func label
 	name := p.parseLabel()
 
@@ -43,6 +47,11 @@ func (p *Parser) parseFunc() {
 			p.unscan()
 			return
 
+		case token.PACKAGE:
+			p.resolveLinks()
+			p.unscan()
+			return
+
 		default:
 			p.errorf("found %q, expected func or block label", lit)
 		}
@@ -63,12 +72,18 @@ func (p *Parser) resolveLinks() {
 		v, ok := p.values[arg.label]
 		if !ok {
 			p.errorf("unable to resolve value link %s from %s in %s", arg.label, ins, p.fn.FullName)
+			continue
 		}
+
 		ins.ReplaceArg(arg.pos, v)
 	}
 }
 
 func (p *Parser) parseBlock() {
+	if p.trace {
+		defer un(trace(p, "block"))
+	}
+
 	// Read a block label
 	name := p.parseLabel()
 
@@ -92,6 +107,10 @@ func (p *Parser) parseBlock() {
 			p.unscan()
 			p.parseInstr()
 
+		case token.PACKAGE:
+			p.unscan()
+			return
+
 		case token.EOF:
 			p.unscan()
 			return
@@ -103,6 +122,10 @@ func (p *Parser) parseBlock() {
 }
 
 func (p *Parser) parseLabel() string {
+	if p.trace {
+		defer un(trace(p, "label"))
+	}
+
 	tok, lit := p.scan()
 	if tok != token.IDENT {
 		p.errorf("found %q, expected label", lit)

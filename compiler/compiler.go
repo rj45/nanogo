@@ -83,7 +83,7 @@ func Compile(outname, dir string, patterns []string, assemble, run bool) int {
 		defer f.Close()
 
 		prog := &ir2.Program{}
-		p, err := parseir.NewParser(*ngir, f, prog)
+		p, err := parseir.NewParser(*ngir, f, prog, *trace)
 		if err != nil {
 			panic(err)
 		}

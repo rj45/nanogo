@@ -240,9 +240,8 @@ func (fe *FrontEnd) translateArgs(it *ir2.BlockIter, instr ssa.Instruction) {
 				block.Func().NumCalls++
 
 			case *ssa.Builtin:
-				name := genName("builtin", con.Name())
-				arg = name
-				block.Func().NumCalls++
+				con.Type()
+				arg = con.Name()
 
 			case *ssa.Global:
 				pkg := block.Func().Package()

@@ -42,6 +42,8 @@ type Literal struct {
 type Package struct {
 	prog *Program
 
+	Type *types.Package
+
 	Name string
 	Path string
 
