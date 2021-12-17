@@ -162,38 +162,41 @@ func (fe *FrontEnd) translateInstrs(irBlock *ir2.Block, ssaBlock *ssa.BasicBlock
 			log.Fatalf("unknown instruction type %#v", instr)
 		}
 
-		if opcode != nil {
-			if typ == nil {
-				if typed, ok := instr.(interface{ Type() types.Type }); ok {
-					typ = typed.Type()
-				}
-			}
-
-			ins := irBlock.Func().NewInstr(opcode, typ)
-			if con != nil {
-				ins.InsertArg(-1, irBlock.Func().ValueFor(typ, con))
-			}
-
-			if arg != nil {
-				ins.InsertArg(-1, arg)
-			}
-
-			if ins == nil {
-				log.Panicf("ins is nil! %s", instr)
-			}
-
-			irBlock.InsertInstr(-1, ins)
-
-			if vin, ok := instr.(ssa.Value); ok {
-				fe.val2instr[vin] = ins
-
-				if ins.NumDefs() == 1 {
-					fe.val2val[vin] = ins.Def(0)
-				}
-			}
-
-			fe.instrmap[ins] = instr
+		if opcode == nil {
+			// skip this instruction
+			continue
 		}
+
+		if typ == nil {
+			if typed, ok := instr.(interface{ Type() types.Type }); ok {
+				typ = typed.Type()
+			}
+		}
+
+		ins := irBlock.Func().NewInstr(opcode, typ)
+		if con != nil {
+			ins.InsertArg(-1, irBlock.Func().ValueFor(typ, con))
+		}
+
+		if arg != nil {
+			ins.InsertArg(-1, arg)
+		}
+
+		if ins == nil {
+			log.Panicf("ins is nil! %s", instr)
+		}
+
+		irBlock.InsertInstr(-1, ins)
+
+		if vin, ok := instr.(ssa.Value); ok {
+			fe.val2instr[vin] = ins
+
+			if ins.NumDefs() == 1 {
+				fe.val2val[vin] = ins.Def(0)
+			}
+		}
+
+		fe.instrmap[ins] = instr
 	}
 }
 

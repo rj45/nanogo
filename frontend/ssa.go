@@ -1,6 +1,7 @@
 package frontend
 
 import (
+	"errors"
 	"fmt"
 	"os"
 	"sort"
@@ -10,6 +11,8 @@ import (
 	"golang.org/x/tools/go/ssa"
 	"golang.org/x/tools/go/ssa/ssautil"
 )
+
+var ErrParsing = errors.New("parse failure")
 
 type members []ssa.Member
 
@@ -56,7 +59,7 @@ func parseProgram(dir string, patterns ...string) ([]ssa.Member, error) {
 		}
 
 		if packages.PrintErrors(rt) > 0 {
-			return nil, fmt.Errorf("runtime loading had errors")
+			return nil, fmt.Errorf("%w: runtime parsing had errors", ErrParsing)
 		}
 
 		main.Imports["runtime"] = rt[0]
@@ -64,7 +67,7 @@ func parseProgram(dir string, patterns ...string) ([]ssa.Member, error) {
 
 	// Print any errors that happened in the build process
 	if packages.PrintErrors(initial) > 0 {
-		return nil, fmt.Errorf("initial package loading had errors")
+		return nil, fmt.Errorf("%w: initial package parsing had errors", ErrParsing)
 	}
 
 	// Create SSA packages for well-typed packages and their dependencies.
