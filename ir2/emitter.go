@@ -32,6 +32,34 @@ func (prog *Program) Emit(out io.Writer, dec Decorator) {
 func (pkg *Package) Emit(out io.Writer, dec Decorator) {
 	dec.Begin(out, pkg)
 	fmt.Fprintf(out, "package %s %q\n", pkg.Name, pkg.Path)
+
+	first := true
+	for _, glob := range pkg.globals {
+		if !glob.Referenced {
+			continue
+		}
+
+		if first {
+			first = false
+			fmt.Fprintln(out)
+		}
+
+		val := glob.Value
+		valstr := ""
+		if val != nil {
+			// todo: wrap this in the decorator?
+			if val.Kind() == StringConst {
+				valstr = fmt.Sprintf(" = %q", val.String())
+			} else {
+				valstr = fmt.Sprintf(" = %s", val.String())
+			}
+		}
+
+		fmt.Fprintf(out, "var %s:%s%s\n",
+			dec.WrapLabel(glob.FullName, glob),
+			dec.WrapType(glob.Type.String()), valstr)
+	}
+
 	for _, fn := range pkg.funcs {
 		if !fn.Referenced {
 			continue
@@ -111,10 +139,20 @@ func (in *Instr) Emit(out io.Writer, dec Decorator) {
 		if i != 0 {
 			argstr += ", "
 		}
-		argstr += dec.WrapRef(arg.String(), arg)
 
-		// todo: remove this when globals are being emitted properly
-		if arg.Const != nil && (arg.Const.Kind() == FuncConst || arg.Const.Kind() == GlobalConst || arg.Const.Kind() == LiteralConst || arg.Const.Kind() == StringConst) {
+		if arg == nil {
+			argstr += "<!nil>"
+			continue
+		}
+
+		globref := ""
+		if arg.Const != nil && (arg.Const.Kind() == FuncConst || arg.Const.Kind() == GlobalConst) {
+			globref = "^" // denote it's a global
+		}
+
+		argstr += dec.WrapRef(globref+arg.String(), arg)
+
+		if arg.Const != nil && arg.Const.Kind() == StringConst {
 			basic, ok := arg.Type.(*types.Basic)
 			if !ok || (basic.Info()&types.IsUntyped) == 0 {
 				argstr += ":"
@@ -163,13 +201,7 @@ func (in *Instr) Emit(out io.Writer, dec Decorator) {
 		}
 	}
 
-	// if dec.SSAForm() && len(typstr) > 0 {
-	// 	fmt.Fprintf(out, "%-30s %s", str, dec.WrapType(fmt.Sprintf("<%s>", typstr)))
-	// } else {
-	fmt.Fprint(out, str)
-	// }
-
-	fmt.Fprintln(out)
+	fmt.Fprintln(out, str)
 
 	dec.End(out, in)
 }

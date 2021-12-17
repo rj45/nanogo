@@ -9,12 +9,14 @@ import (
 	"regexp"
 
 	"github.com/rj45/nanogo/ir/op"
+	"github.com/rj45/nanogo/ir2"
 )
 
 type typedToken struct {
-	tok token.Token
-	lit string
-	typ types.Type
+	tok  token.Token
+	lit  string
+	typ  types.Type
+	glob bool
 }
 
 func (p *Parser) parseInstr() {
@@ -55,7 +57,7 @@ func (p *Parser) parseInstr() {
 			defs = list
 			list = nil
 
-		case token.SUB, token.INT, token.IDENT:
+		case token.SUB, token.INT, token.IDENT, token.XOR:
 			p.unscan()
 
 			if last.tok == token.ILLEGAL {
@@ -99,6 +101,14 @@ func (p *Parser) parseVar() typedToken {
 	case token.SUB, token.INT:
 		p.unscan()
 		return p.parseIntVar()
+
+	case token.XOR:
+		tok, lit = p.expect(token.IDENT, "global var ref")
+		p.scan()
+		p.unscan()
+
+		return typedToken{
+			tok: tok, lit: lit, typ: nil, glob: true}
 
 	case token.IDENT:
 		next, _ := p.scan()
@@ -163,7 +173,7 @@ func (p *Parser) addInstr(defs []typedToken, opcode string, args []typedToken) {
 		p.values[def.lit] = v
 	}
 
-	for _, arg := range args {
+	for an, arg := range args {
 		if arg.tok == token.IDENT && blockRefRe.MatchString(arg.lit) {
 			p.blkLinks[p.blk] = arg.lit
 			continue
@@ -173,7 +183,40 @@ func (p *Parser) addInstr(defs []typedToken, opcode string, args []typedToken) {
 			if p.trace {
 				p.printTrace("arg type: value", val)
 			}
-			ins.InsertArg(-1, val)
+			ins.InsertArg(an, val)
+			continue
+		}
+
+		glob := p.prog.Global(arg.lit)
+		if glob != nil {
+			if p.trace {
+				p.printTrace("arg type: global", glob)
+			}
+
+			val := p.fn.ValueFor(glob.Type, glob)
+			glob.Referenced = true
+			ins.InsertArg(an, val)
+			continue
+		}
+
+		if arg.glob {
+			if p.globLinks == nil {
+				p.globLinks = make(map[*ir2.Instr]struct {
+					fullname string
+					pos      int
+				})
+			}
+			p.globLinks[ins] = struct {
+				fullname string
+				pos      int
+			}{
+				fullname: arg.lit,
+				pos:      an,
+			}
+			ins.InsertArg(an, nil)
+			if p.trace {
+				p.printTrace("arg type: global placeholder", an)
+			}
 			continue
 		}
 
@@ -182,7 +225,7 @@ func (p *Parser) addInstr(defs []typedToken, opcode string, args []typedToken) {
 				p.printTrace("arg type: given type", arg.typ)
 			}
 			val := p.fn.ValueFor(arg.typ, arg.lit)
-			ins.InsertArg(-1, val)
+			ins.InsertArg(an, val)
 			continue
 		}
 
@@ -192,11 +235,11 @@ func (p *Parser) addInstr(defs []typedToken, opcode string, args []typedToken) {
 				pos   int
 			}{
 				label: arg.lit,
-				pos:   ins.NumArgs(),
+				pos:   an,
 			}
-			ins.InsertArg(-1, nil)
+			ins.InsertArg(an, nil)
 			if p.trace {
-				p.printTrace("arg type: placeholder")
+				p.printTrace("arg type: placeholder", an)
 			}
 			continue
 		}
@@ -204,7 +247,7 @@ func (p *Parser) addInstr(defs []typedToken, opcode string, args []typedToken) {
 		builtin := types.Universe.Lookup(arg.lit)
 		if builtin != nil && builtin.Type() != nil && builtin.Type() != types.Typ[types.Invalid] {
 			val := p.fn.ValueFor(builtin.Type(), arg.lit)
-			ins.InsertArg(-1, val)
+			ins.InsertArg(an, val)
 			if p.trace {
 				p.printTrace("arg type: builtin", builtin.Type().String())
 			}
@@ -218,7 +261,7 @@ func (p *Parser) addInstr(defs []typedToken, opcode string, args []typedToken) {
 			}
 
 			val := p.fn.ValueFor(typ, arg.lit)
-			ins.InsertArg(-1, val)
+			ins.InsertArg(an, val)
 			continue
 		}
 

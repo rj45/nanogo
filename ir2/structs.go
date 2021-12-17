@@ -28,13 +28,7 @@ type Program struct {
 	packages []*Package
 
 	takenNames map[string]bool
-	strings    map[string]*Literal
-}
-
-// Literal is a piece of constant data stored with the program
-type Literal struct {
-	Name  string
-	Value Const
+	strings    map[string]*Global
 }
 
 // Package is a collection of Funcs and Globals
@@ -59,6 +53,9 @@ type Global struct {
 	FullName   string
 	Type       types.Type
 	Referenced bool
+
+	// initial value
+	Value Const
 }
 
 // Func is a collection of Blocks, which comprise
@@ -188,10 +185,9 @@ const (
 	// numeric values
 	IntConst
 
-	// funcs, globals and literals
+	// funcs and globals
 	FuncConst
 	GlobalConst
-	LiteralConst
 )
 
 // Const is a constant value of some sort

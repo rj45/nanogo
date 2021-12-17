@@ -65,6 +65,38 @@ func (pkg *Package) NewGlobal(name string, typ types.Type) *Global {
 	return glob
 }
 
+func (pkg *Package) NewStringLiteral(funcname, str string) *Global {
+	glob := pkg.prog.strings[str]
+	if glob != nil {
+		return glob
+	}
+
+	// move to building a global as the string literal
+	name := pkg.makeUnique(funcname)
+	glob = pkg.NewGlobal(name, types.Typ[types.String])
+	glob.Value = ConstFor(str)
+	pkg.prog.registerStringLiteral(glob)
+
+	return glob
+}
+
+func (pkg *Package) makeUnique(name string) string {
+	for i := 1; ; i++ {
+		uniq := fmt.Sprintf("%s_%d", name, i)
+		if pkg.Global(uniq) != nil {
+			continue
+		}
+
+		if pkg.Func(uniq) != nil {
+			continue
+		}
+
+		// todo: check types too
+
+		return uniq
+	}
+}
+
 func (pkg *Package) genUniqueName(name string) string {
 	name = strings.ReplaceAll(name, "$", "_")
 	parts := strings.Split(pkg.Path, "/")

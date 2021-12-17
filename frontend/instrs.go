@@ -222,10 +222,9 @@ func (fe *FrontEnd) translateArgs(it *ir2.BlockIter, instr ssa.Instruction) {
 				if con.Type().Underlying().String() == "string" {
 					str := constant.StringVal(con.Value)
 					fn := it.Block().Func()
-					prog := fn.Package().Program()
-					name := prog.MakeUnique(fn.FullName)
-
-					arg = prog.StringLiteral(str, name)
+					glob := fn.Package().NewStringLiteral(fn.Name, str)
+					glob.Referenced = true
+					arg = glob
 				} else {
 					arg = con.Value
 				}

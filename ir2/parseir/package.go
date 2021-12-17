@@ -16,6 +16,7 @@ func (p *Parser) parse() {
 	for {
 		if tok, lit := p.scan(); tok != token.PACKAGE {
 			if tok == token.EOF {
+				p.resolveGlobalLinks()
 				return
 			}
 			p.errorf("found %q, expected package", lit)
@@ -64,17 +65,20 @@ func (p *Parser) parsePackage() {
 	}
 
 	for {
-		if tok, lit := p.scan(); tok != token.FUNC {
-			if tok == token.EOF {
-				return
-			}
-			if tok == token.PACKAGE {
-				p.unscan()
-				return
-			}
-			p.errorf("found %q, expected func", lit)
-		}
+		tok, lit := p.scan()
 
-		p.parseFunc()
+		switch tok {
+		case token.EOF:
+			return
+		case token.PACKAGE:
+			p.unscan()
+			return
+		case token.FUNC:
+			p.parseFunc()
+		case token.VAR:
+			p.parseGlobal()
+		default:
+			p.errorf("found %q %q, expected func", lit, tok)
+		}
 	}
 }

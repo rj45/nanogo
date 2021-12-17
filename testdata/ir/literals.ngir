@@ -1,20 +1,25 @@
+package runtime "runtime"
+
 package main "github.com/rj45/nanogo/testdata/literals"
+
+var main__init_guard:*bool
+var main__main_1:string = "This is a string!"
 
 func main__init:
 .b0:
-  v0:bool = load   main__init_guard:*bool
+  v0:bool = load   ^main__init_guard
   if2    v0, b1, b2
 .b1:
   jump2 b3
 .b2:
-  v1:bool = store  main__init_guard:*bool, true
+  v1:bool = store  ^main__init_guard, true
   jump2 b3
 .b3:
   return2
 
 func main__main:
 .b0:
-  callBuiltin print:func(string), main__main_1:string
+  callBuiltin print:func(string), ^main__main_1
   v0:*[5]int = local  arraylit:*[5]int
   v2:*int = indexAddr v0, 0
   v3:*int = indexAddr v0, 1
@@ -42,5 +47,3 @@ func main__main:
   v25:[]int = slice  v13, nil, nil, nil
   callBuiltin print:func(string), v25
   return2
-
-package runtime "runtime"

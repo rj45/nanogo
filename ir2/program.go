@@ -1,7 +1,5 @@
 package ir2
 
-import "fmt"
-
 // Packages returns a copy of the package list
 func (prog *Program) Packages() []*Package {
 	return append([]*Package(nil), prog.packages...)
@@ -29,27 +27,40 @@ func (prog *Program) Package(name string) *Package {
 	return nil
 }
 
-func (prog *Program) StringLiteral(str string, name string) *Literal {
-	if lit, ok := prog.strings[str]; ok {
-		return lit
+// Global searches each package for a global
+func (prog *Program) Global(name string) *Global {
+	for _, pkg := range prog.packages {
+		glob := pkg.Global(name)
+		if glob != nil {
+			return glob
+		}
 	}
-	if prog.strings == nil {
-		prog.strings = make(map[string]*Literal)
-	}
-	prog.claimName(name)
-	lit := &Literal{Name: name, Value: ConstFor(str)}
-	prog.strings[str] = lit
-	return lit
+	return nil
 }
 
-func (prog *Program) MakeUnique(name string) string {
-	for i := 1; ; i++ {
-		uniq := fmt.Sprintf("%s_%d", name, i)
-		if prog.takenNames[uniq] {
-			continue
+// Func searches each package for a func
+func (prog *Program) Func(name string) *Func {
+	for _, pkg := range prog.packages {
+		fn := pkg.Func(name)
+		if fn != nil {
+			return fn
 		}
-		return uniq
 	}
+	return nil
+}
+
+func (prog *Program) StringLiteral(str string, fullname string) *Global {
+	if glob, ok := prog.strings[str]; ok {
+		return glob
+	}
+	return nil
+}
+
+func (prog *Program) registerStringLiteral(glob *Global) {
+	if prog.strings == nil {
+		prog.strings = make(map[string]*Global)
+	}
+	prog.strings[glob.Value.String()] = glob
 }
 
 func (prog *Program) claimName(name string) {

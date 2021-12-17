@@ -2,22 +2,24 @@ package runtime "runtime"
 
 package main "github.com/rj45/nanogo/testdata/muldiv"
 
+var main__init_guard:*bool
+
 func main__init:
 .b0:
-  v0:bool = load   main__init_guard:*bool
+  v0:bool = load   ^main__init_guard
   if2    v0, b1, b2
 .b1:
   jump2 b3
 .b2:
-  v1:bool = store  main__init_guard:*bool, true
+  v1:bool = store  ^main__init_guard, true
   jump2 b3
 .b3:
   return2
 
 func main__mulu:
 .b0:
-  v1:uint = parameter a
-  v3:uint = parameter b
+  v1:uint = parameter a:uint
+  v3:uint = parameter b:uint
   jump2 b1
 .b1:
   v4:uint = phi    v1, v12
@@ -44,8 +46,8 @@ func main__mulu:
 
 func main__divu:
 .b0:
-  v1:uint = parameter dividend
-  v3:uint = parameter divisor
+  v1:uint = parameter dividend:uint
+  v3:uint = parameter divisor:uint
   v4:bool = equal  v3, 0
   if2    v4, b1, b2
 .b1:
@@ -86,21 +88,21 @@ func main__divu:
 
 func main__main:
 .b0:
-  v0:uint = call   main__mulu:func(a uint, b uint) (res uint), 2, 5
+  v0:uint = call   ^main__mulu, 2, 5
   v1:bool = notEqual v0, 10
   if2    v1, b1, b2
 .b1:
   v2:interface{} = makeInterface v0
   panic2 v2
 .b2:
-  v3:uint = call   main__mulu:func(a uint, b uint) (res uint), 49, 1234
+  v3:uint = call   ^main__mulu, 49, 1234
   v4:bool = notEqual v3, 60466
   if2    v4, b3, b4
 .b3:
   v5:interface{} = makeInterface v3
   panic2 v5
 .b4:
-  v6:uint, v7:uint = call   main__divu:func(dividend uint, divisor uint) (quotient uint, remainder uint), 10, 5
+  v6:uint, v7:uint = call   ^main__divu, 10, 5
   v8:bool = notEqual v6, 2
   if2    v8, b5, b6
 .b5:
@@ -113,7 +115,7 @@ func main__main:
   v11:interface{} = makeInterface v7
   panic2 v11
 .b8:
-  v12:uint, v13:uint = call   main__divu:func(dividend uint, divisor uint) (quotient uint, remainder uint), 1234, 13
+  v12:uint, v13:uint = call   ^main__divu, 1234, 13
   v14:bool = notEqual v12, 94
   if2    v14, b9, b10
 .b9:

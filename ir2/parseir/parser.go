@@ -38,6 +38,10 @@ type Parser struct {
 		label string
 		pos   int
 	}
+	globLinks map[*ir2.Instr]struct {
+		fullname string
+		pos      int
+	}
 
 	// debugging / diagnostics
 	indent int
