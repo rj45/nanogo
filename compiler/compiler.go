@@ -82,6 +82,16 @@ func Compile(outname, dir string, patterns []string, mode Mode) int {
 	var finalout io.WriteCloser
 	var asmout io.WriteCloser
 
+	if outname == "-" {
+		finalout = nopWriteCloser{os.Stdout}
+	} else {
+		f, err := os.Create(outname)
+		if err != nil {
+			log.Fatal(err)
+		}
+		finalout = f
+	}
+
 	if filepath.Ext(patterns[0]) == ".ngir" {
 		f, err := os.Open(patterns[0])
 		if err != nil {
@@ -101,19 +111,9 @@ func Compile(outname, dir string, patterns []string, mode Mode) int {
 			return 1
 		}
 
-		prog.Emit(os.Stdout, ir2.SSAString{})
+		prog.Emit(finalout, ir2.SSAString{})
 
 		return 0
-	}
-
-	if outname == "-" {
-		finalout = nopWriteCloser{os.Stdout}
-	} else {
-		f, err := os.Create(outname)
-		if err != nil {
-			log.Fatal(err)
-		}
-		finalout = f
 	}
 
 	if mode&IR != 0 {

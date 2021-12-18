@@ -208,7 +208,7 @@
       - [x] Empty interfaces
       - [ ] Full interfaces
       - [ ] Named types
-      - [ ] Struct types
+      - [x] Struct types
       - [ ] Map types
       - [ ] Chan types
       - [ ] Tuple types?

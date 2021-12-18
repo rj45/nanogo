@@ -175,7 +175,7 @@ func (p *Parser) addInstr(defs []typedToken, opcode string, args []typedToken) {
 
 	for an, arg := range args {
 		if arg.tok == token.IDENT && blockRefRe.MatchString(arg.lit) {
-			p.blkLinks[p.blk] = arg.lit
+			p.blkLinks[p.blk] = append(p.blkLinks[p.blk], arg.lit)
 			continue
 		}
 

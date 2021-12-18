@@ -24,7 +24,7 @@ func (p *Parser) parseFunc() {
 
 	p.blkLabels = make(map[string]*ir2.Block)
 	p.values = make(map[string]*ir2.Value)
-	p.blkLinks = make(map[*ir2.Block]string)
+	p.blkLinks = make(map[*ir2.Block][]string)
 	p.valLinks = make(map[*ir2.Instr]struct {
 		label string
 		pos   int
@@ -59,13 +59,18 @@ func (p *Parser) parseFunc() {
 }
 
 func (p *Parser) resolveLinks() {
-	for a, label := range p.blkLinks {
-		b, ok := p.blkLabels[label]
-		if !ok {
-			p.errorf("unable to resolve block link %s from %s", b, a)
+	for a, labels := range p.blkLinks {
+		for _, label := range labels {
+			b, ok := p.blkLabels[label]
+			if !ok {
+				p.errorf("unable to resolve block link %s from %s", b, a)
+			}
+			a.AddSucc(b)
+			b.AddPred(a)
+			if p.trace {
+				p.printTrace("linked block", a, "to succ", b)
+			}
 		}
-		a.AddSucc(b)
-		b.AddPred(a)
 	}
 
 	for ins, arg := range p.valLinks {

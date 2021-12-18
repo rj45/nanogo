@@ -58,10 +58,10 @@ func (p *Parser) tryParseType() types.Type {
 		return p.parseFuncType()
 	case token.INTERFACE:
 		return p.parseInterfaceType()
+	case token.STRUCT:
+		return p.parseStructType()
 
 	// TODO: parse these types
-	// case token.STRUCT:
-	// 	return p.parseStructType()
 	// case token.MAP:
 	// 	return p.parseMapType()
 	// case token.CHAN, token.ARROW:
@@ -337,6 +337,68 @@ func (p *Parser) parseParamDecl() *types.Var {
 		typ = types.NewSlice(element)
 	default:
 		p.errorf("expected param/result, got %s %q", tok, lit)
+	}
+
+	return types.NewVar(pos, p.pkg.Type, name, typ)
+}
+
+func (p *Parser) parseStructType() types.Type {
+	if p.trace {
+		defer un(trace(p, "structType"))
+	}
+
+	p.expect(token.STRUCT, "struct type")
+	p.expect(token.LBRACE, "struct type")
+
+	var list []*types.Var
+
+	for {
+		tok, _ := p.scan()
+		p.unscan()
+		if tok != token.IDENT && tok != token.MUL {
+			break
+		}
+
+		list = append(list, p.parseFieldDecl())
+	}
+
+	p.expect(token.RBRACE, "struct type")
+
+	return types.NewStruct(list, nil)
+}
+
+func (p *Parser) parseFieldDecl() *types.Var {
+	if p.trace {
+		defer un(trace(p, "fieldDecl"))
+	}
+
+	tok, lit := p.scan()
+	var typ types.Type
+	pos := p.buf.pos
+	var name string
+
+	if tok == token.IDENT {
+		name = lit
+		tok, lit = p.scan()
+		p.unscan()
+		if tok == token.PERIOD {
+			typ = p.lookupTypeFor(name, lit)
+		} else if tok == token.STRING || tok == token.SEMICOLON || tok == token.RBRACE {
+			typ = p.lookupTypeFor(p.pkg.Name, name)
+		} else if tok == token.LBRACK {
+			typ = p.parseArrayType()
+		} else {
+			// T P
+			typ = p.parseType()
+		}
+	} else {
+		// embedded type
+		typ = p.parseType()
+	}
+
+	tok, _ = p.scan()
+	if tok != token.SEMICOLON {
+		p.unscan()
 	}
 
 	return types.NewVar(pos, p.pkg.Type, name, typ)

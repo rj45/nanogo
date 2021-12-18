@@ -55,9 +55,10 @@ func (pkg *Package) Emit(out io.Writer, dec Decorator) {
 			}
 		}
 
+		typstr := types.TypeString(glob.Type, qualifier(pkg.Type))
 		fmt.Fprintf(out, "var %s:%s%s\n",
 			dec.WrapLabel(glob.FullName, glob),
-			dec.WrapType(glob.Type.String()), valstr)
+			dec.WrapType(typstr), valstr)
 	}
 
 	for _, fn := range pkg.funcs {
@@ -114,6 +115,17 @@ func (blk *Block) Emit(out io.Writer, dec Decorator) {
 	dec.End(out, blk)
 }
 
+func qualifier(rootPkg *types.Package) types.Qualifier {
+	return func(pkg *types.Package) string {
+		if pkg == rootPkg {
+			return ""
+		} else {
+			// todo: handle package aliases
+			return pkg.Name()
+		}
+	}
+}
+
 func (in *Instr) Emit(out io.Writer, dec Decorator) {
 	if in == nil {
 		fmt.Fprint(out, "  <!nil>\n")
@@ -129,7 +141,7 @@ func (in *Instr) Emit(out io.Writer, dec Decorator) {
 		}
 		defstr += dec.WrapLabel(def.String(), def)
 		if def.Type != nil {
-			typstr := dec.WrapType(def.Type.String())
+			typstr := dec.WrapType(types.TypeString(def.Type, qualifier(in.Func().pkg.Type)))
 			defstr += fmt.Sprintf(":%s", typstr)
 		}
 	}
@@ -156,7 +168,8 @@ func (in *Instr) Emit(out io.Writer, dec Decorator) {
 			basic, ok := arg.Type.(*types.Basic)
 			if !ok || (basic.Info()&types.IsUntyped) == 0 {
 				argstr += ":"
-				argstr += dec.WrapType(arg.Type.String())
+				typstr := types.TypeString(arg.Type, qualifier(in.Func().pkg.Type))
+				argstr += dec.WrapType(typstr)
 			}
 		}
 	}

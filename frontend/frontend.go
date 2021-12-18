@@ -91,6 +91,7 @@ func (fe *FrontEnd) getPackage(typPkg *types.Package) *ir2.Package {
 		pkg = &ir2.Package{
 			Name: typPkg.Name(),
 			Path: typPkg.Path(),
+			Type: typPkg,
 		}
 		fe.prog.AddPackage(pkg)
 	}

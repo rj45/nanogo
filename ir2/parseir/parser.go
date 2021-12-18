@@ -10,6 +10,11 @@ import (
 	"github.com/rj45/nanogo/ir2"
 )
 
+type labelPos struct {
+	label string
+	pos   int
+}
+
 type Parser struct {
 	fset *token.FileSet
 	s    *scanner.Scanner
@@ -33,7 +38,7 @@ type Parser struct {
 	values    map[string]*ir2.Value
 
 	// forward reference links
-	blkLinks map[*ir2.Block]string
+	blkLinks map[*ir2.Block][]string
 	valLinks map[*ir2.Instr]struct {
 		label string
 		pos   int
