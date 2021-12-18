@@ -36,6 +36,15 @@ func SetArch(a Arch) {
 
 var arch Arch
 
+type Mode int
+
+const (
+	Asm Mode = iota << 1
+	Assemble
+	Run
+	IR
+)
+
 type dumper interface {
 	WritePhase(string, string)
 	WriteAsmBuf(string, *bytes.Buffer)
@@ -66,10 +75,9 @@ var _ io.WriteCloser = nopWriteCloser{}
 
 var dump = flag.String("dump", "", "Dump a function to ssa.html")
 var trace = flag.Bool("trace", false, "debug program with tracing info")
-var ffir2 = flag.Bool("ir2", false, "test ir2 on program (WIP)")
 var ngir = flag.String("ngir", "", "Read ngir file")
 
-func Compile(outname, dir string, patterns []string, assemble, run bool) int {
+func Compile(outname, dir string, patterns []string, mode Mode) int {
 	log.SetFlags(log.Lshortfile)
 
 	var finalout io.WriteCloser
@@ -109,7 +117,7 @@ func Compile(outname, dir string, patterns []string, assemble, run bool) int {
 		finalout = f
 	}
 
-	if *ffir2 {
+	if mode&IR != 0 {
 		fe := frontend.NewFrontEnd(dir, patterns...)
 		fe.Scan()
 		for fn := fe.NextUnparsedFunc(); fn != nil; fn = fe.NextUnparsedFunc() {
@@ -125,7 +133,7 @@ func Compile(outname, dir string, patterns []string, assemble, run bool) int {
 
 	var binfile string
 	var asmcmd *exec.Cmd
-	if assemble {
+	if mode&Assemble != 0 {
 		// todo: if specified, allow this to not be a temp file
 		asmtemp, err := os.CreateTemp("", "nanogo_*.asm")
 		if err != nil {
@@ -157,7 +165,7 @@ func Compile(outname, dir string, patterns []string, assemble, run bool) int {
 	}
 
 	var runcmd *exec.Cmd
-	if run {
+	if mode&Run != 0 {
 		args := arch.EmulatorArgs()
 		args = append(args, binfile)
 		if *trace {
@@ -230,7 +238,7 @@ func Compile(outname, dir string, patterns []string, assemble, run bool) int {
 		if err := asmcmd.Run(); err != nil {
 			os.Exit(1)
 		}
-		if !run {
+		if mode&Run == 0 {
 			// todo: read file and emit to finalout
 			f, err := os.Open(binfile)
 			if err != nil {

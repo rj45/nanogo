@@ -57,7 +57,7 @@ func TestCompilerForRj32(t *testing.T) {
 	for _, tC := range testCases {
 		t.Run(tC.desc, func(t *testing.T) {
 			arch.SetArch("rj32")
-			result := compiler.Compile("-", "../testdata/", []string{tC.filename}, true, true)
+			result := compiler.Compile("-", "../testdata/", []string{tC.filename}, compiler.Assemble|compiler.Run)
 			if result != 0 {
 				t.Errorf("test %s failed with code %d", tC.filename, result)
 			}
@@ -69,7 +69,7 @@ func TestCompilerForA32(t *testing.T) {
 	for _, tC := range testCases {
 		t.Run(tC.desc, func(t *testing.T) {
 			arch.SetArch("a32")
-			result := compiler.Compile("-", "../testdata/", []string{tC.filename}, true, true)
+			result := compiler.Compile("-", "../testdata/", []string{tC.filename}, compiler.Assemble|compiler.Run)
 			if result != 0 {
 				t.Errorf("test %s failed with code %d", tC.filename, result)
 			}

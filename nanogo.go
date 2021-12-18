@@ -35,16 +35,15 @@ func main() {
 	command := flag.Arg(0)
 	printUsage := flag.NArg() < 2
 
-	assemble := false
-	run := false
-	_ = run
+	mode := compiler.Asm
 
 	switch command {
+	case "i", "ir":
+		mode = compiler.IR
 	case "b", "build":
-		assemble = true
+		mode = compiler.Assemble
 	case "r", "run":
-		assemble = true
-		run = true
+		mode = compiler.Assemble | compiler.Run
 	case "s", "asm":
 	default:
 		printUsage = true
@@ -83,7 +82,7 @@ func main() {
 		arch.SetArch(*theArch)
 	}
 
-	result := compiler.Compile(outname, *dir, flag.Args()[1:], assemble, run)
+	result := compiler.Compile(outname, *dir, flag.Args()[1:], mode)
 
 	os.Exit(result)
 }
