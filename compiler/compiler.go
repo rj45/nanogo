@@ -75,7 +75,6 @@ var _ io.WriteCloser = nopWriteCloser{}
 
 var dump = flag.String("dump", "", "Dump a function to ssa.html")
 var trace = flag.Bool("trace", false, "debug program with tracing info")
-var ngir = flag.String("ngir", "", "Read ngir file")
 
 func Compile(outname, dir string, patterns []string, mode Mode) int {
 	log.SetFlags(log.Lshortfile)
@@ -83,15 +82,15 @@ func Compile(outname, dir string, patterns []string, mode Mode) int {
 	var finalout io.WriteCloser
 	var asmout io.WriteCloser
 
-	if *ngir != "" {
-		f, err := os.Open(*ngir)
+	if filepath.Ext(patterns[0]) == ".ngir" {
+		f, err := os.Open(patterns[0])
 		if err != nil {
 			panic(err)
 		}
 		defer f.Close()
 
 		prog := &ir2.Program{}
-		p, err := parseir.NewParser(*ngir, f, prog, *trace)
+		p, err := parseir.NewParser(patterns[0], f, prog, *trace)
 		if err != nil {
 			panic(err)
 		}
