@@ -39,7 +39,7 @@ var arch Arch
 type Mode int
 
 const (
-	Asm Mode = iota << 1
+	Asm Mode = 1 << iota
 	Assemble
 	Run
 	IR
