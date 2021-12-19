@@ -25,10 +25,6 @@ func (p *Parser) parseFunc() {
 	p.blkLabels = make(map[string]*ir2.Block)
 	p.values = make(map[string]*ir2.Value)
 	p.blkLinks = make(map[*ir2.Block][]string)
-	p.valLinks = make(map[*ir2.Instr]struct {
-		label string
-		pos   int
-	})
 
 	for {
 		tok, lit := p.scan()
@@ -67,20 +63,14 @@ func (p *Parser) resolveLinks() {
 			}
 			a.AddSucc(b)
 			b.AddPred(a)
-			if p.trace {
-				p.printTrace("linked block", a, "to succ", b)
-			}
 		}
 	}
 
-	for ins, arg := range p.valLinks {
-		v, ok := p.values[arg.label]
-		if !ok {
-			p.errorf("unable to resolve value link %s from %s in %s", arg.label, ins, p.fn.FullName)
-			continue
+	for _, label := range p.fn.PlaceholderLabels() {
+		if v, ok := p.values[label]; ok {
+			p.fn.ResolvePlaceholder(label, v)
 		}
-
-		ins.ReplaceArg(arg.pos, v)
+		// remaining unresolved placeholders should be globals
 	}
 }
 

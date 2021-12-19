@@ -50,7 +50,6 @@ func (fe *FrontEnd) translateFunc(irFunc *ir2.Func, ssaFunc *ssa.Function) {
 
 		fe.blockmap[ssaBlock] = irBlock
 
-		// walkInstrs(irBlock, block.Instrs, valmap, storemap)
 		fe.translateInstrs(irBlock, ssaBlock)
 
 		lastInstr := ssaBlock.Instrs[len(ssaBlock.Instrs)-1]

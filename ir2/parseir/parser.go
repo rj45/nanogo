@@ -39,14 +39,6 @@ type Parser struct {
 
 	// forward reference links
 	blkLinks map[*ir2.Block][]string
-	valLinks map[*ir2.Instr]struct {
-		label string
-		pos   int
-	}
-	globLinks map[*ir2.Instr]struct {
-		fullname string
-		pos      int
-	}
 
 	// debugging / diagnostics
 	indent int
