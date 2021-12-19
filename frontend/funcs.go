@@ -73,12 +73,15 @@ func (fe *FrontEnd) translateFunc(irFunc *ir2.Func, ssaFunc *ssa.Function) {
 		}
 	}
 
+	fe.resolvePlaceholders(irFunc)
+
 	for _, block := range blockList {
 		irBlock := fe.blockmap[block]
 
 		for it := irBlock.InstrIter(); it.HasNext(); it.Next() {
 			if ssaInstr, ok := fe.instrmap[it.Instr()]; ok {
-				fe.translateArgs(it, ssaInstr)
+				_ = ssaInstr
+				// fe.translateArgs(it.Block(), it.Instr(), ssaInstr)
 			} else if it.Instr().Op != op.Parameter {
 				log.Panicf("missing instruction: %v : %d/%d, %d/%d", it.Instr(),
 					it.BlockIndex(), irFunc.NumBlocks(),

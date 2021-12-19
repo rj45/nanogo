@@ -35,6 +35,8 @@ type FrontEnd struct {
 	val2instr map[ssa.Value]*ir2.Instr
 	val2val   map[ssa.Value]*ir2.Value
 	blockmap  map[*ssa.BasicBlock]*ir2.Block
+
+	placeholders map[string]ssa.Value
 }
 
 func NewFrontEnd(dir string, patterns ...string) *FrontEnd {

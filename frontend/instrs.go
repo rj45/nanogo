@@ -182,6 +182,8 @@ func (fe *FrontEnd) translateInstrs(irBlock *ir2.Block, ssaBlock *ssa.BasicBlock
 			ins.InsertArg(-1, arg)
 		}
 
+		fe.translateArgs(irBlock, ins, instr)
+
 		if ins == nil {
 			log.Panicf("ins is nil! %s", instr)
 		}
@@ -200,10 +202,9 @@ func (fe *FrontEnd) translateInstrs(irBlock *ir2.Block, ssaBlock *ssa.BasicBlock
 	}
 }
 
-func (fe *FrontEnd) translateArgs(it *ir2.BlockIter, instr ssa.Instruction) {
+func (fe *FrontEnd) translateArgs(block *ir2.Block, irInstr *ir2.Instr, ssaInstr ssa.Instruction) {
 	var valarr [10]*ssa.Value
-	vals := instr.Operands(valarr[:0])
-	block := it.Block()
+	vals := ssaInstr.Operands(valarr[:0])
 
 	for _, val := range vals {
 		if val == nil {
@@ -221,7 +222,7 @@ func (fe *FrontEnd) translateArgs(it *ir2.BlockIter, instr ssa.Instruction) {
 			case *ssa.Const:
 				if con.Type().Underlying().String() == "string" {
 					str := constant.StringVal(con.Value)
-					fn := it.Block().Func()
+					fn := block.Func()
 					glob := fn.Package().NewStringLiteral(fn.Name, str)
 					glob.Referenced = true
 					arg = glob
@@ -242,7 +243,6 @@ func (fe *FrontEnd) translateArgs(it *ir2.BlockIter, instr ssa.Instruction) {
 				block.Func().NumCalls++
 
 			case *ssa.Builtin:
-				con.Type()
 				arg = con.Name()
 
 			case *ssa.Global:
@@ -260,7 +260,6 @@ func (fe *FrontEnd) translateArgs(it *ir2.BlockIter, instr ssa.Instruction) {
 				arg = ir2.ConstFor(nil)
 
 			default:
-
 				ok = false
 			}
 		}
@@ -269,10 +268,27 @@ func (fe *FrontEnd) translateArgs(it *ir2.BlockIter, instr ssa.Instruction) {
 			if *val != nil {
 				typ = (*val).Type()
 			}
-			v := it.Block().Func().ValueFor(typ, arg)
-			it.Instr().InsertArg(-1, v)
+			v := block.Func().ValueFor(typ, arg)
+			irInstr.InsertArg(-1, v)
 		} else {
-			log.Printf("Unmapped value: %#v for %s\n", *val, instr)
+			if fe.placeholders == nil {
+				fe.placeholders = make(map[string]ssa.Value)
+			}
+			name := (*val).Name()
+			fe.placeholders[name] = *val
+			irInstr.InsertArg(-1, block.Func().PlaceholderFor(name))
 		}
 	}
+}
+
+func (fe *FrontEnd) resolvePlaceholders(fn *ir2.Func) {
+	for _, label := range fn.PlaceholderLabels() {
+		ssaValue := fe.placeholders[label]
+		irValue, ok := fe.val2val[ssaValue]
+		if !ok {
+			log.Fatalf("Unmapped value: %s: %#v for %s\n", label, ssaValue, fn.FullName)
+		}
+		fn.ResolvePlaceholder(label, irValue)
+	}
+	fe.placeholders = nil
 }

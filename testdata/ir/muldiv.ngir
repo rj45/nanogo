@@ -11,7 +11,7 @@ func main__init:
 .b1:
   jump2 b3
 .b2:
-  v1:bool = store  ^main__init_guard, true
+  v2:bool = store  ^main__init_guard, true
   jump2 b3
 .b3:
   return2
@@ -22,24 +22,24 @@ func main__mulu:
   v3:uint = parameter b:uint
   jump2 b1
 .b1:
-  v4:uint = phi    v1, v12
-  v5:uint = phi    v3, v13
-  v6:uint = phi    0, v11
-  v7:bool = greater v5, 0
-  if2    v7, b2, b6
+  v4:uint = phi    v1, v14
+  v5:uint = phi    v3, v15
+  v6:uint = phi    0, v13
+  v8:bool = greater v5, 0
+  if2    v8, b2, b6
 .b2:
-  v8:uint = and    v5, 1
-  v9:bool = notEqual v8, 0
-  if2    v9, b4, b3
+  v9:uint = and    v5, 1
+  v11:bool = notEqual v9, 0
+  if2    v11, b4, b3
 .b3:
   jump2 b5
 .b4:
-  v10:uint = add    v6, v4
+  v12:uint = add    v6, v4
   jump2 b5
 .b5:
-  v11:uint = phi    v6, v10
-  v12:uint = shiftLeft v4, 1
-  v13:uint = shiftRight v5, 1
+  v13:uint = phi    v6, v12
+  v14:uint = shiftLeft v4, 1
+  v15:uint = shiftRight v5, 1
   jump2 b1
 .b6:
   return2 v6
@@ -51,81 +51,81 @@ func main__divu:
   v4:bool = equal  v3, 0
   if2    v4, b1, b2
 .b1:
-  v5:interface{} = makeInterface -255
-  panic2 v5
+  v6:interface{} = makeInterface -255
+  panic2 v6
 .b2:
   jump2 b3
 .b3:
-  v6:uint = phi    0, v21
-  v7:uint = phi    0, v22
-  v8:int = phi    15, v23
-  v9:bool = greaterEqual v8, 0
-  if2    v9, b4, b8
+  v8:uint = phi    0, v25
+  v9:uint = phi    0, v26
+  v10:int = phi    15, v27
+  v12:bool = greaterEqual v10, 0
+  if2    v12, b4, b8
 .b4:
-  v10:uint = shiftLeft v6, 1
-  v11:uint = shiftLeft v7, 1
-  v12:uint = convert v8
-  v13:uint = shiftLeft 1, v12
-  v14:uint = and    v1, v13
-  v15:uint = convert v8
-  v16:uint = shiftRight v14, v15
-  v17:uint = or     v11, v16
-  v18:bool = greaterEqual v17, v3
-  if2    v18, b6, b5
+  v13:uint = shiftLeft v8, 1
+  v15:uint = shiftLeft v9, 1
+  v16:uint = convert v10
+  v17:uint = shiftLeft 1, v16
+  v18:uint = and    v1, v17
+  v19:uint = convert v10
+  v20:uint = shiftRight v18, v19
+  v21:uint = or     v15, v20
+  v22:bool = greaterEqual v21, v3
+  if2    v22, b6, b5
 .b5:
   jump2 b7
 .b6:
-  v19:uint = sub    v17, v3
-  v20:uint = or     v10, 1
+  v23:uint = sub    v21, v3
+  v24:uint = or     v13, 1
   jump2 b7
 .b7:
-  v21:uint = phi    v10, v20
-  v22:uint = phi    v17, v19
-  v23:int = sub    v8, 1
+  v25:uint = phi    v13, v24
+  v26:uint = phi    v21, v23
+  v27:int = sub    v10, 1
   jump2 b3
 .b8:
-  return2 v6, v7
+  return2 v8, v9
 
 func main__main:
 .b0:
   v0:uint = call   ^main__mulu, 2, 5
-  v1:bool = notEqual v0, 10
-  if2    v1, b1, b2
+  v4:bool = notEqual v0, 10
+  if2    v4, b1, b2
 .b1:
-  v2:interface{} = makeInterface v0
-  panic2 v2
+  v6:interface{} = makeInterface v0
+  panic2 v6
 .b2:
-  v3:uint = call   ^main__mulu, 49, 1234
-  v4:bool = notEqual v3, 60466
-  if2    v4, b3, b4
+  v7:uint = call   ^main__mulu, 49, 1234
+  v10:bool = notEqual v7, 60466
+  if2    v10, b3, b4
 .b3:
-  v5:interface{} = makeInterface v3
-  panic2 v5
+  v12:interface{} = makeInterface v7
+  panic2 v12
 .b4:
-  v6:uint, v7:uint = call   ^main__divu, 10, 5
-  v8:bool = notEqual v6, 2
-  if2    v8, b5, b6
+  v13:uint, v14:uint = call   ^main__divu, 10, 5
+  v16:bool = notEqual v13, 2
+  if2    v16, b5, b6
 .b5:
-  v9:interface{} = makeInterface v6
-  panic2 v9
-.b6:
-  v10:bool = notEqual v7, 0
-  if2    v10, b7, b8
-.b7:
-  v11:interface{} = makeInterface v7
-  panic2 v11
-.b8:
-  v12:uint, v13:uint = call   ^main__divu, 1234, 13
-  v14:bool = notEqual v12, 94
-  if2    v14, b9, b10
-.b9:
-  v15:interface{} = makeInterface v12
-  panic2 v15
-.b10:
-  v16:bool = notEqual v13, 12
-  if2    v16, b11, b12
-.b11:
   v17:interface{} = makeInterface v13
   panic2 v17
+.b6:
+  v18:bool = notEqual v14, 0
+  if2    v18, b7, b8
+.b7:
+  v20:interface{} = makeInterface v14
+  panic2 v20
+.b8:
+  v21:uint, v22:uint = call   ^main__divu, 1234, 13
+  v24:bool = notEqual v21, 94
+  if2    v24, b9, b10
+.b9:
+  v26:interface{} = makeInterface v21
+  panic2 v26
+.b10:
+  v27:bool = notEqual v22, 12
+  if2    v27, b11, b12
+.b11:
+  v29:interface{} = makeInterface v22
+  panic2 v29
 .b12:
   return2
