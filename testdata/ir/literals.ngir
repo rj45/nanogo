@@ -1,5 +1,3 @@
-package runtime "runtime"
-
 package main "github.com/rj45/nanogo/testdata/literals"
 
 var main__init_guard:*bool
@@ -47,3 +45,5 @@ func main__main:
   v33:[]int = slice  v21, nil, nil, nil
   callBuiltin print:func(string), v33
   return2
+
+package runtime "runtime"

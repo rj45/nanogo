@@ -56,7 +56,7 @@ func (p *Parser) parseInstr() {
 			defs = list
 			list = nil
 
-		case token.SUB, token.INT, token.IDENT, token.XOR:
+		case token.SUB, token.INT, token.IDENT, token.XOR, token.RANGE:
 			p.unscan()
 
 			if last.tok == token.ILLEGAL {
@@ -109,7 +109,7 @@ func (p *Parser) parseVar() typedToken {
 		return typedToken{
 			tok: tok, lit: lit, typ: nil, glob: true}
 
-	case token.IDENT:
+	case token.IDENT, token.RANGE:
 		next, _ := p.scan()
 		p.unscan()
 		var typ types.Type
@@ -165,7 +165,7 @@ func (p *Parser) addInstr(defs []typedToken, opcode string, args []typedToken) {
 	ins := p.fn.NewInstr(opv, nil)
 
 	for _, def := range defs {
-		if def.typ == nil {
+		if def.typ == nil && opcode != "next" {
 			p.errorf("def %s is missing a type for instruction %s", def.lit, opcode)
 		}
 		v := ins.AddDef(p.fn.NewValue(def.typ))
@@ -194,6 +194,17 @@ func (p *Parser) addInstr(defs []typedToken, opcode string, args []typedToken) {
 
 			val := p.fn.ValueFor(glob.Type, glob)
 			glob.Referenced = true
+			ins.InsertArg(an, val)
+			continue
+		}
+
+		if fn := p.prog.Func(arg.lit); fn != nil {
+			if p.trace {
+				p.printTrace("arg type: func", fn.FullName)
+			}
+
+			fn.Referenced = true
+			val := p.fn.ValueFor(fn.Sig, fn)
 			ins.InsertArg(an, val)
 			continue
 		}

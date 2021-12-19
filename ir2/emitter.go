@@ -5,6 +5,8 @@ import (
 	"fmt"
 	"go/types"
 	"io"
+	"sort"
+	"strings"
 )
 
 type Decorator interface {
@@ -20,7 +22,15 @@ type Decorator interface {
 
 func (prog *Program) Emit(out io.Writer, dec Decorator) {
 	dec.Begin(out, prog)
-	for i, pkg := range prog.packages {
+
+	pkgs := prog.Packages()
+
+	// ensure deterministic package order
+	sort.SliceStable(pkgs, func(i, j int) bool {
+		return strings.Compare(pkgs[i].Path, pkgs[j].Path) < 0
+	})
+
+	for i, pkg := range pkgs {
 		if i != 0 {
 			fmt.Fprintln(out)
 		}

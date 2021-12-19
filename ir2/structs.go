@@ -119,6 +119,7 @@ type Block struct {
 // Op describes an operation (instruction) type
 type Op interface {
 	String() string
+	IsCall() bool
 	IsCompare() bool
 	IsCopy() bool
 	IsCommutative() bool
@@ -146,7 +147,7 @@ type Instr struct {
 type ValueLoc uint8
 
 const (
-	Invalid ValueLoc = iota
+	VInvalid ValueLoc = iota
 	VConst
 	VFunc
 	VTemp

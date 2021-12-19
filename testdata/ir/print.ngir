@@ -1,0 +1,45 @@
+package main "github.com/rj45/nanogo/testdata/print"
+
+var main__init_guard:*bool
+var main__main_1:string = "Hello, World!\r\n"
+
+func main__init:
+.b0:
+  v0:bool = load   ^main__init_guard
+  if2    v0, b1, b2
+.b1:
+  jump2 b3
+.b2:
+  v2:bool = store  ^main__init_guard, true
+  jump2 b3
+.b3:
+  return2
+
+func main__printstr:
+.b0:
+  v0:string = parameter s:string
+  v2:iter = range  v0
+  jump2 b1
+.b1:
+  v3:int = phi    0, v9
+  v5:bool, v6, v7:rune = next   v2
+  if2    v5, b2, b3
+.b2:
+  callBuiltin print:func(rune), v7
+  v9:int = add    v3, 1
+  jump2 b1
+.b3:
+  return2 v3
+
+func main__main:
+.b0:
+  v0:int = call   ^main__printstr, ^main__main_1
+  v3:bool = notEqual v0, 15
+  if2    v3, b1, b2
+.b1:
+  v5:interface{} = makeInterface v0
+  panic2 v5
+.b2:
+  return2
+
+package runtime "runtime"

@@ -38,6 +38,16 @@ func (in *Instr) Update(op Op, typ types.Type, args ...interface{}) {
 func (in *Instr) update(fn *Func, op Op, typ types.Type, args []interface{}) {
 	in.Op = op
 
+	if tuple, ok := typ.(*types.Tuple); ok {
+		for i := 0; i < tuple.Len(); i++ {
+			v := tuple.At(i)
+
+			in.updateDef(fn, i, v.Type())
+		}
+	} else if typ != nil {
+		in.updateDef(fn, 0, typ)
+	}
+
 	for i, a := range args {
 		arg := fn.ValueFor(typ, a)
 
@@ -47,16 +57,6 @@ func (in *Instr) update(fn *Func, op Op, typ types.Type, args []interface{}) {
 	for len(in.args) > len(args) {
 		// todo: replace with in.RemoveArgAt()?
 		in.RemoveArg(in.args[len(in.args)-1])
-	}
-
-	if tuple, ok := typ.(*types.Tuple); ok {
-		for i := 0; i < tuple.Len(); i++ {
-			v := tuple.At(i)
-
-			in.updateDef(fn, i, v.Type())
-		}
-	} else if typ != nil {
-		in.updateDef(fn, 0, typ)
 	}
 }
 
@@ -99,6 +99,7 @@ func (in *Instr) AddDef(val *Value) *Value {
 
 // updateDef updates an existing def or adds one if necessary
 func (in *Instr) updateDef(fn *Func, i int, typ types.Type) *Value {
+	typ = validType(typ)
 	if len(in.defs) < i {
 		in.defs[i].Type = typ
 		return in.defs[i]

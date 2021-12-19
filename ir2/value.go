@@ -10,7 +10,21 @@ import (
 func (val *Value) init(id ID, typ types.Type) {
 	val.uses = val.usestorage[:0]
 	val.ID = id
-	val.Type = typ
+	if typ != nil {
+		if t, ok := typ.(*types.Basic); ok && t.Kind() == types.Invalid {
+			typ = nil
+		}
+	}
+	val.Type = validType(typ)
+}
+
+func validType(typ types.Type) types.Type {
+	if typ != nil {
+		if t, ok := typ.(*types.Basic); ok && t.Kind() == types.Invalid {
+			return nil
+		}
+	}
+	return typ
 }
 
 // Func returns the containing Func

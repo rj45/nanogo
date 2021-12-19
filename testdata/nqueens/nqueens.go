@@ -4,12 +4,10 @@ package main
 
 const N = 8
 
-type point struct {
+var board [N]struct {
 	x int
 	y int
 }
-
-var board [N]point
 var num int
 
 func main() {

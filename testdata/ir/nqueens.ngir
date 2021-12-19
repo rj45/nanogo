@@ -1,0 +1,173 @@
+package main "github.com/rj45/nanogo/testdata/nqueens"
+
+var main__init_guard:*bool
+var main__board:*[8]struct{x int; y int}
+var main__num:*int
+var main__printBoard_1:string = ": "
+var main__printBoard_2:string = "("
+var main__printBoard_3:string = ","
+var main__printBoard_4:string = ") "
+var main__printBoard_5:string = " "
+
+func main__init:
+.b0:
+  v0:bool = load   ^main__init_guard
+  if2    v0, b1, b2
+.b1:
+  jump2 b3
+.b2:
+  v2:bool = store  ^main__init_guard, true
+  jump2 b3
+.b3:
+  return2
+
+func main__main:
+.b0:
+  jump2 b1
+.b1:
+  v0:int = phi    0, v5
+  v2:bool = less   v0, 8
+  if2    v2, b2, b3
+.b2:
+  call   ^main__recurse, v0, 0, 0
+  v5:int = add    v0, 1
+  jump2 b1
+.b3:
+  v7:int = load   ^main__num
+  callBuiltin println:func(int), v7
+  v10:int = load   ^main__num
+  v11:bool = notEqual v10, 92
+  if2    v11, b4, b5
+.b4:
+  v13:int = load   ^main__num
+  v14:interface{} = makeInterface v13
+  panic2 v14
+.b5:
+  return2
+
+func main__recurse:
+.b0:
+  v0:int = parameter x:int
+  v2:int = parameter y:int
+  v4:int = parameter n:int
+  v6:*struct{x int; y int} = indexAddr ^main__board, v4
+  v8:*int = fieldAddr 0, v6
+  v10:int = store  v8, v0
+  v11:*struct{x int; y int} = indexAddr ^main__board, v4
+  v12:*int = fieldAddr 1, v11
+  v14:int = store  v12, v2
+  v15:int = add    v4, 1
+  v16:bool = equal  v15, 8
+  if2    v16, b2, b1
+.b1:
+  jump2 b3
+.b2:
+  v18:int = load   ^main__num
+  v20:int = add    v18, 1
+  v21:int = store  ^main__num, v20
+  call   ^main__printBoard
+  jump2 b3
+.b3:
+  jump2 b4
+.b4:
+  v23:int = phi    0, v55
+  v24:bool = less   v23, 8
+  if2    v24, b5, b25
+.b5:
+  jump2 b6
+.b6:
+  v25:int = phi    v2, v54
+  v26:bool = less   v25, 8
+  if2    v26, b7, b24
+.b7:
+  jump2 b8
+.b8:
+  v27:int = phi    0, v52
+  v28:bool = less   v27, v15
+  if2    v28, b9, b22
+.b9:
+  v29:*struct{x int; y int} = indexAddr ^main__board, v27
+  v30:*int = fieldAddr 0, v29
+  v31:int = load   v30
+  v32:bool = equal  v23, v31
+  if2    v32, b10, b11
+.b10:
+  jump2 b23
+.b11:
+  v33:*struct{x int; y int} = indexAddr ^main__board, v27
+  v34:*int = fieldAddr 1, v33
+  v35:int = load   v34
+  v36:bool = equal  v25, v35
+  if2    v36, b12, b13
+.b12:
+  jump2 b23
+.b13:
+  v37:*struct{x int; y int} = indexAddr ^main__board, v27
+  v38:*int = fieldAddr 1, v37
+  v39:int = load   v38
+  v40:int = sub    v39, v25
+  v41:bool = less   v40, 0
+  if2    v41, b15, b14
+.b14:
+  jump2 b16
+.b15:
+  v42:int = negate v40
+  jump2 b16
+.b16:
+  v43:int = phi    v40, v42
+  v44:*struct{x int; y int} = indexAddr ^main__board, v27
+  v45:*int = fieldAddr 0, v44
+  v46:int = load   v45
+  v47:int = sub    v46, v23
+  v48:bool = less   v47, 0
+  if2    v48, b18, b17
+.b17:
+  jump2 b19
+.b18:
+  v49:int = negate v47
+  jump2 b19
+.b19:
+  v50:int = phi    v47, v49
+  v51:bool = equal  v43, v50
+  if2    v51, b20, b21
+.b20:
+  jump2 b23
+.b21:
+  v52:int = add    v27, 1
+  jump2 b8
+.b22:
+  call   ^main__recurse, v23, v25, v15
+  jump2 b23
+.b23:
+  v54:int = add    v25, 1
+  jump2 b6
+.b24:
+  v55:int = add    v23, 1
+  jump2 b4
+.b25:
+  return2
+
+func main__printBoard:
+.b0:
+  v0:int = load   ^main__num
+  callBuiltin print:func(int, string), v0, ^main__printBoard_1
+  jump2 b1
+.b1:
+  v4:int = phi    0, v19
+  v6:bool = less   v4, 8
+  if2    v6, b2, b3
+.b2:
+  v8:*struct{x int; y int} = indexAddr ^main__board, v4
+  v10:*int = fieldAddr 0, v8
+  v11:int = load   v10
+  v12:*struct{x int; y int} = indexAddr ^main__board, v4
+  v13:*int = fieldAddr 1, v12
+  v15:int = load   v13
+  callBuiltin print:func(int, string), ^main__printBoard_2, v11, ^main__printBoard_3, v15, ^main__printBoard_4
+  v19:int = add    v4, 1
+  jump2 b1
+.b3:
+  callBuiltin println:func(string), ^main__printBoard_5
+  return2
+
+package runtime "runtime"

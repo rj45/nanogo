@@ -6,6 +6,15 @@ import (
 	"strconv"
 )
 
+type opaqueType struct {
+	types.Type
+	name string
+}
+
+func (t *opaqueType) String() string { return t.name }
+
+var tRangeIter = &opaqueType{nil, "iter"}
+
 func (p *Parser) parseColonType() types.Type {
 	if p.trace {
 		defer un(trace(p, "colonType"))
@@ -110,6 +119,10 @@ func (p *Parser) parseTypeName() types.Type {
 		typ := types.Universe.Lookup(name)
 		if typ != nil {
 			return typ.Type()
+		}
+
+		if name == "iter" {
+			return tRangeIter
 		}
 	}
 
@@ -322,7 +335,7 @@ func (p *Parser) parseParamDecl() *types.Var {
 			p.scan()
 			typ = p.lookupTypeFor(name, lit)
 			name = ""
-		case token.RPAREN:
+		case token.RPAREN, token.COMMA:
 			typ = p.lookupTypeFor("", name)
 			name = ""
 		default:

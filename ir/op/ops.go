@@ -39,6 +39,10 @@ func (op Op) IsCommutative() bool {
 	return op.Def().Commute
 }
 
+func (op Op) IsCall() bool {
+	return op == Call
+}
+
 func (op Op) ClobbersArg() bool {
 	return op.Def().ClobArg && twoOperand
 }
