@@ -20,6 +20,7 @@ package ir2
 import (
 	"go/token"
 	"go/types"
+	"math"
 )
 
 // Program is a collection of packages,
@@ -58,6 +59,12 @@ type Global struct {
 	Value Const
 }
 
+// ID is an identifier that's unique within a Func
+type ID uint
+
+// Placeholder is an invalid ID meant to signal a place that needs to be filled
+const Placeholder ID = math.MaxUint
+
 // Func is a collection of Blocks, which comprise
 // a function or method in a Program.
 type Func struct {
@@ -74,6 +81,9 @@ type Func struct {
 
 	consts map[Const]*Value
 
+	// placeholders that need filling
+	placeholders map[string]*Value
+
 	// ID to node mappings
 	idBlocks []*Block
 	idValues []*Value
@@ -85,9 +95,6 @@ type Func struct {
 	valueslab []Value
 	instrslab []Instr
 }
-
-// ID is an identifier that's unique within a Func
-type ID uint
 
 // Block is a collection of Instrs which is a basic block
 // in a control flow graph. The last Instr of a block must
@@ -109,6 +116,7 @@ type Block struct {
 	succstorage  [2]*Block
 }
 
+// Op describes an operation (instruction) type
 type Op interface {
 	String() string
 	IsCompare() bool
@@ -117,7 +125,7 @@ type Op interface {
 }
 
 // Instr is an instruction that may define one or more Values,
-// and take as Args (operands) one or more Values.
+// and take as args (operands) one or more Values.
 type Instr struct {
 	ID
 	Op

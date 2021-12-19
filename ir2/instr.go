@@ -137,9 +137,11 @@ func (in *Instr) Arg(i int) *Value {
 // InsertArg inserts the Value in the argument
 // list at position i, or appending if i is -1
 func (in *Instr) InsertArg(i int, arg *Value) {
-	if arg != nil {
-		arg.addUse(in)
+	if arg == nil {
+		panic("tried to insert a nil arg, use placeholder instead")
 	}
+
+	arg.addUse(in)
 
 	if i < 0 || i >= len(in.args) {
 		in.args = append(in.args, arg)

@@ -226,6 +226,9 @@ func (in *Instr) LongString() string {
 }
 
 func (val *Value) String() string {
+	if val.ID == Placeholder {
+		return "<" + val.Const.String() + ">"
+	}
 	if val.Const != nil {
 		return val.Const.String()
 	}

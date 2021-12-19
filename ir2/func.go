@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"go/types"
 	"log"
+	"sort"
 )
 
 // slab allocation sizes
@@ -69,6 +70,66 @@ func (fn *Func) ValueFor(typ types.Type, v interface{}) *Value {
 	}
 
 	panic(fmt.Sprintf("can't get value for %T %#v", v, v))
+}
+
+// Placeholders
+
+// PlaceholderFor creates a special placeholder value that can be later
+// resolved with a different value. This is useful for marking and
+// resolving forward references.
+func (fn *Func) PlaceholderFor(label string) *Value {
+	ph, found := fn.placeholders[label]
+	if found {
+		return ph
+	}
+
+	ph = &Value{
+		ID:    Placeholder,
+		Const: ConstFor(label),
+	}
+
+	if fn.placeholders == nil {
+		fn.placeholders = make(map[string]*Value)
+	}
+
+	fn.placeholders[label] = ph
+
+	return ph
+}
+
+// HasPlaceholders returns whether there are unresolved placeholders or not
+func (fn *Func) HasPlaceholders() bool {
+	return len(fn.placeholders) > 0
+}
+
+// ResolvePlaceholder removes the placeholder from the list, replacing its
+// uses with the specified value
+func (fn *Func) ResolvePlaceholder(label string, value *Value) {
+	if len(fn.placeholders[label].uses) < 1 {
+		panic("resolving unused placeholder " + label)
+	}
+
+	fn.placeholders[label].ReplaceUsesWith(value)
+
+	delete(fn.placeholders, label)
+	if len(fn.placeholders) == 0 {
+		fn.placeholders = nil
+	}
+}
+
+// PlaceholderLabels returns a sorted list of placeholder labels
+func (fn *Func) PlaceholderLabels() []string {
+	labels := make([]string, len(fn.placeholders))
+	i := 0
+	for lab := range fn.placeholders {
+		labels[i] = lab
+		i++
+	}
+
+	// sort to make this deterministic since maps have random order
+	sort.Strings(labels)
+
+	return labels
 }
 
 // Instrs

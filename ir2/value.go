@@ -39,7 +39,7 @@ func (val *Value) Use(i int) *Instr {
 // any definitions.
 func (val *Value) ReplaceUsesWith(other *Value) {
 	tries := 0
-	for len(val.uses) > 1 {
+	for len(val.uses) > 0 {
 		tries++
 		use := val.uses[len(val.uses)-1]
 		if tries > 1000 {
