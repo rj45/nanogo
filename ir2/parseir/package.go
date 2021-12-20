@@ -77,6 +77,8 @@ func (p *Parser) parsePackage() {
 			p.parseFunc()
 		case token.VAR:
 			p.parseGlobal()
+		case token.TYPE:
+			p.parseTypeDef()
 		default:
 			p.errorf("found %q %q, expected func", lit, tok)
 		}

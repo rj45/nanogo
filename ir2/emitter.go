@@ -44,6 +44,21 @@ func (pkg *Package) Emit(out io.Writer, dec Decorator) {
 	fmt.Fprintf(out, "package %s %q\n", pkg.Name, pkg.Path)
 
 	first := true
+	for _, td := range pkg.typedefs {
+		// todo: enable this somehow
+		// if !td.Referenced {
+		// 	continue
+		// }
+
+		if first {
+			first = false
+			fmt.Fprintln(out)
+		}
+
+		td.Emit(out, dec)
+	}
+
+	first = true
 	for _, glob := range pkg.globals {
 		if !glob.Referenced {
 			continue
@@ -54,21 +69,7 @@ func (pkg *Package) Emit(out io.Writer, dec Decorator) {
 			fmt.Fprintln(out)
 		}
 
-		val := glob.Value
-		valstr := ""
-		if val != nil {
-			// todo: wrap this in the decorator?
-			if val.Kind() == StringConst {
-				valstr = fmt.Sprintf(" = %q", val.String())
-			} else {
-				valstr = fmt.Sprintf(" = %s", val.String())
-			}
-		}
-
-		typstr := types.TypeString(glob.Type, qualifier(pkg.Type))
-		fmt.Fprintf(out, "var %s:%s%s\n",
-			dec.WrapLabel(glob.FullName, glob),
-			dec.WrapType(typstr), valstr)
+		glob.Emit(out, dec)
 	}
 
 	for _, fn := range pkg.funcs {
@@ -80,6 +81,39 @@ func (pkg *Package) Emit(out io.Writer, dec Decorator) {
 		fn.Emit(out, dec)
 	}
 	dec.End(out, pkg)
+}
+
+func (glob *Global) Emit(out io.Writer, dec Decorator) {
+	dec.Begin(out, glob)
+	val := glob.Value
+	valstr := ""
+	if val != nil {
+		// todo: wrap this in the decorator?
+		if val.Kind() == StringConst {
+			valstr = fmt.Sprintf(" = %q", val.String())
+		} else {
+			valstr = fmt.Sprintf(" = %s", val.String())
+		}
+	}
+
+	typstr := types.TypeString(glob.Type, qualifier(glob.pkg.Type))
+	fmt.Fprintf(out, "var %s:%s%s\n",
+		dec.WrapLabel(glob.FullName, glob),
+		dec.WrapType(typstr), valstr)
+
+	dec.End(out, glob)
+}
+
+func (td *TypeDef) Emit(out io.Writer, dec Decorator) {
+	dec.Begin(out, td)
+
+	typ := td.Type.Underlying()
+	typstr := types.TypeString(typ, qualifier(td.pkg.Type))
+	fmt.Fprintf(out, "type %s:%s\n",
+		dec.WrapLabel(td.Name, td),
+		dec.WrapType(typstr))
+
+	dec.End(out, td)
 }
 
 func (fn *Func) Emit(out io.Writer, dec Decorator) {

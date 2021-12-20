@@ -208,15 +208,17 @@
       - [x] Empty interfaces
       - [ ] Full interfaces
       - [ ] Named types
+        - [x] Type names and looking up the typedef
+        - [ ] Methods
       - [x] Struct types
       - [ ] Map types
       - [ ] Chan types
       - [ ] Tuple types?
-      - [ ] Type defs
-    - [ ] Constants parsed
-      - [ ] function references
-      - [ ] literal references
-      - [ ] global references
+      - [x] Type defs
+    - [x] Constants parsed
+      - [x] function references
+      - [x] literal references
+      - [x] global references
       - [x] numbers
     - [x] Instructions parsed
     - [x] block labels parsed
@@ -225,8 +227,11 @@
     - [x] packages parsed
     - [x] parses block references and links them
     - [x] parses value references and links them
-    - [ ] Global vars
-    - [ ] Global/Func forward references
+    - [x] Global vars
+    - [x] Global/Func forward references
+    - [ ] Refactor: better package naming
+      - [ ] Generate unique package names
+      - [ ] Identifiers in other packages are pkg_name.ident rather than pkg_name__ident
 
 - [ ] Rework xform system
 

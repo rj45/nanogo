@@ -79,6 +79,9 @@ func (fe *FrontEnd) Scan() {
 			pkg.NewGlobal(member.Name(), member.Type())
 
 		case token.TYPE:
+			pkg := fe.getPackage(member.Package().Pkg)
+			pkg.NewTypeDef(member.Name(), member.Type())
+
 		case token.CONST:
 		default:
 			log.Fatalln("unknown type", member.Token())

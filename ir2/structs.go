@@ -42,8 +42,9 @@ type Package struct {
 	Name string
 	Path string
 
-	funcs   []*Func
-	globals []*Global
+	funcs    []*Func
+	globals  []*Global
+	typedefs []*TypeDef
 }
 
 // Global is a global variable or literal stored in memory
@@ -57,6 +58,16 @@ type Global struct {
 
 	// initial value
 	Value Const
+}
+
+// TypeDef is a type definition
+type TypeDef struct {
+	pkg *Package
+
+	Name       string
+	Referenced bool
+
+	Type types.Type
 }
 
 // ID is an identifier that's unique within a Func

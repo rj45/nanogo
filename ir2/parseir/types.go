@@ -41,7 +41,7 @@ func (p *Parser) parseType() types.Type {
 
 	if typ == nil {
 		// no type found
-		p.errorf("expected type; found %q", p.buf.lit)
+		p.errorf("expected type; wasn't found")
 	}
 
 	return typ
@@ -115,27 +115,27 @@ func (p *Parser) parseTypeName() types.Type {
 		name = lit
 	} else {
 		p.unscan()
-
-		typ := types.Universe.Lookup(name)
-		if typ != nil {
-			return typ.Type()
-		}
-
-		if name == "iter" {
-			return tRangeIter
-		}
 	}
 
-	// todo:
-	// - lookup package and type
-	// - find in
+	typ := types.Universe.Lookup(name)
+	if typ != nil {
+		return typ.Type()
+	}
+
+	if name == "iter" {
+		return tRangeIter
+	}
 
 	if pkg.Type == nil {
 		panic("missing type on pkg " + pkg.Name)
 	}
 
-	_ = pkg
-	_ = name
+	td := pkg.TypeDef(name)
+	if td != nil {
+		return td.Type
+	}
+
+	p.errorf("unable to resolve type %s.%s", pkg.Name, name)
 
 	return nil
 }

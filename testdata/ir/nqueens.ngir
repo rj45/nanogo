@@ -1,7 +1,9 @@
 package main "github.com/rj45/nanogo/testdata/nqueens"
 
+type point:struct{x int; y int}
+
 var main__init_guard:*bool
-var main__board:*[8]struct{x int; y int}
+var main__board:*[8]point
 var main__num:*int
 var main__printBoard_1:string = ": "
 var main__printBoard_2:string = "("
@@ -50,10 +52,10 @@ func main__recurse:
   v0:int = parameter x:int
   v2:int = parameter y:int
   v4:int = parameter n:int
-  v6:*struct{x int; y int} = indexAddr ^main__board, v4
+  v6:*point = indexAddr ^main__board, v4
   v8:*int = fieldAddr 0, v6
   v10:int = store  v8, v0
-  v11:*struct{x int; y int} = indexAddr ^main__board, v4
+  v11:*point = indexAddr ^main__board, v4
   v12:*int = fieldAddr 1, v11
   v14:int = store  v12, v2
   v15:int = add    v4, 1
@@ -86,7 +88,7 @@ func main__recurse:
   v28:bool = less   v27, v15
   if2    v28, b9, b22
 .b9:
-  v29:*struct{x int; y int} = indexAddr ^main__board, v27
+  v29:*point = indexAddr ^main__board, v27
   v30:*int = fieldAddr 0, v29
   v31:int = load   v30
   v32:bool = equal  v23, v31
@@ -94,7 +96,7 @@ func main__recurse:
 .b10:
   jump2 b23
 .b11:
-  v33:*struct{x int; y int} = indexAddr ^main__board, v27
+  v33:*point = indexAddr ^main__board, v27
   v34:*int = fieldAddr 1, v33
   v35:int = load   v34
   v36:bool = equal  v25, v35
@@ -102,7 +104,7 @@ func main__recurse:
 .b12:
   jump2 b23
 .b13:
-  v37:*struct{x int; y int} = indexAddr ^main__board, v27
+  v37:*point = indexAddr ^main__board, v27
   v38:*int = fieldAddr 1, v37
   v39:int = load   v38
   v40:int = sub    v39, v25
@@ -115,7 +117,7 @@ func main__recurse:
   jump2 b16
 .b16:
   v43:int = phi    v40, v42
-  v44:*struct{x int; y int} = indexAddr ^main__board, v27
+  v44:*point = indexAddr ^main__board, v27
   v45:*int = fieldAddr 0, v44
   v46:int = load   v45
   v47:int = sub    v46, v23
@@ -157,10 +159,10 @@ func main__printBoard:
   v6:bool = less   v4, 8
   if2    v6, b2, b3
 .b2:
-  v8:*struct{x int; y int} = indexAddr ^main__board, v4
+  v8:*point = indexAddr ^main__board, v4
   v10:*int = fieldAddr 0, v8
   v11:int = load   v10
-  v12:*struct{x int; y int} = indexAddr ^main__board, v4
+  v12:*point = indexAddr ^main__board, v4
   v13:*int = fieldAddr 1, v12
   v15:int = load   v13
   callBuiltin print:func(int, string), ^main__printBoard_2, v11, ^main__printBoard_3, v15, ^main__printBoard_4
@@ -171,3 +173,6 @@ func main__printBoard:
   return2
 
 package runtime "runtime"
+
+type _string:struct{ptr *byte; length uintptr}
+type stringIterator:struct{index int}
