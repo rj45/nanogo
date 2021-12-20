@@ -86,14 +86,6 @@ func TestCompileToFromIR(t *testing.T) {
 		t.Run("compiles "+tC.desc+" IR identically", func(t *testing.T) {
 			arch.SetArch("rj32")
 
-			if tC.filename == "./nqueens/" {
-				// todo: in the parsed IR, placeholders must be used for func refs
-				// but in the go parser, all globals/funcs are known ahead of time so
-				// placeholders aren't needed. Need to figure out a way to not renumber
-				// subsequent values because of this.
-				t.Skip()
-			}
-
 			bufA := &bytes.Buffer{}
 			bufB := &bytes.Buffer{}
 

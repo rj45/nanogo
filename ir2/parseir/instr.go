@@ -9,6 +9,7 @@ import (
 	"regexp"
 
 	"github.com/rj45/nanogo/ir/op"
+	"github.com/rj45/nanogo/ir2"
 )
 
 type typedToken struct {
@@ -210,7 +211,22 @@ func (p *Parser) addInstr(defs []typedToken, opcode string, args []typedToken) {
 		}
 
 		if arg.glob {
-			ins.InsertArg(an, p.fn.PlaceholderFor(arg.lit))
+			if p.globals == nil {
+				p.globals = make(map[string]map[*ir2.Func]*ir2.Value)
+			}
+
+			val, found := p.globals[arg.lit][p.fn]
+			if !found {
+				val = p.fn.NewValue(nil)
+
+				if p.globals[arg.lit] == nil {
+					p.globals[arg.lit] = make(map[*ir2.Func]*ir2.Value)
+				}
+
+				p.globals[arg.lit][p.fn] = val
+			}
+
+			ins.InsertArg(an, val)
 			if p.trace {
 				p.printTrace("arg type: global placeholder", an)
 			}

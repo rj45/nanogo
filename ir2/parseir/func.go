@@ -67,10 +67,12 @@ func (p *Parser) resolveLinks() {
 	}
 
 	for _, label := range p.fn.PlaceholderLabels() {
-		if v, ok := p.values[label]; ok {
-			p.fn.ResolvePlaceholder(label, v)
+		v, ok := p.values[label]
+		if !ok {
+			p.errorf("unable to resolve placeholder value %s in %s", label, p.fn.FullName)
+			continue
 		}
-		// remaining unresolved placeholders should be globals
+		p.fn.ResolvePlaceholder(label, v)
 	}
 }
 

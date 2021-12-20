@@ -68,34 +68,32 @@ func (p *Parser) parseLiteral() ir2.Const {
 }
 
 func (p *Parser) resolveGlobalLinks() {
-	for _, pkg := range p.prog.Packages() {
-		for _, fn := range pkg.Funcs() {
-			for _, label := range fn.PlaceholderLabels() {
-				glob := p.prog.Global(label)
-				if glob != nil {
-					v := fn.ValueFor(glob.Type, glob)
-					fn.ResolvePlaceholder(label, v)
-					if p.trace {
-						p.printTrace("resolved", label, "with global", v)
-					}
-					glob.Referenced = true
-					continue
-				}
-
-				reffn := p.prog.Func(label)
-				if reffn == nil {
-					p.errorf("unable to resolve global link %s in %s", label, fn.FullName)
-					continue
-				}
-
-				reffn.Referenced = true
-
-				v := fn.ValueFor(reffn.Sig, reffn)
-				fn.ResolvePlaceholder(label, v)
-
+	for label, fnvals := range p.globals {
+		for fn, val := range fnvals {
+			glob := p.prog.Global(label)
+			if glob != nil {
+				val.Type = glob.Type
+				val.Const = ir2.ConstFor(glob)
 				if p.trace {
-					p.printTrace("resolved", label, "with func", v)
+					p.printTrace("resolved", label, "with global", glob)
 				}
+				glob.Referenced = true
+				continue
+			}
+
+			reffn := p.prog.Func(label)
+			if reffn == nil {
+				p.errorf("unable to resolve global link %s in %s", label, fn.FullName)
+				continue
+			}
+
+			reffn.Referenced = true
+
+			val.Type = reffn.Sig
+			val.Const = ir2.ConstFor(reffn)
+
+			if p.trace {
+				p.printTrace("resolved", label, "with func", fn.FullName)
 			}
 		}
 	}
