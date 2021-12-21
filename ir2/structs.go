@@ -163,6 +163,7 @@ const (
 	VFunc
 	VTemp
 	VReg
+	VArg
 	VStack
 	VGlob
 	VHeap

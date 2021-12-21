@@ -4,12 +4,61 @@ import (
 	"go/types"
 )
 
+// Iter is a iterator over instructions
+type Iter interface {
+	// Instr returns the current instruction
+	Instr() *Instr
+
+	// InstrIndex returns the index of the current instruction in the Block
+	InstrIndex() int
+
+	// Block returns the current block
+	Block() *Block
+
+	// BlockIndex returns the index of the Block within the Func
+	BlockIndex() int
+
+	// HasNext returns whether Next() will succeed
+	HasNext() bool
+
+	// Next increments the position and returns whether that was successful
+	Next() bool
+
+	// HasPrev returns whether Prev() will succeed
+	HasPrev() bool
+
+	// Prev decrements the position and returns whether that was successful
+	Prev() bool
+
+	// Insert inserts an instruction at the cursor position and increments the position
+	Insert(op Op, typ types.Type, args ...interface{}) *Instr
+
+	// Remove will remove the instruction at the current position and decrement the position,
+	// returning the removed instruction.
+	// NOTE: this only removes the instruction from the Block, it does not Unlink() it from
+	// any uses.
+	Remove() *Instr
+
+	// Update updates the instruction at the cursor position
+	Update(op Op, typ types.Type, args ...interface{}) *Instr
+
+	// HasChanged returns true if `Changed()` was called, or one of the mutation methods
+	HasChanged() bool
+
+	// Changed forces `HasChanged()` to return true
+	Changed()
+}
+
+var _ Iter = &BlockIter{}
+var _ Iter = &CrossBlockIter{}
+
 /// in-block iterator
 
 // BlockIter is an iterator that iterates over instructions in a Block
 type BlockIter struct {
-	blk    *Block
-	insIdx int
+	blk     *Block
+	insIdx  int
+	changed bool
 }
 
 // InstrIter will return an Iter which iterates over every
@@ -74,12 +123,24 @@ func (it *BlockIter) HasPrev() bool {
 	return it.insIdx >= 0 // todo: there is a bug here
 }
 
+// HasChanged returns true if `Changed()` was called, or one of the mutation methods
+func (it *BlockIter) HasChanged() bool {
+	return it.changed
+}
+
+// Changed forces `HasChanged()` to return true
+func (it *BlockIter) Changed() {
+	it.changed = true
+}
+
 // Insert inserts an instruction at the cursor position and increments the position
 func (it *BlockIter) Insert(op Op, typ types.Type, args ...interface{}) *Instr {
 	instr := it.blk.fn.NewInstr(op, typ, args...)
 
 	it.blk.InsertInstr(it.insIdx, instr)
 	it.Next()
+
+	it.changed = true
 
 	return instr
 }
@@ -95,6 +156,8 @@ func (it *BlockIter) Remove() *Instr {
 	it.blk.RemoveInstr(instr)
 	it.Prev()
 
+	it.changed = true
+
 	return instr
 }
 
@@ -103,6 +166,8 @@ func (it *BlockIter) Update(op Op, typ types.Type, args ...interface{}) *Instr {
 	instr := it.blk.instrs[it.insIdx]
 
 	instr.Update(op, typ, args...)
+
+	it.changed = true
 
 	return instr
 }
@@ -128,24 +193,25 @@ func (fn *Func) InstrIter() *CrossBlockIter {
 
 // HasNext returns whether Next() will succeed
 func (it *CrossBlockIter) HasNext() bool {
-	return it.insIdx < len(it.blk.instrs) && it.blkIdx < len(it.fn.blocks)
+	return (it.insIdx+1) < len(it.blk.instrs) || (it.blkIdx+1) < len(it.fn.blocks)
 }
 
 // Next increments the position and returns whether that was successful
 func (it *CrossBlockIter) Next() bool {
-	if it.insIdx >= len(it.blk.instrs) {
-		if (it.blkIdx + 1) >= len(it.fn.blocks) {
-			return false
-		}
+	if !it.HasNext() {
+		return false
+	}
 
+	it.insIdx++
+
+	if it.insIdx >= len(it.blk.instrs) {
 		it.blkIdx++
 		it.insIdx = 0
 		it.blk = it.fn.blocks[it.blkIdx]
 		return true
 	}
 
-	it.insIdx++
-	return it.insIdx < len(it.blk.instrs)
+	return true
 }
 
 // HasPrev returns whether Prev() will succeed

@@ -21,6 +21,9 @@ import (
 	"github.com/rj45/nanogo/parser"
 	"github.com/rj45/nanogo/regalloc"
 	"github.com/rj45/nanogo/xform"
+	"github.com/rj45/nanogo/xform2"
+
+	_ "github.com/rj45/nanogo/xform2/elaboration"
 )
 
 type Arch interface {
@@ -121,6 +124,8 @@ func Compile(outname, dir string, patterns []string, mode Mode) int {
 		fe.Scan()
 		for fn := fe.NextUnparsedFunc(); fn != nil; fn = fe.NextUnparsedFunc() {
 			fe.ParseFunc(fn)
+
+			xform2.Transform(xform2.Elaboration, fn)
 		}
 
 		fe.Program().Emit(finalout, ir2.SSAString{})

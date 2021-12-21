@@ -182,6 +182,7 @@
     - [x] Get it to parse programs to ir2
     - [x] Handle translating tuples to multiple return values
   - [x] Can emit IR code in a way that simplifies text, assembly and html generation
+    - [ ] Emits to ssa.html
   - [ ] Implement a simplified type system
     - [ ] integer types i/u 8,16,32,64
     - [ ] bool type
@@ -232,6 +233,21 @@
     - [ ] Refactor: better package naming
       - [ ] Generate unique package names
       - [ ] Identifiers in other packages are pkg_name.ident rather than pkg_name__ident
+    - [ ] Use github.com/nochso/ctxerr for error messages
+  - [ ] Transform xform pkg to use new IR
+    - [x] Register func with options for config
+      - [x] grabs name from passed xform func
+      - [x] tags
+      - [x] list of active stages
+      - [x] activating op
+      - [x] can be run on each instr
+      - [ ] can be run on each block
+      - [x] takes a func that takes an iterator
+        - [x] xform func responsible for leaving iterator in a resumable position
+        - [x] iterator tracks changes
+          - [x] ability to tell the iterator a change was made it can't see
+    - [ ] A way to run a single transform for testing w/tags
+    - [ ] A way to run a single stage for testing w/tags
 
 - [ ] Rework xform system
 

@@ -116,7 +116,7 @@ func (in *Instr) Args() []*Value {
 
 // NumArgs returns the number of arguments
 func (in *Instr) NumArgs() int {
-	return len(in.defs)
+	return len(in.args)
 }
 
 // ArgIndex returns the index of the arg, or
