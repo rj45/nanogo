@@ -53,12 +53,12 @@ func (fn *Func) ValueFor(typ types.Type, v interface{}) *Value {
 	}
 
 	con := ConstFor(v)
-	if con.Kind() != UnknownConst {
+	if con.Kind() != NotConst {
 		if conval, ok := fn.consts[con]; ok {
 			return conval
 		}
 		conval := fn.NewValue(typ)
-		conval.Const = con
+		conval.SetConst(con)
 
 		if fn.consts == nil {
 			fn.consts = make(map[Const]*Value)
@@ -84,9 +84,9 @@ func (fn *Func) PlaceholderFor(label string) *Value {
 	}
 
 	ph = &Value{
-		ID:    Placeholder,
-		Const: ConstFor(label),
+		ID: Placeholder,
 	}
+	ph.SetConst(ConstFor(label))
 
 	if fn.placeholders == nil {
 		fn.placeholders = make(map[string]*Value)

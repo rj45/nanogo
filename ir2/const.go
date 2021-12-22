@@ -6,42 +6,49 @@ import (
 )
 
 type (
-	unknownConst struct{}
-	nilConst     struct{}
-	boolConst    bool
-	stringConst  string
-	intConst     int64
-	funcConst    struct{ fn *Func }
-	globalConst  struct{ glob *Global }
+	notConst    struct{}
+	nilConst    struct{}
+	boolConst   bool
+	stringConst string
+	intConst    int64
+	funcConst   struct{ fn *Func }
+	globalConst struct{ glob *Global }
 )
 
-func (unknownConst) Kind() ConstKind { return UnknownConst }
-func (unknownConst) String() string  { return "<unk>" }
-func (unknownConst) private()        {}
+func (notConst) Location() Location { return InConst }
+func (notConst) Kind() ConstKind    { return NotConst }
+func (notConst) String() string     { return "<unk>" }
+func (notConst) private()           {}
 
-func (nilConst) Kind() ConstKind { return NilConst }
-func (nilConst) String() string  { return "nil" }
-func (nilConst) private()        {}
+func (nilConst) Location() Location { return InConst }
+func (nilConst) Kind() ConstKind    { return NilConst }
+func (nilConst) String() string     { return "nil" }
+func (nilConst) private()           {}
 
-func (c boolConst) Kind() ConstKind { return BoolConst }
-func (c boolConst) String() string  { return fmt.Sprintf("%v", bool(c)) }
-func (c boolConst) private()        {}
+func (c boolConst) Location() Location { return InConst }
+func (c boolConst) Kind() ConstKind    { return BoolConst }
+func (c boolConst) String() string     { return fmt.Sprintf("%v", bool(c)) }
+func (c boolConst) private()           {}
 
-func (c stringConst) Kind() ConstKind { return StringConst }
-func (c stringConst) String() string  { return string(c) }
-func (c stringConst) private()        {}
+func (c stringConst) Location() Location { return InConst }
+func (c stringConst) Kind() ConstKind    { return StringConst }
+func (c stringConst) String() string     { return string(c) }
+func (c stringConst) private()           {}
 
-func (c intConst) Kind() ConstKind { return IntConst }
-func (c intConst) String() string  { return fmt.Sprintf("%d", int64(c)) }
-func (c intConst) private()        {}
+func (c intConst) Location() Location { return InConst }
+func (c intConst) Kind() ConstKind    { return IntConst }
+func (c intConst) String() string     { return fmt.Sprintf("%d", int64(c)) }
+func (c intConst) private()           {}
 
-func (c funcConst) Kind() ConstKind { return FuncConst }
-func (c funcConst) String() string  { return c.fn.FullName }
-func (c funcConst) private()        {}
+func (c funcConst) Location() Location { return InConst }
+func (c funcConst) Kind() ConstKind    { return FuncConst }
+func (c funcConst) String() string     { return c.fn.FullName }
+func (c funcConst) private()           {}
 
-func (c globalConst) Kind() ConstKind { return GlobalConst }
-func (c globalConst) String() string  { return c.glob.FullName }
-func (c globalConst) private()        {}
+func (c globalConst) Location() Location { return InConst }
+func (c globalConst) Kind() ConstKind    { return GlobalConst }
+func (c globalConst) String() string     { return c.glob.FullName }
+func (c globalConst) private()           {}
 
 // Return a Const for a value
 func ConstFor(v interface{}) Const {
@@ -71,10 +78,10 @@ func ConstFor(v interface{}) Const {
 			if i, ok := constant.Int64Val(v); ok {
 				return intConst(i)
 			}
-			return unknownConst{}
+			return notConst{}
 
 		default:
-			return unknownConst{}
+			return notConst{}
 		}
 	case Const:
 		return v
@@ -82,7 +89,7 @@ func ConstFor(v interface{}) Const {
 	if v == nil {
 		return nilConst{}
 	}
-	return unknownConst{}
+	return notConst{}
 }
 
 // BoolValue returns a bool for a BoolConst

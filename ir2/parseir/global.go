@@ -73,7 +73,7 @@ func (p *Parser) resolveGlobalLinks() {
 			glob := p.prog.Global(label)
 			if glob != nil {
 				val.Type = glob.Type
-				val.Const = ir2.ConstFor(glob)
+				val.SetConst(ir2.ConstFor(glob))
 				if p.trace {
 					p.printTrace("resolved", label, "with global", glob)
 				}
@@ -90,7 +90,7 @@ func (p *Parser) resolveGlobalLinks() {
 			reffn.Referenced = true
 
 			val.Type = reffn.Sig
-			val.Const = ir2.ConstFor(reffn)
+			val.SetConst(ir2.ConstFor(reffn))
 
 			if p.trace {
 				p.printTrace("resolved", label, "with func", fn.FullName)

@@ -150,7 +150,7 @@ func (p *Parser) parseIntVar() typedToken {
 }
 
 var blockRefRe = regexp.MustCompile(`^b\d+$`)
-var valueRefRe = regexp.MustCompile(`^v\d+$`)
+var valueRefRe = regexp.MustCompile(`^v(\d+)(_\w+)?$`)
 
 func (p *Parser) addInstr(defs []typedToken, opcode string, args []typedToken) {
 	if p.trace {

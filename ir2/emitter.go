@@ -202,13 +202,13 @@ func (in *Instr) Emit(out io.Writer, dec Decorator) {
 		}
 
 		globref := ""
-		if arg.Const != nil && (arg.Const.Kind() == FuncConst || arg.Const.Kind() == GlobalConst) {
+		if arg.Const().Kind() == FuncConst || arg.Const().Kind() == GlobalConst {
 			globref = "^" // denote it's a global
 		}
 
 		argstr += dec.WrapRef(globref+arg.String(), arg)
 
-		if arg.Const != nil && arg.Const.Kind() == StringConst {
+		if arg.Const().Kind() == StringConst {
 			basic, ok := arg.Type.(*types.Basic)
 			if !ok || (basic.Info()&types.IsUntyped) == 0 {
 				argstr += ":"
@@ -271,10 +271,22 @@ func (in *Instr) LongString() string {
 
 func (val *Value) String() string {
 	if val.ID == Placeholder {
-		return "<" + val.Const.String() + ">"
+		return "<" + val.Const().String() + ">"
 	}
-	if val.Const != nil {
-		return val.Const.String()
+	if val.IsConst() {
+		return val.Const().String()
+	}
+	if val.InReg() {
+		return fmt.Sprintf("v%d_%s", val.ID, val.Reg())
+	}
+	if val.InArgSlot() {
+		return fmt.Sprintf("v%d_sa%d", val.ID, val.ArgSlot())
+	}
+	if val.InParamSlot() {
+		return fmt.Sprintf("v%d_sp%d", val.ID, val.ParamSlot())
+	}
+	if val.InSpillSlot() {
+		return fmt.Sprintf("v%d_ss%d", val.ID, val.SpillSlot())
 	}
 	return fmt.Sprintf("v%d", val.ID)
 }

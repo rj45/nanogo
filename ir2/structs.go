@@ -1,20 +1,20 @@
 // Package ir2 contains an Intermediate Representation (IR) in
 // Static Single Assignment (SSA) form.
 //
-// - Each Program contains a list of Packages.
-// - Packages are a list of Globals and Funcs.
-// - Each Func is a list of Blocks.
-// - Blocks have a list of Instrs.
-// - Instrs Def (define) Values, and have Values as Args.
-// - Values can be constants, types, temps, registers, memory locations, etc.
+//   - Each Program contains a list of Packages.
+//   - Packages are a list of Globals, TypeDefs and Funcs.
+//   - Each Func is a list of Blocks.
+//   - Blocks have a list of Instrs.
+//   - Instrs Def (define) Values, and have Values as Args.
+//   - Values can be constants, types, temps, registers, memory locations, etc.
 //
-// The Go compiler does not have a concept of instructions,
-// Values are also instructions. But then an operation can only
-// return a single value, and tuples are used to get around that.
-// In this model, there are no tuples, and operations can return
-// multiple values. This simplfies multi-precision math, calls
-// that can return multiple results, and PhiCopies / swaps that
-// are defined to happen in parallel.
+// Note: Unlike other SSA representations, this representation
+// separates the concept of instructions from the concept of
+// values. This allows an instruction to define multiple values.
+// This is handy to avoid needing tuples and unpacking tuples to
+// handle instructions (like function calls) that return multiple
+// values.
+//
 package ir2
 
 import (
@@ -86,6 +86,10 @@ type Func struct {
 	Referenced bool
 	NumCalls   int
 
+	numArgSlots   int
+	numParamSlots int
+	numSpillSlots int
+
 	pkg *Package
 
 	blocks []*Block
@@ -154,37 +158,28 @@ type Instr struct {
 	argstorage [3]*Value
 }
 
-// ValueLoc is the location of a Value
-type ValueLoc uint8
+// Location is the location of a Value
+type Location uint8
 
 const (
-	VInvalid ValueLoc = iota
-	VConst
-	VFunc
-	VTemp
-	VReg
-	VArg
-	VStack
-	VGlob
-	VHeap
+	InTemp Location = iota
+	InConst
+	InReg
+	InParam
+	InArg
+	InSpill
 )
 
 // Value is a single value that may be stored in a
 // single place. This may be a constant or variable,
 // stored in a temp, register or on the stack.
 type Value struct {
+	stg
+
 	ID
 
 	// Type is the type of the Value
 	Type types.Type
-
-	Const Const
-
-	// Loc is the location of the Value
-	Loc ValueLoc
-
-	// Index is the index in the location
-	Index int
 
 	def  *Instr
 	uses []*Instr
@@ -192,11 +187,14 @@ type Value struct {
 	usestorage [2]*Instr
 }
 
+// ConstKind is a kind of constant
 type ConstKind uint8
 
 const (
-	UnknownConst ConstKind = iota
+	// no const, or not a const
+	NotConst ConstKind = iota
 
+	// nil, which is different than no const at all
 	NilConst
 
 	// non-numeric values
@@ -213,6 +211,7 @@ const (
 
 // Const is a constant value of some sort
 type Const interface {
+	Location() Location
 	Kind() ConstKind
 	String() string
 	private()

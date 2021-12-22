@@ -2,7 +2,6 @@ package elaboration
 
 import (
 	"go/types"
-	"log"
 
 	"github.com/rj45/nanogo/ir/op"
 	"github.com/rj45/nanogo/ir/reg"
@@ -20,12 +19,10 @@ func calls(it ir2.Iter) {
 	fnType := instr.Arg(0).Type.(*types.Signature)
 
 	if instr.NumArgs() > 1 && instr.Arg(1).Def() != nil && instr.Arg(1).Def().Op == op.Copy {
-		log.Println("arg copy already done")
 		return
 	}
 
 	if instr.NumDefs() > 0 && instr.Def(0).NumUses() == 1 && instr.Def(0).Use(0).Op == op.Copy {
-		log.Println("result copy already done")
 		return
 	}
 
@@ -41,14 +38,11 @@ func calls(it ir2.Iter) {
 		}
 
 		paramCopy := it.Insert(op.Copy, params, args...)
-		log.Println(paramCopy.LongString())
 		for i := 0; i < paramCopy.NumDefs(); i++ {
 			if i < len(reg.ArgRegs) {
-				paramCopy.Def(i).Loc = ir2.VReg
-				paramCopy.Def(i).Index = reg.ArgRegs[i].RegNumber()
+				paramCopy.Def(i).SetReg(reg.ArgRegs[i])
 			} else {
-				paramCopy.Def(i).Loc = ir2.VArg
-				paramCopy.Def(i).Index = i - len(reg.ArgRegs)
+				paramCopy.Def(i).SetArgSlot(i - len(reg.ArgRegs))
 			}
 			instr.ReplaceArg(i+1, paramCopy.Def(i))
 		}
@@ -64,14 +58,11 @@ func calls(it ir2.Iter) {
 
 		it.Next()
 		resCopy := it.Insert(op.Copy, results, args...)
-		log.Println(resCopy.LongString())
 		for i := 0; i < resCopy.NumArgs(); i++ {
 			if i < len(reg.ArgRegs) {
-				resCopy.Arg(i).Loc = ir2.VReg
-				resCopy.Arg(i).Index = reg.ArgRegs[i].RegNumber()
+				resCopy.Arg(i).SetReg(reg.ArgRegs[i])
 			} else {
-				resCopy.Arg(i).Loc = ir2.VArg
-				resCopy.Arg(i).Index = i - len(reg.ArgRegs)
+				resCopy.Arg(i).SetArgSlot(i - len(reg.ArgRegs))
 			}
 
 			// todo: could use a version of this that doesn't
@@ -82,6 +73,4 @@ func calls(it ir2.Iter) {
 			resCopy.ReplaceArg(i, instr.Def(i))
 		}
 	}
-
-	log.Println(instr.LongString())
 }

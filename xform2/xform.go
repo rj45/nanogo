@@ -2,7 +2,6 @@ package xform2
 
 import (
 	"fmt"
-	"log"
 	"reflect"
 	"runtime"
 
@@ -84,7 +83,6 @@ func Transform(pass Pass, fn *ir2.Func) {
 			// run the xforms specific to the current op
 			op := it.Instr().Op
 			for _, xform := range opXforms[op] {
-				log.Println("found xform on op")
 				xform(it)
 			}
 
@@ -131,7 +129,6 @@ next:
 		}
 
 		if xf.op != nil {
-			log.Printf("adding xform %s to op %s", xf.name, xf.op)
 			opXforms[xf.op] = append(opXforms[xf.op], xf.fn)
 		} else {
 			otherXforms = append(otherXforms, xf.fn)
