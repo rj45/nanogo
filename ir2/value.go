@@ -7,7 +7,7 @@ import (
 	"github.com/rj45/nanogo/ir/reg"
 )
 
-// init initializes the Value
+// init initializes the Value.
 func (val *Value) init(id ID, typ types.Type) {
 	val.uses = val.usestorage[:0]
 	val.ID = id
@@ -20,7 +20,7 @@ func (val *Value) init(id ID, typ types.Type) {
 	val.SetTemp()
 }
 
-// Func returns the containing Func
+// Func returns the containing Func.
 func (val *Value) Func() *Func {
 	return val.def.blk.fn
 }
@@ -71,10 +71,12 @@ type tempStg struct{}
 
 func (tempStg) Location() Location { return InTemp }
 
+// InTemp indicates the value is in a temp.
 func (val *Value) InTemp() bool {
 	return val.Location() == InTemp
 }
 
+// Temp returns which temp if the value is in a temp.
 func (val *Value) Temp() ID {
 	if val.Location() == InTemp {
 		return val.ID
@@ -82,6 +84,7 @@ func (val *Value) Temp() ID {
 	return Placeholder
 }
 
+// SetTemp turns the value into a temp.
 func (val *Value) SetTemp() {
 	val.stg = tempStg{}
 }
@@ -92,10 +95,13 @@ type regStg struct{ r reg.Reg }
 
 func (regStg) Location() Location { return InReg }
 
+// InReg indicates if the Value is in a register.
 func (val *Value) InReg() bool {
 	return val.Location() == InReg
 }
 
+// Reg returns which register the Value is in,
+// otherwise reg.None if its not in a register.
 func (val *Value) Reg() reg.Reg {
 	if val.Location() == InReg {
 		return val.stg.(regStg).r
@@ -103,6 +109,7 @@ func (val *Value) Reg() reg.Reg {
 	return reg.None
 }
 
+// SetReg puts the value in the specified register.
 func (val *Value) SetReg(reg reg.Reg) {
 	val.stg = regStg{reg}
 }
@@ -111,19 +118,22 @@ func (val *Value) SetReg(reg reg.Reg) {
 
 type paramStg uint8
 
-func (paramStg) Location() Location { return InParam }
+func (paramStg) Location() Location { return InParamSlot }
 
+// InParamSlot returns whether the value in one of the param slots on the stack.
 func (val *Value) InParamSlot() bool {
-	return val.Location() == InParam
+	return val.Location() == InParamSlot
 }
 
+// ParamSlot returns which param slot the Value is in, or -1 if not in a param slot.
 func (val *Value) ParamSlot() int {
-	if val.Location() == InParam {
+	if val.Location() == InParamSlot {
 		return int(val.stg.(paramStg))
 	}
 	return -1
 }
 
+// SetParamSlot puts the Value in the specified param slot on the stack.
 func (val *Value) SetParamSlot(slot int) {
 	val.stg = paramStg(slot)
 
@@ -136,19 +146,22 @@ func (val *Value) SetParamSlot(slot int) {
 
 type argStg uint8
 
-func (argStg) Location() Location { return InArg }
+func (argStg) Location() Location { return InArgSlot }
 
+// InArgSlot returns whether the value in one of the arg slots on the stack.
 func (val *Value) InArgSlot() bool {
-	return val.Location() == InArg
+	return val.Location() == InArgSlot
 }
 
+// ArgSlot returns which arg slot the Value is in, or -1 if not in a arg slot.
 func (val *Value) ArgSlot() int {
-	if val.Location() == InArg {
+	if val.Location() == InArgSlot {
 		return int(val.stg.(argStg))
 	}
 	return -1
 }
 
+// SetArgSlot puts the Value in the specified arg slot on the stack.
 func (val *Value) SetArgSlot(slot int) {
 	val.stg = argStg(slot)
 
@@ -161,19 +174,22 @@ func (val *Value) SetArgSlot(slot int) {
 
 type spillStg uint8
 
-func (spillStg) Location() Location { return InSpill }
+func (spillStg) Location() Location { return InSpillSlot }
 
+// InSpillSlot returns whether the value in one of the spill slots on the stack.
 func (val *Value) InSpillSlot() bool {
-	return val.Location() == InSpill
+	return val.Location() == InSpillSlot
 }
 
+// SpillSlot returns which spill slot the Value is in, or -1 if not in a spill slot.
 func (val *Value) SpillSlot() int {
-	if val.Location() == InSpill {
+	if val.Location() == InSpillSlot {
 		return int(val.stg.(spillStg))
 	}
 	return -1
 }
 
+// SetSpillSlot puts the Value in the specified spill slot on the stack.
 func (val *Value) SetSpillSlot(slot int) {
 	val.stg = spillStg(slot)
 
@@ -184,6 +200,12 @@ func (val *Value) SetSpillSlot(slot int) {
 
 // const
 
+// IsConst returns if the Value is constant.
+func (val *Value) IsConst() bool {
+	return val.Location() == InConst
+}
+
+// Const returns the constant value of the Value or NotConst if not constant.
 func (val *Value) Const() Const {
 	if val.Location() == InConst {
 		return val.stg.(Const)
@@ -191,20 +213,19 @@ func (val *Value) Const() Const {
 	return notConst{}
 }
 
+// SetConst makes the Value the specified constant.
 func (val *Value) SetConst(con Const) {
 	val.stg = con
 }
 
-func (val *Value) IsConst() bool {
-	return val.Location() == InConst
-}
-
 // util funcs
 
+// addUse adds the instr as a use of this value.
 func (val *Value) addUse(instr *Instr) {
 	val.uses = append(val.uses, instr)
 }
 
+// removeUse removes the isntr as a use of this value.
 func (val *Value) removeUse(instr *Instr) {
 	index := -1
 	for i, use := range val.uses {
@@ -219,6 +240,8 @@ func (val *Value) removeUse(instr *Instr) {
 	val.uses = append(val.uses[:index], val.uses[index+1:]...)
 }
 
+// validType returns if the type is valid. The SSA lib sometimes
+// returns Invalid types (specifically for range ops), which break things.
 func validType(typ types.Type) types.Type {
 	if typ != nil {
 		if t, ok := typ.(*types.Basic); ok && t.Kind() == types.Invalid {

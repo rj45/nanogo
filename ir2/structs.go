@@ -165,9 +165,16 @@ const (
 	InTemp Location = iota
 	InConst
 	InReg
-	InParam
-	InArg
-	InSpill
+
+	// Param slots are an area of the stack for func parameters.
+	// Specifically, they are in the caller's arg slot area.
+	InParamSlot
+
+	// Arg slots are an area of the stack reserved for call arguments.
+	InArgSlot
+
+	// Spill slots are an area of the stack reserved for register spills.
+	InSpillSlot
 )
 
 // Value is a single value that may be stored in a
