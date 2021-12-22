@@ -30,6 +30,9 @@ type Iter interface {
 	// Prev decrements the position and returns whether that was successful
 	Prev() bool
 
+	// Last fast forwards to the end
+	Last() bool
+
 	// Insert inserts an instruction at the cursor position and increments the position
 	Insert(op Op, typ types.Type, args ...interface{}) *Instr
 
@@ -110,7 +113,7 @@ func (it *BlockIter) Next() bool {
 
 // Prev decrements the position and returns whether that was successful
 func (it *BlockIter) Prev() bool {
-	if it.insIdx == 0 {
+	if it.insIdx <= 0 {
 		return false
 	}
 
@@ -121,6 +124,12 @@ func (it *BlockIter) Prev() bool {
 // HasPrev returns whether Prev() will succeed
 func (it *BlockIter) HasPrev() bool {
 	return it.insIdx >= 0 // todo: there is a bug here
+}
+
+// Last fast forwards to the end of the block
+func (it *BlockIter) Last() bool {
+	it.insIdx = len(it.blk.instrs) - 1
+	return it.insIdx >= 0
 }
 
 // HasChanged returns true if `Changed()` was called, or one of the mutation methods
@@ -193,7 +202,11 @@ func (fn *Func) InstrIter() *CrossBlockIter {
 
 // HasNext returns whether Next() will succeed
 func (it *CrossBlockIter) HasNext() bool {
-	return (it.insIdx+1) < len(it.blk.instrs) || (it.blkIdx+1) < len(it.fn.blocks)
+	if (it.blkIdx + 1) < len(it.fn.blocks) {
+		return true
+	}
+
+	return (it.blkIdx + 1) < len(it.blk.instrs)
 }
 
 // Next increments the position and returns whether that was successful
@@ -207,8 +220,10 @@ func (it *CrossBlockIter) Next() bool {
 	if it.insIdx >= len(it.blk.instrs) {
 		it.blkIdx++
 		it.insIdx = 0
+		if it.blkIdx >= len(it.fn.blocks) {
+			return false
+		}
 		it.blk = it.fn.blocks[it.blkIdx]
-		return true
 	}
 
 	return true
@@ -235,4 +250,11 @@ func (it *CrossBlockIter) Prev() bool {
 
 	it.insIdx--
 	return true
+}
+
+// Last fast forwards to the end of the func
+func (it *CrossBlockIter) Last() bool {
+	it.blkIdx = len(it.fn.blocks) - 1
+	it.insIdx = len(it.blk.instrs) - 1
+	return it.blkIdx >= 0 && it.insIdx >= 0
 }

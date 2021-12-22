@@ -50,13 +50,23 @@ func (in *Instr) update(fn *Func, op Op, typ types.Type, args []interface{}) {
 		}
 	}
 
+	offset := 0
 	for i, a := range args {
+		if list, ok := a.([]*Value); ok {
+			for _, a := range list {
+				in.ReplaceArg(i+offset, a)
+				offset++
+			}
+			offset--
+			continue
+		}
+
 		arg := fn.ValueFor(typ, a)
 
-		in.ReplaceArg(i, arg)
+		in.ReplaceArg(i+offset, arg)
 	}
 
-	for len(in.args) > len(args) {
+	for len(in.args) > (len(args) + offset) {
 		// todo: replace with in.RemoveArgAt()?
 		in.RemoveArg(in.args[len(in.args)-1])
 	}

@@ -21,11 +21,13 @@ const (
 )
 
 type desc struct {
-	name   string
-	passes []Pass
-	tags   []Tag
-	op     ir2.Op
-	fn     func(ir2.Iter)
+	name     string
+	passes   []Pass
+	tags     []Tag
+	op       ir2.Op
+	once     bool
+	disabled bool
+	fn       func(ir2.Iter)
 }
 
 type Option func(d *desc)
@@ -54,6 +56,12 @@ func OnOp(op ir2.Op) Option {
 	}
 }
 
+func Once() Option {
+	return func(d *desc) {
+		d.once = true
+	}
+}
+
 var xformers []desc
 
 // Register an xform function
@@ -73,22 +81,23 @@ func Register(fn func(ir2.Iter), options ...Option) int {
 }
 
 func Transform(pass Pass, fn *ir2.Func) {
-	active, opXforms, otherXforms := activeXforms(pass)
+	active, opXforms, otherXforms := activeXforms(pass, fn)
 	tries := 0
 
 	for {
 		it := fn.InstrIter()
+		var iter ir2.Iter = it
 
 		for ; it.HasNext(); it.Next() {
 			// run the xforms specific to the current op
 			op := it.Instr().Op
 			for _, xform := range opXforms[op] {
-				xform(it)
+				perform(xform, iter)
 			}
 
 			// run the xforms that always run
 			for _, xform := range otherXforms {
-				xform(it)
+				perform(xform, iter)
 			}
 		}
 
@@ -103,14 +112,24 @@ func Transform(pass Pass, fn *ir2.Func) {
 	}
 }
 
+func perform(xform *desc, it ir2.Iter) {
+	if xform.disabled {
+		return
+	}
+	xform.fn(it)
+	if xform.once {
+		xform.disabled = true
+	}
+}
+
 // activeXforms determines the active xform functions for the current pass and tags
-func activeXforms(pass Pass) ([]string, map[ir2.Op][]func(ir2.Iter), []func(ir2.Iter)) {
+func activeXforms(pass Pass, fn *ir2.Func) ([]string, map[ir2.Op][]*desc, []*desc) {
 	var active []string
-	opXforms := make(map[ir2.Op][]func(ir2.Iter))
-	var otherXforms []func(ir2.Iter)
+	opXforms := make(map[ir2.Op][]*desc)
+	var otherXforms []*desc
 
 next:
-	for _, xf := range xformers {
+	for i, xf := range xformers {
 		inPass := false
 		for _, p := range xf.passes {
 			if p == pass {
@@ -129,9 +148,9 @@ next:
 		}
 
 		if xf.op != nil {
-			opXforms[xf.op] = append(opXforms[xf.op], xf.fn)
+			opXforms[xf.op] = append(opXforms[xf.op], &xformers[i])
 		} else {
-			otherXforms = append(otherXforms, xf.fn)
+			otherXforms = append(otherXforms, &xformers[i])
 		}
 		active = append(active, xf.name)
 	}
