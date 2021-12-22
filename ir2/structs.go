@@ -138,6 +138,7 @@ type Op interface {
 	IsCompare() bool
 	IsCopy() bool
 	IsCommutative() bool
+	IsSink() bool
 }
 
 // Instr is an instruction that may define one or more Values,
