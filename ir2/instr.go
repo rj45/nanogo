@@ -30,6 +30,12 @@ func (in *Instr) Index() int {
 	return in.index
 }
 
+func (in *Instr) LineNo() int {
+	fset := in.blk.fn.pkg.prog.FileSet
+	pos := fset.Position(in.Pos)
+	return pos.Line
+}
+
 // Update changes the op, type and number of defs and the args
 func (in *Instr) Update(op Op, typ types.Type, args ...interface{}) {
 	in.update(in.blk.fn, op, typ, args)

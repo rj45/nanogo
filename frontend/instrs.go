@@ -178,6 +178,8 @@ func (fe *FrontEnd) translateInstrs(irBlock *ir2.Block, ssaBlock *ssa.BasicBlock
 			ins.InsertArg(-1, irBlock.Func().ValueFor(typ, con))
 		}
 
+		ins.Pos = getPos(instr)
+
 		if arg != nil {
 			ins.InsertArg(-1, arg)
 		}

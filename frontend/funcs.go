@@ -39,11 +39,12 @@ func (fe *FrontEnd) translateFunc(irFunc *ir2.Func, ssaFunc *ssa.Function) {
 		irFunc.InsertBlock(-1, irBlock)
 
 		if bn == 0 {
-			for _, param := range ssaFunc.Params {
-				instr := irFunc.NewInstr(op.Parameter, param.Type(), param.Name())
+			for i, param := range ssaFunc.Params {
+				instr := irFunc.NewInstr(op.Parameter, param.Type(), i)
 				irBlock.InsertInstr(-1, instr)
 
-				// todo: fixme for multiple defs
+				instr.Pos = getPos(param)
+
 				fe.val2instr[param] = instr
 			}
 		}

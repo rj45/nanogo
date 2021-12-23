@@ -13,6 +13,9 @@ type Decorator interface {
 	Begin(out io.Writer, what interface{})
 	End(out io.Writer, what interface{})
 
+	BeginLabel(out io.Writer, what interface{})
+	EndLabel(out io.Writer, what interface{})
+
 	WrapLabel(str string, what interface{}) string
 	WrapRef(str string, what interface{}) string
 	WrapType(str string) string
@@ -140,6 +143,7 @@ func (blk *Block) String() string {
 func (blk *Block) Emit(out io.Writer, dec Decorator) {
 	dec.Begin(out, blk)
 
+	dec.BeginLabel(out, blk)
 	fmt.Fprintf(out, ".%s:", dec.WrapLabel(blk.String(), blk))
 
 	// if len(blk.preds) > 0 {
@@ -151,6 +155,7 @@ func (blk *Block) Emit(out io.Writer, dec Decorator) {
 	// }
 
 	fmt.Fprintln(out)
+	dec.EndLabel(out, blk)
 
 	for it := blk.InstrIter(); it.HasNext(); it.Next() {
 		it.Instr().Emit(out, dec)
@@ -231,9 +236,9 @@ func (in *Instr) Emit(out io.Writer, dec Decorator) {
 		} else {
 			str += "  "
 		}
-		str += fmt.Sprintf("%-6s", opstr)
+		str += opstr
 	} else {
-		str += fmt.Sprintf("  %-6s", opstr)
+		str += fmt.Sprintf("  %s", opstr)
 		if len(defstr) > 0 {
 			str += fmt.Sprintf(" %s", defstr)
 		}
@@ -249,12 +254,14 @@ func (in *Instr) Emit(out io.Writer, dec Decorator) {
 	if in == in.blk.Control() {
 		if len(argstr) > 0 && len(in.blk.succs) > 0 {
 			str += ", "
+		} else {
+			str += " "
 		}
 		for i, succ := range in.blk.succs {
 			if i != 0 {
 				str += ", "
 			}
-			str += succ.String()
+			str += dec.WrapRef(succ.String(), succ)
 		}
 	}
 
@@ -291,11 +298,18 @@ func (val *Value) String() string {
 	return fmt.Sprintf("v%d", val.ID)
 }
 
+func (val *Value) IDString() string {
+	return fmt.Sprintf("v%d", val.ID)
+}
+
 // SSAString emits a plain string in SSA form
 type SSAString struct{}
 
 func (ss SSAString) Begin(out io.Writer, what interface{}) {}
 func (ss SSAString) End(out io.Writer, what interface{})   {}
+
+func (ss SSAString) BeginLabel(out io.Writer, what interface{}) {}
+func (ss SSAString) EndLabel(out io.Writer, what interface{})   {}
 
 func (ss SSAString) WrapLabel(str string, what interface{}) string {
 	return str

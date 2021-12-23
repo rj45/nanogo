@@ -16,6 +16,7 @@ import (
 	"github.com/rj45/nanogo/frontend"
 	"github.com/rj45/nanogo/goenv"
 	"github.com/rj45/nanogo/html"
+	html2 "github.com/rj45/nanogo/html2"
 	"github.com/rj45/nanogo/ir2"
 	"github.com/rj45/nanogo/ir2/parseir"
 	"github.com/rj45/nanogo/parser"
@@ -63,6 +64,18 @@ func (nopDumper) WriteAsmBuf(string, *bytes.Buffer)                             
 func (nopDumper) WriteAsm(string, *asm.Func)                                          {}
 func (nopDumper) WriteSources(phase string, fn string, lines []string, startline int) {}
 func (nopDumper) Close()                                                              {}
+
+type dumper2 interface {
+	WritePhase(string, string)
+	WriteSources(phase string, fn string, lines []string, startline int)
+	Close()
+}
+
+type nopDumper2 struct{}
+
+func (nopDumper2) WritePhase(string, string)                                           {}
+func (nopDumper2) WriteSources(phase string, fn string, lines []string, startline int) {}
+func (nopDumper2) Close()                                                              {}
 
 type nopWriteCloser struct{ w io.Writer }
 
@@ -123,9 +136,23 @@ func Compile(outname, dir string, patterns []string, mode Mode) int {
 		fe := frontend.NewFrontEnd(dir, patterns...)
 		fe.Scan()
 		for fn := fe.NextUnparsedFunc(); fn != nil; fn = fe.NextUnparsedFunc() {
+			var w dumper2
+			w = nopDumper2{}
+			if *dump != "" && strings.Contains(fn.FullName, *dump) {
+				w = html2.NewHTMLWriter("ssa.html", fn)
+				filename, lines, start := fe.DumpOrignalSource(fn)
+				w.WriteSources("go", filename, lines, start)
+				// w.WriteAsmBuf("tools/go/ssa", parser.DumpOriginalSSA(fn))
+			}
+			defer w.Close()
+
 			fe.ParseFunc(fn)
 
+			w.WritePhase("initial", "initial")
+
 			xform2.Transform(xform2.Elaboration, fn)
+
+			w.WritePhase("elaboration", "elaboration")
 		}
 
 		fe.Program().Emit(finalout, ir2.SSAString{})

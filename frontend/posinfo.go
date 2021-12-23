@@ -34,6 +34,12 @@ func getPos(val posser) token.Pos {
 	// No position information is known.
 	switch val := val.(type) {
 	case *ssa.MakeInterface:
+		refs := val.Referrers()
+		for _, ref := range *refs {
+			if getPos(ref) != token.NoPos {
+				return getPos(ref)
+			}
+		}
 		return getPos(val.X)
 	case *ssa.MakeClosure:
 		return val.Fn.(*ssa.Function).Pos()

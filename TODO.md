@@ -182,7 +182,7 @@
     - [x] Get it to parse programs to ir2
     - [x] Handle translating tuples to multiple return values
   - [x] Can emit IR code in a way that simplifies text, assembly and html generation
-    - [ ] Emits to ssa.html
+    - [x] Emits to ssa.html
   - [ ] Implement a simplified type system
     - [ ] integer types i/u 8,16,32,64
     - [ ] bool type

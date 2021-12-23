@@ -45,7 +45,15 @@ func NewFrontEnd(dir string, patterns ...string) *FrontEnd {
 		log.Fatal(err)
 	}
 
-	return &FrontEnd{prog: &ir2.Program{}, members: members}
+	var fset *token.FileSet
+	if len(members) > 0 {
+		fset = members[0].Package().Prog.Fset
+	}
+
+	return &FrontEnd{
+		prog:    &ir2.Program{FileSet: fset},
+		members: members,
+	}
 }
 
 var dumptypes = flag.Bool("dumptypes", false, "Dump all types in a program")
@@ -148,7 +156,7 @@ func (fe *FrontEnd) DumpOrignalSource(fn *ir2.Func) (filename string, lines []st
 
 	startp := fset.PositionFor(start, true)
 	filename = startp.Filename
-	startline = startp.Line - 1
+	startline = startp.Line
 
 	endp := fset.PositionFor(end, true)
 	buf, err := os.ReadFile(startp.Filename)
@@ -156,7 +164,7 @@ func (fe *FrontEnd) DumpOrignalSource(fn *ir2.Func) (filename string, lines []st
 		log.Fatal(err)
 	}
 	lines = strings.Split(string(buf), "\n")
-	lines = lines[startline:endp.Line]
+	lines = lines[startline-1 : endp.Line]
 
 	return
 }

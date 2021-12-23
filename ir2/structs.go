@@ -28,6 +28,8 @@ import (
 type Program struct {
 	packages []*Package
 
+	FileSet *token.FileSet
+
 	takenNames map[string]bool
 	strings    map[string]*Global
 }
