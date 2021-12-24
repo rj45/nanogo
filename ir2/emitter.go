@@ -137,7 +137,7 @@ func (fn *Func) LongString() string {
 }
 
 func (blk *Block) String() string {
-	return fmt.Sprintf("b%d", blk.ID)
+	return blk.IDString()
 }
 
 func (blk *Block) Emit(out io.Writer, dec Decorator) {
@@ -277,29 +277,25 @@ func (in *Instr) LongString() string {
 }
 
 func (val *Value) String() string {
-	if val.ID == Placeholder {
+	if val.ident == Placeholder {
 		return "<" + val.Const().String() + ">"
 	}
 	if val.IsConst() {
 		return val.Const().String()
 	}
 	if val.InReg() {
-		return fmt.Sprintf("v%d_%s", val.ID, val.Reg())
+		return fmt.Sprintf("%s_%s", val.IDString(), val.Reg())
 	}
 	if val.InArgSlot() {
-		return fmt.Sprintf("v%d_sa%d", val.ID, val.ArgSlot())
+		return fmt.Sprintf("%s_sa%d", val.IDString(), val.ArgSlot())
 	}
 	if val.InParamSlot() {
-		return fmt.Sprintf("v%d_sp%d", val.ID, val.ParamSlot())
+		return fmt.Sprintf("%s_sp%d", val.IDString(), val.ParamSlot())
 	}
 	if val.InSpillSlot() {
-		return fmt.Sprintf("v%d_ss%d", val.ID, val.SpillSlot())
+		return fmt.Sprintf("%s_ss%d", val.IDString(), val.SpillSlot())
 	}
-	return fmt.Sprintf("v%d", val.ID)
-}
-
-func (val *Value) IDString() string {
-	return fmt.Sprintf("v%d", val.ID)
+	return val.IDString()
 }
 
 // SSAString emits a plain string in SSA form

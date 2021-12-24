@@ -8,9 +8,9 @@ import (
 )
 
 // init initializes the Value.
-func (val *Value) init(id ID, typ types.Type) {
+func (val *Value) init(id ident, typ types.Type) {
 	val.uses = val.usestorage[:0]
-	val.ID = id
+	val.ident = id
 	if typ != nil {
 		if t, ok := typ.(*types.Basic); ok && t.Kind() == types.Invalid {
 			typ = nil
@@ -22,12 +22,12 @@ func (val *Value) init(id ID, typ types.Type) {
 
 // Func returns the containing Func.
 func (val *Value) Func() *Func {
-	return val.def.blk.fn
+	return val.def.Block().fn
 }
 
 // Def returns the Instr defining the Value,
 // or nil if it's not defined
-func (val *Value) Def() *Instr {
+func (val *Value) Def() *User {
 	return val.def
 }
 
@@ -37,7 +37,7 @@ func (val *Value) NumUses() int {
 }
 
 // Use returns the ith Instr using this Value
-func (val *Value) Use(i int) *Instr {
+func (val *Value) Use(i int) *User {
 	return val.uses[i]
 }
 
@@ -60,6 +60,17 @@ func (val *Value) ReplaceUsesWith(other *Value) {
 	}
 }
 
+func (val *Value) IsDefinedByOp(op Op) bool {
+	if val.def == nil {
+		return false
+	}
+	if !val.def.IsInstr() {
+		return false
+	}
+
+	return val.def.Instr().Op == op
+}
+
 // stg is the storage for a value
 type stg interface {
 	Location() Location
@@ -77,9 +88,9 @@ func (val *Value) InTemp() bool {
 }
 
 // Temp returns which temp if the value is in a temp.
-func (val *Value) Temp() ID {
+func (val *Value) Temp() ident {
 	if val.Location() == InTemp {
-		return val.ID
+		return val.ident
 	}
 	return Placeholder
 }
@@ -221,21 +232,21 @@ func (val *Value) SetConst(con Const) {
 // util funcs
 
 // addUse adds the instr as a use of this value.
-func (val *Value) addUse(instr *Instr) {
-	val.uses = append(val.uses, instr)
+func (val *Value) addUse(user *User) {
+	val.uses = append(val.uses, user)
 }
 
 // removeUse removes the isntr as a use of this value.
-func (val *Value) removeUse(instr *Instr) {
+func (val *Value) removeUse(user *User) {
 	index := -1
-	for i, use := range val.uses {
-		if use == instr {
+	for i, v := range val.uses {
+		if v == user {
 			index = i
 			break
 		}
 	}
 	if index < 0 {
-		log.Panicf("%v does not have use %v", val, instr)
+		log.Panicf("%v does not have use %v", val, user)
 	}
 	val.uses = append(val.uses[:index], val.uses[index+1:]...)
 }

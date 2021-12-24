@@ -4,9 +4,8 @@ import (
 	"log"
 )
 
-func (blk *Block) init(fn *Func, id ID) {
-	blk.fn = fn
-	blk.ID = id
+func (blk *Block) init(fn *Func, id ident) {
+	blk.User.init(fn, id)
 	blk.instrs = blk.instrstorage[:0]
 	blk.preds = blk.predstorage[:0]
 	blk.succs = blk.succstorage[:0]

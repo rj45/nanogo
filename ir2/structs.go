@@ -20,8 +20,23 @@ package ir2
 import (
 	"go/token"
 	"go/types"
-	"math"
 )
+
+type ObjectKind uint8
+
+const (
+	UnknownObject ObjectKind = iota
+	BlockObject
+	InstrObject
+	ValueObject
+	ValuePlaceholder
+)
+
+// ident is an identifier that's unique within a Func
+type ident uint32
+
+// Placeholder is an invalid ID meant to signal a place that needs to be filled
+var Placeholder ident = idFor(ValuePlaceholder, -1)
 
 // Program is a collection of packages,
 // which comprise a whole program.
@@ -72,12 +87,6 @@ type TypeDef struct {
 	Type types.Type
 }
 
-// ID is an identifier that's unique within a Func
-type ID uint
-
-// Placeholder is an invalid ID meant to signal a place that needs to be filled
-const Placeholder ID = math.MaxUint
-
 // Func is a collection of Blocks, which comprise
 // a function or method in a Program.
 type Func struct {
@@ -113,6 +122,19 @@ type Func struct {
 	instrslab []Instr
 }
 
+// User uses and defines Values. Blocks and
+// Instrs are Users.
+type User struct {
+	ident
+	fn *Func
+
+	defs []*Value
+	args []*Value
+
+	defstorage [2]*Value
+	argstorage [3]*Value
+}
+
 // Block is a collection of Instrs which is a basic block
 // in a control flow graph. The last Instr of a block must
 // be a control flow Instr. A block may begin with one or more
@@ -120,8 +142,7 @@ type Func struct {
 // Blocks can have Preds and Succs for the blocks that
 // come before or after in the control flow graph respectively.
 type Block struct {
-	ID
-	fn *Func
+	User
 
 	instrs []*Instr
 
@@ -146,19 +167,13 @@ type Op interface {
 // Instr is an instruction that may define one or more Values,
 // and take as args (operands) one or more Values.
 type Instr struct {
-	ID
+	User
 	Op
 
 	blk *Block
 
 	Pos   token.Pos
 	index int
-
-	defs []*Value
-	args []*Value
-
-	defstorage [2]*Value
-	argstorage [3]*Value
 }
 
 // Location is the location of a Value
@@ -186,15 +201,15 @@ const (
 type Value struct {
 	stg
 
-	ID
+	ident
 
 	// Type is the type of the Value
 	Type types.Type
 
-	def  *Instr
-	uses []*Instr
+	def  *User
+	uses []*User
 
-	usestorage [2]*Instr
+	usestorage [2]*User
 }
 
 // ConstKind is a kind of constant

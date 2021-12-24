@@ -18,11 +18,11 @@ func calls(it ir2.Iter) {
 	instr := it.Instr()
 	fnType := instr.Arg(0).Type.(*types.Signature)
 
-	if instr.NumArgs() > 1 && instr.Arg(1).Def() != nil && instr.Arg(1).Def().Op == op.Copy {
+	if instr.NumArgs() > 1 && instr.Arg(1).Def() != nil && instr.Arg(1).Def().Instr().Op == op.Copy {
 		return
 	}
 
-	if instr.NumDefs() > 0 && instr.Def(0).NumUses() == 1 && instr.Def(0).Use(0).Op == op.Copy {
+	if instr.NumDefs() > 0 && instr.Def(0).NumUses() == 1 && instr.Def(0).Use(0).Instr().Op == op.Copy {
 		return
 	}
 

@@ -169,7 +169,6 @@
     - [x] Add A32 to test suite to make sure it doesn't break
 
 - [ ] Rework IR (ir2)
-
   - [x] Split globals into Literals (strings) and Globals (bss data)
   - [x] Split values into Values and Instructions
   - [x] Instructions can return multiple values
@@ -183,6 +182,14 @@
     - [x] Handle translating tuples to multiple return values
   - [x] Can emit IR code in a way that simplifies text, assembly and html generation
     - [x] Emits to ssa.html
+  - [ ] Block parameters instead of phis
+    - [x] Values can be used by both Blocks and Instrs
+    - [x] Blocks and Instrs are Users of Values
+    - [ ] Block parameters are emitted
+    - [ ] Block parameter defs are parsed
+    - [ ] Terminal instructions specify dest block arguments
+    - [ ] Frontend builds blocks with parameters
+    - [ ] Phis are eliminated
   - [ ] Implement a simplified type system
     - [ ] integer types i/u 8,16,32,64
     - [ ] bool type
