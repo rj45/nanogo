@@ -31,7 +31,6 @@ type FrontEnd struct {
 	ssaFuncs map[*ir2.Func]*ssa.Function
 	parsed   map[*ir2.Func]bool
 
-	instrmap  map[*ir2.Instr]ssa.Instruction
 	val2instr map[ssa.Value]*ir2.Instr
 	val2val   map[ssa.Value]*ir2.Value
 	blockmap  map[*ssa.BasicBlock]*ir2.Block
@@ -180,7 +179,6 @@ func (fe *FrontEnd) ParseFunc(fn *ir2.Func) {
 
 	fe.val2instr = make(map[ssa.Value]*ir2.Instr)
 	fe.val2val = make(map[ssa.Value]*ir2.Value)
-	fe.instrmap = make(map[*ir2.Instr]ssa.Instruction)
 	fe.blockmap = make(map[*ssa.BasicBlock]*ir2.Block)
 
 	fe.translateFunc(fn, fe.ssaFuncs[fn])

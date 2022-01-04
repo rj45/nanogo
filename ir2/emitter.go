@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"go/types"
 	"io"
+	"log"
 	"sort"
 	"strings"
 )
@@ -144,7 +145,7 @@ func (blk *Block) Emit(out io.Writer, dec Decorator) {
 	dec.Begin(out, blk)
 
 	dec.BeginLabel(out, blk)
-	fmt.Fprintf(out, ".%s:", dec.WrapLabel(blk.String(), blk))
+	fmt.Fprintf(out, ".%s", dec.WrapLabel(blk.String(), blk))
 
 	// if len(blk.preds) > 0 {
 	// 	fmt.Fprintf(out, " ; <=")
@@ -154,7 +155,22 @@ func (blk *Block) Emit(out io.Writer, dec Decorator) {
 	// 	}
 	// }
 
-	fmt.Fprintln(out)
+	if dec.SSAForm() && len(blk.defs) > 0 {
+		fmt.Fprint(out, "(")
+		for i, def := range blk.defs {
+			if i != 0 {
+				fmt.Fprint(out, ", ")
+			}
+
+			lab := dec.WrapLabel(def.String(), def)
+			typ := dec.WrapType(types.TypeString(def.Type, qualifier(blk.fn.pkg.Type)))
+
+			fmt.Fprintf(out, "%s:%s", lab, typ)
+		}
+		fmt.Fprint(out, ")")
+	}
+
+	fmt.Fprintln(out, ":")
 	dec.EndLabel(out, blk)
 
 	for it := blk.InstrIter(); it.HasNext(); it.Next() {
@@ -257,11 +273,31 @@ func (in *Instr) Emit(out io.Writer, dec Decorator) {
 		} else {
 			str += " "
 		}
+		argn := 0
 		for i, succ := range in.blk.succs {
 			if i != 0 {
 				str += ", "
 			}
-			str += dec.WrapRef(succ.String(), succ)
+			str += dec.WrapRef("."+succ.String(), succ)
+
+			if dec.SSAForm() && len(succ.defs) > 0 {
+				str += "("
+				for i, _ := range succ.defs {
+					if i != 0 {
+						str += ", "
+					}
+
+					if argn >= len(in.blk.args) {
+						log.Panicf("missing args on block args: %v  defs: %v", in.blk.args, succ.defs)
+					}
+
+					arg := in.blk.args[argn]
+					argn++
+
+					str += dec.WrapLabel(arg.String(), arg)
+				}
+				str += ")"
+			}
 		}
 	}
 

@@ -6,131 +6,131 @@ var main__primes:*[16382]struct{prime int; multiple int}
 
 func main__init:
 .b0:
-  v0:bool = load   ^main__init_guard
-  if2    v0, b1, b2
+  v0:bool = load ^main__init_guard
+  if2 v0, .b3, .b2
 .b1:
-  jump2 b3
+  jump2
 .b2:
-  v2:bool = store  ^main__init_guard, true
-  jump2 b3
+  store ^main__init_guard, true
+  jump2 .b3
 .b3:
   return2
 
 func main__main:
 .b0:
-  jump2 b1
-.b1:
-  v0:int = phi    3, v13
-  v2:int = phi    9, v14
-  v4:int = phi    7, v15
-  v6:int = phi    3, v66
-  v7:bool = less   v6, 32750
-  if2    v7, b3, b2
+  jump2 .b1(3, 9, 7, 3)
+.b1(v3:int, v4:int, v5:int, v6:int):
+  v7:bool = less v6, 32750
+  if2 v7, .b3, .b27
 .b2:
-  jump2 b27
+  jump2
 .b3:
-  v9:int = load   ^main__num
-  v11:bool = less   v9, 16382
-  if2    v11, b4, b5
+  v9:int = load ^main__num
+  v11:bool = less v9, 16382
+  if2 v11, .b6(v3, v4, v5), .b27
 .b4:
-  jump2 b6
+  jump2
 .b5:
-  jump2 b27
-.b6:
-  v13:int = phi    v0, v19
-  v14:int = phi    v2, v21
-  v15:int = phi    v4, v22
-  v16:bool = less   v14, v6
-  if2    v16, b8, b7
+  jump2
+.b6(v13:int, v14:int, v15:int):
+  v16:bool = less v14, v6
+  if2 v16, .b8, .b11
 .b7:
-  jump2 b11
+  jump2
 .b8:
   v17:bool = greater v14, 0
-  if2    v17, b10, b9
+  if2 v17, .b10, .b11
 .b9:
-  jump2 b11
+  jump2
 .b10:
-  v19:int = add    v13, 1
-  v21:int = add    v14, v15
-  v22:int = add    v15, 2
-  jump2 b6
+  v19:int = add v13, 1
+  v21:int = add v14, v15
+  v22:int = add v15, 2
+  jump2 .b6(v19, v21, v22)
 .b11:
-  jump2 b12
-.b12:
-  v24:int = phi    0, v52
-  v25:int = load   ^main__num
-  v26:bool = less   v24, v25
-  if2    v26, b14, b13
+  jump2 .b12(0)
+.b12(v24:int):
+  v25:int = load ^main__num
+  v26:bool = less v24, v25
+  if2 v26, .b14, .b25
 .b13:
-  jump2 b25
+  jump2
 .b14:
-  v27:*struct{prime int; multiple int} = indexAddr ^main__primes, v24
-  v29:*int = fieldAddr 0, v27
-  v30:int = load   v29
+  v64:int = mul v24, 2
+  v27:*struct{prime int; multiple int} = add ^main__primes, v64
+  v30:int = load v27
   v31:bool = greater v30, v13
-  if2    v31, b15, b16
+  if2 v31, .b25, .b17
 .b15:
-  jump2 b25
+  jump2
 .b16:
-  jump2 b17
+  jump2
 .b17:
-  v32:*struct{prime int; multiple int} = indexAddr ^main__primes, v24
-  v33:*int = fieldAddr 1, v32
-  v34:int = load   v33
-  v35:bool = less   v34, v6
-  if2    v35, b19, b18
+  v65:int = mul v24, 2
+  v32:*struct{prime int; multiple int} = add ^main__primes, v65
+  v33:*int = add v32, 1
+  v34:int = load v33
+  v35:bool = less v34, v6
+  if2 v35, .b19, .b22
 .b18:
-  jump2 b22
+  jump2
 .b19:
-  v36:*struct{prime int; multiple int} = indexAddr ^main__primes, v24
-  v37:*int = fieldAddr 1, v36
-  v38:int = load   v37
+  v66:int = mul v24, 2
+  v36:*struct{prime int; multiple int} = add ^main__primes, v66
+  v37:*int = add v36, 1
+  v38:int = load v37
   v39:bool = greater v38, 0
-  if2    v39, b21, b20
+  if2 v39, .b21, .b22
 .b20:
-  jump2 b22
+  jump2
 .b21:
-  v40:*struct{prime int; multiple int} = indexAddr ^main__primes, v24
-  v41:*int = fieldAddr 1, v40
-  v42:*struct{prime int; multiple int} = indexAddr ^main__primes, v24
-  v43:*int = fieldAddr 0, v42
-  v44:int = load   v43
-  v45:int = load   v41
-  v46:int = add    v45, v44
-  v47:int = store  v41, v46
-  jump2 b17
+  v67:int = mul v24, 2
+  v40:*struct{prime int; multiple int} = add ^main__primes, v67
+  v41:*int = add v40, 1
+  v68:int = mul v24, 2
+  v42:*struct{prime int; multiple int} = add ^main__primes, v68
+  v44:int = load v42
+  v45:int = load v41
+  v46:int = add v45, v44
+  store v41, v46
+  jump2 .b17
 .b22:
-  v48:*struct{prime int; multiple int} = indexAddr ^main__primes, v24
-  v49:*int = fieldAddr 1, v48
-  v50:int = load   v49
-  v51:bool = equal  v50, v6
-  if2    v51, b23, b24
+  v69:int = mul v24, 2
+  v47:*struct{prime int; multiple int} = add ^main__primes, v69
+  v48:*int = add v47, 1
+  v49:int = load v48
+  v50:bool = equal v49, v6
+  if2 v50, .b26, .b24
 .b23:
-  jump2 b26
+  jump2
 .b24:
-  v52:int = add    v24, 1
-  jump2 b12
+  v51:int = add v24, 1
+  jump2 .b12(v51)
 .b25:
-  v53:int = load   ^main__num
-  v54:*struct{prime int; multiple int} = indexAddr ^main__primes, v53
-  v55:*int = fieldAddr 0, v54
-  v56:int = store  v55, v6
-  v57:int = load   ^main__num
-  v58:*struct{prime int; multiple int} = indexAddr ^main__primes, v57
-  v59:*int = fieldAddr 1, v58
-  v60:int = add    v6, v6
-  v61:int = store  v59, v60
-  v62:int = load   ^main__num
-  v63:int = add    v62, 1
-  v64:int = store  ^main__num, v63
+  v52:int = load ^main__num
+  v70:int = mul v52, 2
+  v53:*struct{prime int; multiple int} = add ^main__primes, v70
+  store v53, v6
+  v55:int = load ^main__num
+  v71:int = mul v55, 2
+  v56:*struct{prime int; multiple int} = add ^main__primes, v71
+  v57:*int = add v56, 1
+  v58:int = add v6, v6
+  store v57, v58
+  v59:int = load ^main__num
+  v60:int = add v59, 1
+  store ^main__num, v60
   callBuiltin println:func(int), v6
-  jump2 b26
+  jump2 .b26
 .b26:
-  v66:int = add    v6, 2
-  jump2 b1
+  v62:int = add v6, 2
+  jump2 .b1(v13, v14, v15, v62)
 .b27:
-  v67:int = load   ^main__num
-  callBuiltin println:func(int), v67
+  v63:int = load ^main__num
+  callBuiltin println:func(int), v63
   return2
 
 package runtime "runtime"
+
+type _string:struct{ptr *byte; length uintptr}
+type stringIterator:struct{index int}

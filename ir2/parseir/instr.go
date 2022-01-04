@@ -13,10 +13,12 @@ import (
 )
 
 type typedToken struct {
-	tok  token.Token
-	lit  string
-	typ  types.Type
-	glob bool
+	tok   token.Token
+	lit   string
+	typ   types.Type
+	glob  bool
+	block bool
+	args  []typedToken
 }
 
 func (p *Parser) parseInstr() {
@@ -57,7 +59,7 @@ func (p *Parser) parseInstr() {
 			defs = list
 			list = nil
 
-		case token.SUB, token.INT, token.IDENT, token.XOR, token.RANGE:
+		case token.SUB, token.INT, token.IDENT, token.XOR, token.PERIOD, token.RANGE:
 			p.unscan()
 
 			if last.tok == token.ILLEGAL {
@@ -110,6 +112,22 @@ func (p *Parser) parseVar() typedToken {
 		return typedToken{
 			tok: tok, lit: lit, typ: nil, glob: true}
 
+	case token.PERIOD:
+		_, lit = p.expect(token.IDENT, "block ref")
+
+		blkname := lit
+
+		tok, _ = p.scan()
+		p.unscan()
+
+		var args []typedToken
+		if tok == token.LPAREN {
+			args = p.parseParenList()
+		}
+
+		return typedToken{
+			tok: token.PERIOD, lit: blkname, typ: nil, glob: true, block: true, args: args}
+
 	case token.IDENT, token.RANGE:
 		next, _ := p.scan()
 		p.unscan()
@@ -149,7 +167,6 @@ func (p *Parser) parseIntVar() typedToken {
 	return typedToken{tok: tok, lit: lit, typ: types.Typ[types.UntypedInt]}
 }
 
-var blockRefRe = regexp.MustCompile(`^b\d+$`)
 var valueRefRe = regexp.MustCompile(`^v(\d+)(_\w+)?$`)
 
 func (p *Parser) addInstr(defs []typedToken, opcode string, args []typedToken) {
@@ -174,8 +191,37 @@ func (p *Parser) addInstr(defs []typedToken, opcode string, args []typedToken) {
 	}
 
 	for an, arg := range args {
-		if arg.tok == token.IDENT && blockRefRe.MatchString(arg.lit) {
+		if arg.tok == token.PERIOD {
 			p.blkLinks[p.blk] = append(p.blkLinks[p.blk], arg.lit)
+
+			for _, barg := range arg.args {
+				if val, ok := p.values[barg.lit]; ok {
+					p.blk.InsertArg(-1, val)
+
+					if p.trace {
+						p.printTrace("block value arg:", val)
+					}
+					continue
+				}
+
+				if valueRefRe.MatchString(barg.lit) {
+					p.blk.InsertArg(-1, p.fn.PlaceholderFor(barg.lit))
+					if p.trace {
+						p.printTrace("block arg placeholder:", barg.lit)
+					}
+					continue
+				}
+
+				if barg.typ != nil {
+					if p.trace {
+						p.printTrace("block typed arg:", barg.typ, barg.lit)
+					}
+					val := p.fn.ValueFor(barg.typ, barg.lit)
+					p.blk.InsertArg(-1, val)
+					continue
+				}
+			}
+
 			continue
 		}
 
@@ -275,6 +321,38 @@ func (p *Parser) addInstr(defs []typedToken, opcode string, args []typedToken) {
 	}
 
 	p.blk.InsertInstr(-1, ins)
+}
+
+func (p *Parser) parseParenList() (list []typedToken) {
+	if p.trace {
+		defer un(trace(p, "parenList"))
+	}
+
+	p.expect(token.LPAREN, "param/arg list")
+
+	var args []typedToken
+
+	tok, _ := p.scan()
+	if tok != token.RPAREN {
+		p.unscan()
+		first := p.parseVar()
+
+		tok, _ := p.scan()
+		if tok == token.COMMA {
+			p.unscan()
+			args = p.parseList(first)
+		} else {
+			args = append(args, first)
+			p.unscan()
+		}
+	}
+
+	p.expect(token.RPAREN, "param/arg list end")
+
+	p.scan()
+	p.unscan()
+
+	return args
 }
 
 func (p *Parser) parseList(first typedToken) (list []typedToken) {

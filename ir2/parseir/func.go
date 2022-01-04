@@ -13,7 +13,7 @@ func (p *Parser) parseFunc() {
 	}
 
 	// Read a func label
-	name := p.parseLabel()
+	name := p.parseLabel(nil)
 
 	parts := strings.Split(name, "__")
 	name = parts[len(parts)-1]
@@ -81,10 +81,11 @@ func (p *Parser) parseBlock() {
 		defer un(trace(p, "block"))
 	}
 
-	// Read a block label
-	name := p.parseLabel()
-
 	p.blk = p.fn.NewBlock()
+
+	// Read a block label
+	name := p.parseLabel(p.blk)
+
 	p.blkLabels[name] = p.blk
 	p.fn.InsertBlock(-1, p.blk)
 
@@ -118,7 +119,7 @@ func (p *Parser) parseBlock() {
 	}
 }
 
-func (p *Parser) parseLabel() string {
+func (p *Parser) parseLabel(blk *ir2.Block) string {
 	if p.trace {
 		defer un(trace(p, "label"))
 	}
@@ -131,6 +132,22 @@ func (p *Parser) parseLabel() string {
 	label := lit
 
 	tok, lit = p.scan()
+
+	if tok == token.LPAREN && blk != nil {
+		p.unscan()
+		list := p.parseParenList()
+
+		for _, v := range list {
+			val := blk.Func().NewValue(v.typ)
+
+			p.values[v.lit] = val
+
+			blk.AddDef(val)
+		}
+
+		tok, lit = p.scan()
+	}
+
 	if tok != token.COLON {
 		p.errorf("found %q, expected label", lit)
 	}

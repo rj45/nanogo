@@ -1,6 +1,9 @@
 package ir2
 
-import "go/types"
+import (
+	"go/types"
+	"log"
+)
 
 func (use *User) init(fn *Func, id ident) {
 	use.fn = fn
@@ -22,10 +25,17 @@ func (use *User) Block() *Block {
 	return use.Instr().blk
 }
 
-// Instr returns either the Instr or nil if User is not
-// an Instr
+// emptyInstr is an empty Instr returned by Instr().
+// To check for this, check .ObjectKind() == UnknownObject.
+var emptyInstr = &Instr{}
+
+// Instr returns either the Instr or an empty Instr to
+// cut down on having to check IsInstr() everywhere.
 func (use *User) Instr() *Instr {
-	return use.InstrIn(use.fn)
+	if use.IsInstr() {
+		return use.InstrIn(use.fn)
+	}
+	return emptyInstr
 }
 
 // Definitions (Defs)
@@ -48,6 +58,9 @@ func (use *User) Def(i int) *Value {
 
 // AddDef adds a Value definition
 func (use *User) AddDef(val *Value) *Value {
+	if use.ObjectKind() == UnknownObject {
+		log.Panicf("tried to add def %v to unknown/empty user", val)
+	}
 	use.defs = append(use.defs, val)
 	val.def = use
 	return val
@@ -55,6 +68,9 @@ func (use *User) AddDef(val *Value) *Value {
 
 // updateDef updates an existing def or adds one if necessary
 func (use *User) updateDef(i int, typ types.Type) *Value {
+	if use.ObjectKind() == UnknownObject {
+		log.Panicf("tried to update def %d:%v on unknown/empty user", i, typ)
+	}
 	typ = validType(typ)
 
 	if i < len(use.defs) {
@@ -98,6 +114,9 @@ func (use *User) InsertArg(i int, arg *Value) {
 	if arg == nil {
 		panic("tried to insert a nil arg, use placeholder instead")
 	}
+	if use.ObjectKind() == UnknownObject {
+		log.Panicf("tried to add arg %d:%v on unknown/empty user", i, arg)
+	}
 
 	arg.addUse(use)
 
@@ -119,10 +138,14 @@ func (use *User) RemoveArg(arg *Value) {
 }
 
 // ReplaceArg replaces the ith argument with the
-// value specified
+// value specified. Will call InsertArg instead
+// if i == NumArgs().
 func (use *User) ReplaceArg(i int, arg *Value) {
 	if use.ArgIndex(arg) == i {
 		panic("tried to replace already existing arg")
+	}
+	if use.ObjectKind() == UnknownObject {
+		log.Panicf("tried to replace arg with %d:%v on unknown/empty user", i, arg)
 	}
 
 	if len(use.args) == i {

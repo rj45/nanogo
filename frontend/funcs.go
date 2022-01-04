@@ -2,7 +2,6 @@ package frontend
 
 import (
 	"fmt"
-	"log"
 	"strings"
 
 	"github.com/rj45/nanogo/ir/op"
@@ -25,13 +24,13 @@ func (fe *FrontEnd) translateFunc(irFunc *ir2.Func, ssaFunc *ssa.Function) {
 		blockList[i], blockList[j] = blockList[j], blockList[i]
 	}
 
-	type critical struct {
-		pred *ssa.BasicBlock
-		succ *ssa.BasicBlock
-		blk  *ir2.Block
-	}
-	var criticals []critical
-	var returns []*ir2.Block
+	// type critical struct {
+	// 	pred *ssa.BasicBlock
+	// 	succ *ssa.BasicBlock
+	// 	blk  *ir2.Block
+	// }
+	// var criticals []critical
+	// var returns []*ir2.Block
 
 	for bn, ssaBlock := range blockList {
 		irBlock := irFunc.NewBlock()
@@ -46,6 +45,7 @@ func (fe *FrontEnd) translateFunc(irFunc *ir2.Func, ssaFunc *ssa.Function) {
 				instr.Pos = getPos(param)
 
 				fe.val2instr[param] = instr
+				fe.val2val[param] = instr.Def(0)
 			}
 		}
 
@@ -53,10 +53,10 @@ func (fe *FrontEnd) translateFunc(irFunc *ir2.Func, ssaFunc *ssa.Function) {
 
 		fe.translateInstrs(irBlock, ssaBlock)
 
-		lastInstr := ssaBlock.Instrs[len(ssaBlock.Instrs)-1]
-		if _, ok := lastInstr.(*ssa.Return); ok {
-			returns = append(returns, irBlock)
-		}
+		// lastInstr := ssaBlock.Instrs[len(ssaBlock.Instrs)-1]
+		// if _, ok := lastInstr.(*ssa.Return); ok {
+		// 	returns = append(returns, irBlock)
+		// }
 
 		for _, succ := range ssaBlock.Succs {
 			if len(ssaBlock.Succs) > 1 && len(succ.Preds) > 1 {
@@ -65,13 +65,18 @@ func (fe *FrontEnd) translateFunc(irFunc *ir2.Func, ssaFunc *ssa.Function) {
 
 				irBlock.InsertInstr(-1, irFunc.NewInstr(op.Jump2, nil))
 
-				criticals = append(criticals, critical{
-					pred: ssaBlock,
-					succ: succ,
-					blk:  irBlock,
-				})
+				// criticals = append(criticals, critical{
+				// 	pred: ssaBlock,
+				// 	succ: succ,
+				// 	blk:  irBlock,
+				// })
 			}
 		}
+	}
+
+	// todo: if this panic never happens, maybe placeholders not necessary?
+	if irFunc.HasPlaceholders() {
+		panic("Invalid assumption that placeholders no longer necessary")
 	}
 
 	fe.resolvePlaceholders(irFunc)
@@ -79,27 +84,16 @@ func (fe *FrontEnd) translateFunc(irFunc *ir2.Func, ssaFunc *ssa.Function) {
 	for _, block := range blockList {
 		irBlock := fe.blockmap[block]
 
-		for it := irBlock.InstrIter(); it.HasNext(); it.Next() {
-			if ssaInstr, ok := fe.instrmap[it.Instr()]; ok {
-				_ = ssaInstr
-				// fe.translateArgs(it.Block(), it.Instr(), ssaInstr)
-			} else if it.Instr().Op != op.Parameter {
-				log.Panicf("missing instruction: %v : %d/%d, %d/%d", it.Instr(),
-					it.BlockIndex(), irFunc.NumBlocks(),
-					it.InstrIndex(), it.Block().NumInstrs())
-			}
-		}
-
 		for _, succ := range block.Succs {
 			found := false
-			for _, crit := range criticals {
-				if crit.pred == block && crit.succ == succ {
-					irBlock.AddSucc(crit.blk)
-					crit.blk.AddPred(irBlock)
-					found = true
-					break
-				}
-			}
+			// for _, crit := range criticals {
+			// 	if crit.pred == block && crit.succ == succ {
+			// 		irBlock.AddSucc(crit.blk)
+			// 		crit.blk.AddPred(irBlock)
+			// 		found = true
+			// 		break
+			// 	}
+			// }
 
 			if !found {
 				irBlock.AddSucc(fe.blockmap[succ])
@@ -107,14 +101,14 @@ func (fe *FrontEnd) translateFunc(irFunc *ir2.Func, ssaFunc *ssa.Function) {
 		}
 		for _, pred := range block.Preds {
 			found := false
-			for _, crit := range criticals {
-				if crit.pred == pred && crit.succ == block {
-					irBlock.AddPred(crit.blk)
-					crit.blk.AddSucc(irBlock)
-					found = true
-					break
-				}
-			}
+			// for _, crit := range criticals {
+			// 	if crit.pred == pred && crit.succ == block {
+			// 		irBlock.AddPred(crit.blk)
+			// 		crit.blk.AddSucc(irBlock)
+			// 		found = true
+			// 		break
+			// 	}
+			// }
 
 			if !found {
 				irBlock.AddPred(fe.blockmap[pred])
@@ -122,33 +116,33 @@ func (fe *FrontEnd) translateFunc(irFunc *ir2.Func, ssaFunc *ssa.Function) {
 		}
 	}
 
-	if len(returns) > 1 {
-		realRet := irFunc.NewBlock()
-		irFunc.InsertBlock(-1, realRet)
+	// if len(returns) > 1 {
+	// 	realRet := irFunc.NewBlock()
+	// 	irFunc.InsertBlock(-1, realRet)
 
-		// var phis []*ir.Value
+	// 	// var phis []*ir.Value
 
-		// for i := 0; i < returns[0].NumControls(); i++ {
-		// 	phi := irFunc.NewValue(op.Phi, returns[0].Control(i).Type)
-		// 	realRet.InsertInstr(-1, phi)
-		// 	realRet.InsertControl(-1, phi)
-		// 	phis = append(phis, phi)
-		// }
+	// 	// for i := 0; i < returns[0].NumControls(); i++ {
+	// 	// 	phi := irFunc.NewValue(op.Phi, returns[0].Control(i).Type)
+	// 	// 	realRet.InsertInstr(-1, phi)
+	// 	// 	realRet.InsertControl(-1, phi)
+	// 	// 	phis = append(phis, phi)
+	// 	// }
 
-		for _, ret := range returns {
-			ret.AddSucc(realRet)
-			realRet.AddPred(ret)
-			// ret.Op = op.Jump
+	// 	for _, ret := range returns {
+	// 		ret.AddSucc(realRet)
+	// 		realRet.AddPred(ret)
+	// 		// ret.Op = op.Jump
 
-			// for i := 0; i < ret.NumControls(); i++ {
-			// 	phis[i].InsertArg(-1, ret.Control(i))
-			// }
+	// 		// for i := 0; i < ret.NumControls(); i++ {
+	// 		// 	phis[i].InsertArg(-1, ret.Control(i))
+	// 		// }
 
-			// for ret.NumControls() > 0 {
-			// 	ret.RemoveControl(0)
-			// }
-		}
-	}
+	// 		// for ret.NumControls() > 0 {
+	// 		// 	ret.RemoveControl(0)
+	// 		// }
+	// 	}
+	// }
 }
 
 func genName(pkg, name string) string {
