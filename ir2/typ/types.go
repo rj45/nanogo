@@ -1,14 +1,14 @@
 // experimental simplified type system
 //
 // Defintions:
-// - A `byte` is the smallest addressable unit in the CPU, this does not
-//   need to be 8 bits, though it usually is. In rj32 it's 16 bits.
-// - A `word` is the largest value that can fit in a register. This can
-//   be the the same as the word size, as it is in rj32 (16 bits)
-// - A `pointer` can be larger than 1 word, if it is, generally an `int`
-//   will also be larger than 1 word. This is common on 8-bit systems.
-// - In general, though, you will want `int` and `uint` to be the same
-//   size as a word, but at least 16 bits.
+//   - A `byte` is the smallest addressable unit in the CPU, this does not
+//     need to be 8 bits, though it usually is. In rj32 it's 16 bits.
+//   - A `word` is the largest value that can fit in a register. This can
+//     be the the same as the byted size, as it is in rj32 (16 bits)
+//   - A `pointer` can be larger than 1 word, if it is, generally an `int`
+//     will also be larger than 1 word. This is common on 8-bit systems.
+//   - In general, though, you will want `int` and `uint` to be the same
+//     size as a word, but at least 16 bits.
 //
 // TinyGo uses a system to compactly represent types in a way that
 // can be embedded for runtime reflection. We use a very similar system
@@ -18,8 +18,11 @@
 // ones) which can fit in 5 bits. These are the BasicTypes in the types
 // package.
 //
+// Go also allows you to "name" any type and it will be treated as a
+// distinct type.
+//
 // Extended types come in 8 other flavours. 4 of those flavours just
-// decorate another type (chan interface pointer slice). 4 of them
+// decorate another type (chan, interface, pointer, slice). 4 of them
 // are more complex (func, array, map, struct).
 //
 // As much as possible is packed into the Type code itself including
@@ -28,10 +31,17 @@
 // an ID for further information to be looked up in side tables, and
 // it's fundamental Kind.
 //
-// T = type kind
-// K = map key type kind, chan direction, array size
-// D = type decoration
-// I = type index in side tables
+// The bit-packed type codes are defined as follows:
+//
+// Legend:
+//
+//	T = type kind
+//	K = map key type kind, chan direction, array size
+//	D = type decoration
+//	I = type index in side tables
+//
+// Two basic type codes for basic unnamed and named types. These have
+// `0` in their least significant bit.
 //
 // An unnamed basic type, inc: empty struct, empty interface, `func()`
 // 0000 0000 00TT TTT0
@@ -39,15 +49,17 @@
 // A named basic type
 // IIII IIII IITT TTT0
 //
+// There are two codes for decorated or extended types:
+//
 // An unnamed decorated basic type
 //   - maps with basic types as both key and value have both specified
 //   - channels have their direction specified as K
 //   - if an array, and the array length fits in K bits
-// KKKK KKTT TTT0 DDD1
+//
+// # KKKK KKTT TTT0 DDD1
 //
 // A named/extended decorated type
 // IIII IIII III1 DDD1
-//
 package typ
 
 import "fmt"

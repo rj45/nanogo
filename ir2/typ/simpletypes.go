@@ -5,7 +5,7 @@ import (
 	"math/bits"
 )
 
-// SimpleTypeFor attempts to fit the types.Type into a Type. If
+// SimpleTypeFor attempts to fit the types.Type into a typ.Type. If
 // side tables are required for more information, Unknown is
 // returned.
 func SimpleTypeFor(typ types.Type) Type {
