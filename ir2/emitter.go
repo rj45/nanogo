@@ -282,7 +282,7 @@ func (in *Instr) Emit(out io.Writer, dec Decorator) {
 
 			if dec.SSAForm() && len(succ.defs) > 0 {
 				str += "("
-				for i, _ := range succ.defs {
+				for i := range succ.defs {
 					if i != 0 {
 						str += ", "
 					}
@@ -313,7 +313,7 @@ func (in *Instr) LongString() string {
 }
 
 func (val *Value) String() string {
-	if val.ident == Placeholder {
+	if val.ID == Placeholder {
 		return "<" + val.Const().String() + ">"
 	}
 	if val.IsConst() {

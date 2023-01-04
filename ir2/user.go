@@ -5,9 +5,22 @@ import (
 	"log"
 )
 
-func (use *User) init(fn *Func, id ident) {
+// User uses and defines Values. Blocks and
+// Instrs are Users.
+type User struct {
+	ID
+	fn *Func
+
+	defs []*Value
+	args []*Value
+
+	defstorage [2]*Value
+	argstorage [3]*Value
+}
+
+func (use *User) init(fn *Func, id ID) {
 	use.fn = fn
-	use.ident = id
+	use.ID = id
 	use.defs = use.defstorage[:0]
 	use.args = use.argstorage[:0]
 }
@@ -26,7 +39,7 @@ func (use *User) Block() *Block {
 }
 
 // emptyInstr is an empty Instr returned by Instr().
-// To check for this, check .ObjectKind() == UnknownObject.
+// To check for this, check .Kind() == UnknownID.
 var emptyInstr = &Instr{}
 
 // Instr returns either the Instr or an empty Instr to
@@ -58,7 +71,7 @@ func (use *User) Def(i int) *Value {
 
 // AddDef adds a Value definition
 func (use *User) AddDef(val *Value) *Value {
-	if use.ObjectKind() == UnknownObject {
+	if use.Kind() == UnknownID {
 		log.Panicf("tried to add def %v to unknown/empty user", val)
 	}
 	use.defs = append(use.defs, val)
@@ -68,7 +81,7 @@ func (use *User) AddDef(val *Value) *Value {
 
 // updateDef updates an existing def or adds one if necessary
 func (use *User) updateDef(i int, typ types.Type) *Value {
-	if use.ObjectKind() == UnknownObject {
+	if use.Kind() == UnknownID {
 		log.Panicf("tried to update def %d:%v on unknown/empty user", i, typ)
 	}
 	typ = validType(typ)
@@ -114,7 +127,7 @@ func (use *User) InsertArg(i int, arg *Value) {
 	if arg == nil {
 		panic("tried to insert a nil arg, use placeholder instead")
 	}
-	if use.ObjectKind() == UnknownObject {
+	if use.Kind() == UnknownID {
 		log.Panicf("tried to add arg %d:%v on unknown/empty user", i, arg)
 	}
 
@@ -144,7 +157,7 @@ func (use *User) ReplaceArg(i int, arg *Value) {
 	if use.ArgIndex(arg) == i {
 		panic("tried to replace already existing arg")
 	}
-	if use.ObjectKind() == UnknownObject {
+	if use.Kind() == UnknownID {
 		log.Panicf("tried to replace arg with %d:%v on unknown/empty user", i, arg)
 	}
 

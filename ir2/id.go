@@ -2,47 +2,63 @@ package ir2
 
 import "fmt"
 
+// ID is an identifier that's unique within a Func
+type ID uint32
+
+type IDKind uint8
+
+const (
+	UnknownID IDKind = iota
+	BlockID
+	InstrID
+	ValueID
+	PlaceholderID
+)
+
+// Placeholder is an invalid ID meant to signal a place that needs to be filled
+var Placeholder ID = idFor(PlaceholderID, -1)
+
 const kindShift = 24
 const idMask = (1 << kindShift) - 1
 
-// ObjectKind returns the kind of object the ID is for
-func (id ident) ObjectKind() ObjectKind {
-	return ObjectKind(id >> kindShift)
+// Kind returns the IDKind
+func (id ID) Kind() IDKind {
+	return IDKind(id >> kindShift)
 }
 
-// IDNum returns the ID number for the ID
-func (id ident) IDNum() int {
+// Num returns the ID number for the ID
+func (id ID) Num() int {
 	return int(id & idMask)
 }
 
 // IDString returns the ID string
-func (id ident) IDString() string {
+func (id ID) IDString() string {
 	prefix := ""
-	switch id.ObjectKind() {
-	case BlockObject:
+	switch id.Kind() {
+	case BlockID:
 		prefix = "b"
-	case InstrObject:
+	case InstrID:
 		prefix = "i"
-	case ValueObject:
+	case ValueID:
 		prefix = "v"
 	}
-	return fmt.Sprintf("%s%d", prefix, id.IDNum())
+	return fmt.Sprintf("%s%d", prefix, id.Num())
 }
 
 // idFor returns a new ID for a given object kind
-func idFor(kind ObjectKind, idNum int) ident {
-	return ident(kind)<<kindShift | (ident(idNum) & idMask)
+func idFor(kind IDKind, idNum int) ID {
+	return ID(kind)<<kindShift | (ID(idNum) & idMask)
 }
 
 // IsBlock returns if ID points to a Block
-func (id ident) IsBlock() bool {
-	return id.ObjectKind() == BlockObject
+func (id ID) IsBlock() bool {
+	return id.Kind() == BlockID
 }
 
 // BlockIn returns the Block in the Func or nil
 // if this ID is not for a Block
-func (id ident) BlockIn(fn *Func) *Block {
-	if id.ObjectKind() != BlockObject {
+func (id ID) BlockIn(fn *Func) *Block {
+	if id.Kind() != BlockID {
 		return nil
 	}
 
@@ -50,29 +66,29 @@ func (id ident) BlockIn(fn *Func) *Block {
 }
 
 // IsInstr returns if ID points to a Instr
-func (id ident) IsInstr() bool {
-	return id.ObjectKind() == InstrObject
+func (id ID) IsInstr() bool {
+	return id.Kind() == InstrID
 }
 
 // InstrIn returns the Instr in the Func or nil
 // if this ID is not for a Instr
-func (id ident) InstrIn(fn *Func) *Instr {
-	if id.ObjectKind() != InstrObject {
+func (id ID) InstrIn(fn *Func) *Instr {
+	if id.Kind() != InstrID {
 		return nil
 	}
 
 	return fn.idInstrs[id&idMask]
 }
 
-// IsValue returns if ID points to a Value
-func (id ident) IsValue() bool {
-	return id.ObjectKind() == ValueObject
+// IsValue returns true if ID points to a Value
+func (id ID) IsValue() bool {
+	return id.Kind() == ValueID
 }
 
 // ValueIn returns the Value in the Func or nil
-// if this ID is not for a Value
-func (id ident) ValueIn(fn *Func) *Value {
-	if id.ObjectKind() != ValueObject {
+// if this ID is not a value or not in the Func
+func (id ID) ValueIn(fn *Func) *Value {
+	if id.Kind() != ValueID {
 		return nil
 	}
 

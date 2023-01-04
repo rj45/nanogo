@@ -5,6 +5,36 @@ import (
 	"go/constant"
 )
 
+// Const is a constant value of some sort
+type Const interface {
+	Location() Location
+	Kind() ConstKind
+	String() string
+	private()
+}
+
+// ConstKind is a kind of constant
+type ConstKind uint8
+
+const (
+	// no const, or not a const
+	NotConst ConstKind = iota
+
+	// nil, which is different than no const at all
+	NilConst
+
+	// non-numeric values
+	BoolConst
+	StringConst
+
+	// numeric values
+	IntConst
+
+	// funcs and globals
+	FuncConst
+	GlobalConst
+)
+
 type (
 	notConst    struct{}
 	nilConst    struct{}

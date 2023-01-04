@@ -1,5 +1,18 @@
 package ir2
 
+import "go/token"
+
+// Program is a collection of packages,
+// which comprise a whole program.
+type Program struct {
+	packages []*Package
+
+	FileSet *token.FileSet
+
+	takenNames map[string]bool
+	strings    map[string]*Global
+}
+
 // Packages returns a copy of the package list
 func (prog *Program) Packages() []*Package {
 	return append([]*Package(nil), prog.packages...)

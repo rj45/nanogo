@@ -1,9 +1,32 @@
 package ir2
 
 import (
+	"go/token"
 	"go/types"
 	"log"
 )
+
+// Instr is an instruction that may define one or more Values,
+// and take as args (operands) one or more Values.
+type Instr struct {
+	User
+	Op
+
+	blk *Block
+
+	Pos   token.Pos
+	index int
+}
+
+// Op describes an operation (instruction) type
+type Op interface {
+	String() string
+	IsCall() bool
+	IsCompare() bool
+	IsCopy() bool
+	IsCommutative() bool
+	IsSink() bool
+}
 
 // Index returns the index in the Block's
 // Instr list

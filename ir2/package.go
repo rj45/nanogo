@@ -6,6 +6,21 @@ import (
 	"strings"
 )
 
+// Package is a collection of Funcs and Globals
+// which comprise a part of a program.
+type Package struct {
+	prog *Program
+
+	Type *types.Package
+
+	Name string
+	Path string
+
+	funcs    []*Func
+	globals  []*Global
+	typedefs []*TypeDef
+}
+
 // Program that the package belongs to
 func (pkg *Package) Program() *Program {
 	return pkg.prog

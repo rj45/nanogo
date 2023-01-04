@@ -7,6 +7,41 @@ import (
 	"sort"
 )
 
+// Func is a collection of Blocks, which comprise
+// a function or method in a Program.
+type Func struct {
+	Name     string
+	FullName string
+	Sig      *types.Signature
+
+	Referenced bool
+	NumCalls   int
+
+	numArgSlots   int
+	numParamSlots int
+	numSpillSlots int
+
+	pkg *Package
+
+	blocks []*Block
+
+	consts map[Const]*Value
+
+	// placeholders that need filling
+	placeholders map[string]*Value
+
+	// ID to node mappings
+	idBlocks []*Block
+	idValues []*Value
+	idInstrs []*Instr
+
+	// allocate in slabs so related
+	// stuff is close together in memory
+	blockslab []Block
+	valueslab []Value
+	instrslab []Instr
+}
+
 // slab allocation sizes
 const valueSlabSize = 16
 const instrSlabSize = 16
@@ -18,7 +53,7 @@ func (fn *Func) Package() *Package {
 }
 
 // ValueForID returns the Value for the ID
-func (fn *Func) ValueForID(v ident) *Value {
+func (fn *Func) ValueForID(v ID) *Value {
 	return fn.idValues[v&idMask]
 }
 
@@ -32,7 +67,7 @@ func (fn *Func) NewValue(typ types.Type) *Value {
 	fn.valueslab = append(fn.valueslab, Value{})
 	val := &fn.valueslab[len(fn.valueslab)-1]
 
-	val.init(idFor(ValueObject, len(fn.idValues)), typ)
+	val.init(idFor(ValueID, len(fn.idValues)), typ)
 
 	fn.idValues = append(fn.idValues, val)
 
@@ -84,7 +119,7 @@ func (fn *Func) PlaceholderFor(label string) *Value {
 	}
 
 	ph = &Value{
-		ident: Placeholder,
+		ID: Placeholder,
 	}
 	ph.SetConst(ConstFor(label))
 
@@ -135,7 +170,7 @@ func (fn *Func) PlaceholderLabels() []string {
 // Instrs
 
 // InstrForID returns the Instr for the ID
-func (fn *Func) InstrForID(i ident) *Instr {
+func (fn *Func) InstrForID(i ID) *Instr {
 	return fn.idInstrs[i&idMask]
 }
 
@@ -149,7 +184,7 @@ func (fn *Func) NewInstr(op Op, typ types.Type, args ...interface{}) *Instr {
 	fn.instrslab = append(fn.instrslab, Instr{})
 	instr := &fn.instrslab[len(fn.instrslab)-1]
 
-	instr.init(fn, idFor(InstrObject, len(fn.idInstrs)))
+	instr.init(fn, idFor(InstrID, len(fn.idInstrs)))
 
 	fn.idInstrs = append(fn.idInstrs, instr)
 
@@ -171,7 +206,7 @@ func (fn *Func) Block(i int) *Block {
 }
 
 // BlockForID returns a Block by ID
-func (fn *Func) BlockForID(b ident) *Block {
+func (fn *Func) BlockForID(b ID) *Block {
 	return fn.idBlocks[b&idMask]
 }
 
@@ -185,7 +220,7 @@ func (fn *Func) NewBlock() *Block {
 	fn.blockslab = append(fn.blockslab, Block{})
 	blk := &fn.blockslab[len(fn.blockslab)-1]
 
-	blk.init(fn, idFor(BlockObject, len(fn.idBlocks)))
+	blk.init(fn, idFor(BlockID, len(fn.idBlocks)))
 
 	fn.idBlocks = append(fn.idBlocks, blk)
 

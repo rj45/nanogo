@@ -7,10 +7,46 @@ import (
 	"github.com/rj45/nanogo/ir/reg"
 )
 
+// Value is a single value that may be stored in a
+// single place. This may be a constant or variable,
+// stored in a temp, register or on the stack.
+type Value struct {
+	stg
+
+	ID
+
+	// Type is the type of the Value
+	Type types.Type
+
+	def  *User
+	uses []*User
+
+	usestorage [2]*User
+}
+
+// Location is the location of a Value
+type Location uint8
+
+const (
+	InTemp Location = iota
+	InConst
+	InReg
+
+	// Param slots are an area of the stack for func parameters.
+	// Specifically, they are in the caller's arg slot area.
+	InParamSlot
+
+	// Arg slots are an area of the stack reserved for call arguments.
+	InArgSlot
+
+	// Spill slots are an area of the stack reserved for register spills.
+	InSpillSlot
+)
+
 // init initializes the Value.
-func (val *Value) init(id ident, typ types.Type) {
+func (val *Value) init(id ID, typ types.Type) {
 	val.uses = val.usestorage[:0]
-	val.ident = id
+	val.ID = id
 	if typ != nil {
 		if t, ok := typ.(*types.Basic); ok && t.Kind() == types.Invalid {
 			typ = nil
@@ -88,9 +124,9 @@ func (val *Value) InTemp() bool {
 }
 
 // Temp returns which temp if the value is in a temp.
-func (val *Value) Temp() ident {
+func (val *Value) Temp() ID {
 	if val.Location() == InTemp {
-		return val.ident
+		return val.ID
 	}
 	return Placeholder
 }

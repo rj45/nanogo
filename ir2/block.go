@@ -4,7 +4,26 @@ import (
 	"log"
 )
 
-func (blk *Block) init(fn *Func, id ident) {
+// Block is a collection of Instrs which is a basic block
+// in a control flow graph. The last Instr of a block must
+// be a control flow Instr. A block may begin with one or more
+// Phi Instrs, and all Phis should be at the start of the Block.
+// Blocks can have Preds and Succs for the blocks that
+// come before or after in the control flow graph respectively.
+type Block struct {
+	User
+
+	instrs []*Instr
+
+	preds []*Block
+	succs []*Block
+
+	instrstorage [5]*Instr
+	predstorage  [2]*Block
+	succstorage  [2]*Block
+}
+
+func (blk *Block) init(fn *Func, id ID) {
 	blk.User.init(fn, id)
 	blk.instrs = blk.instrstorage[:0]
 	blk.preds = blk.predstorage[:0]
