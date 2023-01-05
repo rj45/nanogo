@@ -14,4 +14,19 @@
 // This is handy to avoid needing tuples and unpacking tuples to
 // handle instructions (like function calls) that return multiple
 // values.
+//
+// This IR is structured with ideas from Data Oriented Programming
+// and Entity Component Systems type thinking to try to structure
+// data to be close together in cache and avoid cache misses if
+// possible.
+//
+// As such there is an ID system that acts like a index into an
+// array. These IDs are local to the Func in which they live. The
+// different kinds of ID-able things are allocated in slabs of a
+// fixed size in order to avoid invalidating pointers. Memory
+// currently is not freed (but could be with a generation counter in
+// the ID.)
+//
+// The IR is designed to be serialized into a human readable text file
+// and parsed back into IR to aid in creating tests.
 package ir2

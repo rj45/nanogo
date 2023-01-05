@@ -26,8 +26,8 @@ func (id ID) Kind() IDKind {
 	return IDKind(id >> kindShift)
 }
 
-// Num returns the ID number for the ID
-func (id ID) Num() int {
+// Index returns the ID number for the ID
+func (id ID) Index() int {
 	return int(id & idMask)
 }
 
@@ -42,7 +42,7 @@ func (id ID) IDString() string {
 	case ValueID:
 		prefix = "v"
 	}
-	return fmt.Sprintf("%s%d", prefix, id.Num())
+	return fmt.Sprintf("%s%d", prefix, id.Index())
 }
 
 // idFor returns a new ID for a given object kind
