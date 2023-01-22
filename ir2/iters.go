@@ -193,8 +193,13 @@ type CrossBlockIter struct {
 // InstrIter returns an iterator that will iterate over every
 // block and instruction in the func.
 func (fn *Func) InstrIter() *CrossBlockIter {
+	var blk *Block
+	if len(fn.blocks) > 0 {
+		blk = fn.blocks[0]
+	}
+
 	return &CrossBlockIter{
-		BlockIter: BlockIter{blk: fn.blocks[0], insIdx: 0},
+		BlockIter: BlockIter{blk: blk, insIdx: 0},
 		fn:        fn,
 		blkIdx:    0,
 	}
@@ -202,6 +207,10 @@ func (fn *Func) InstrIter() *CrossBlockIter {
 
 // HasNext returns whether Next() will succeed
 func (it *CrossBlockIter) HasNext() bool {
+	if it.blk == nil {
+		return false
+	}
+
 	if (it.blkIdx + 1) < len(it.fn.blocks) {
 		return true
 	}
