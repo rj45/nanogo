@@ -26,9 +26,13 @@ func parseProgram(dir string, patterns ...string) ([]ssa.Member, error) {
 		return nil, err
 	}
 
+	needs := packages.NeedName | packages.NeedFiles | packages.NeedCompiledGoFiles |
+		packages.NeedImports | packages.NeedTypes | packages.NeedTypesSizes |
+		packages.NeedSyntax | packages.NeedTypesInfo | packages.NeedDeps
+
 	// Load, parse, and type-check the whole program.
 	cfg := packages.Config{
-		Mode: packages.LoadAllSyntax,
+		Mode: needs,
 		Dir:  dir,
 		Env:  append(os.Environ(), "GOROOT="+goroot),
 	}
