@@ -72,6 +72,8 @@ func walkInstrs(block *ir.Block, instrs []ssa.Instruction, valmap map[ssa.Value]
 		case *ssa.MakeInterface:
 			// todo: properly handle interfaces
 			irInstr.Op = op.Copy
+		case *ssa.Index:
+			irInstr.Op = op.Index
 		case *ssa.IndexAddr:
 			irInstr.Op = op.IndexAddr
 		case *ssa.FieldAddr:
@@ -161,7 +163,8 @@ func walkInstrs(block *ir.Block, instrs []ssa.Instruction, valmap map[ssa.Value]
 		case *ssa.RunDefers:
 			// ignore
 		default:
-			log.Fatalf("unknown instruction type %#v", instr)
+			pos := instr.Block().Parent().Pkg.Prog.Fset.PositionFor(getPos(instr), false)
+			log.Fatalf("unknown instruction type %#v at %s", instr, pos)
 		}
 
 		if irInstr.Op != op.Invalid {

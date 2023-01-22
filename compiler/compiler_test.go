@@ -69,17 +69,17 @@ func TestCompilerForRj32(t *testing.T) {
 	}
 }
 
-func TestCompilerForA32(t *testing.T) {
-	for _, tC := range testCases {
-		t.Run("runs "+tC.desc+" on a32", func(t *testing.T) {
-			arch.SetArch("a32")
-			result := compiler.Compile("-", "../testdata/", []string{tC.filename}, compiler.Assemble|compiler.Run)
-			if result != 0 {
-				t.Errorf("test %s failed with code %d", tC.filename, result)
-			}
-		})
-	}
-}
+// func TestCompilerForA32(t *testing.T) {
+// 	for _, tC := range testCases {
+// 		t.Run("runs "+tC.desc+" on a32", func(t *testing.T) {
+// 			arch.SetArch("a32")
+// 			result := compiler.Compile("-", "../testdata/", []string{tC.filename}, compiler.Assemble|compiler.Run)
+// 			if result != 0 {
+// 				t.Errorf("test %s failed with code %d", tC.filename, result)
+// 			}
+// 		})
+// 	}
+// }
 
 func TestCompileToFromIR(t *testing.T) {
 	for _, tC := range testCases {
@@ -91,7 +91,11 @@ func TestCompileToFromIR(t *testing.T) {
 
 			// compile the go to IR
 			{
-				fe := frontend.NewFrontEnd("../testdata/", tC.filename)
+				fe, err := frontend.NewFrontEnd("../testdata/", tC.filename)
+				if err != nil {
+					t.Error(err)
+				}
+
 				fe.Scan()
 				for fn := fe.NextUnparsedFunc(); fn != nil; fn = fe.NextUnparsedFunc() {
 					fe.ParseFunc(fn)

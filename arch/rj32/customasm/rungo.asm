@@ -20,5 +20,8 @@ call main__main
 if.ne sp, stackStartAddress
   error
 
+; return success
+move a0, 0
+
 halt
 

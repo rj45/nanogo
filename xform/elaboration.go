@@ -184,6 +184,31 @@ func indexAddrs(val *ir.Value) int {
 
 var _ = addToPass(Elaboration, indexAddrs)
 
+// index converts `Index` instructions into a `mul` and `add` instruction
+// The `mul` is by a constant which can be optimized into shifts and adds by
+// some other piece of code.
+func index(val *ir.Value) int {
+	if val.Op != op.Index {
+		return 0
+	}
+
+	elem := val.Type.(*types.Basic)
+
+	size := sizes.Sizeof(elem)
+
+	sizeval := val.Func().IntConst(size)
+
+	mulval := val.Func().NewValue(op.Mul, types.Typ[types.Int], val.Arg(1), sizeval)
+	val.Block().InsertInstr(val.Index(), mulval)
+
+	val.Op = op.Add
+	val.ReplaceArg(1, mulval)
+
+	return 1
+}
+
+var _ = addToPass(Elaboration, index)
+
 func lookups(val *ir.Value) int {
 	if val.Op != op.Lookup {
 		return 0

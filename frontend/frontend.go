@@ -38,10 +38,10 @@ type FrontEnd struct {
 	placeholders map[string]ssa.Value
 }
 
-func NewFrontEnd(dir string, patterns ...string) *FrontEnd {
+func NewFrontEnd(dir string, patterns ...string) (*FrontEnd, error) {
 	members, err := parseProgram(dir, patterns...)
 	if err != nil {
-		log.Fatal(err)
+		return nil, err
 	}
 
 	var fset *token.FileSet
@@ -52,7 +52,7 @@ func NewFrontEnd(dir string, patterns ...string) *FrontEnd {
 	return &FrontEnd{
 		prog:    &ir2.Program{FileSet: fset},
 		members: members,
-	}
+	}, nil
 }
 
 var dumptypes = flag.Bool("dumptypes", false, "Dump all types in a program")

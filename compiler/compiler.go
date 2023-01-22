@@ -133,7 +133,11 @@ func Compile(outname, dir string, patterns []string, mode Mode) int {
 	}
 
 	if mode&IR != 0 {
-		fe := frontend.NewFrontEnd(dir, patterns...)
+		fe, err := frontend.NewFrontEnd(dir, patterns...)
+		if err != nil {
+			log.Fatal(err)
+		}
+
 		fe.Scan()
 		for fn := fe.NextUnparsedFunc(); fn != nil; fn = fe.NextUnparsedFunc() {
 			var w dumper2
@@ -285,6 +289,10 @@ func Compile(outname, dir string, patterns []string, mode Mode) int {
 
 	if runcmd != nil {
 		if err := runcmd.Run(); err != nil {
+			if exitErr, ok := err.(*exec.ExitError); ok {
+				// don't treat exit errors as an error, instead return the exit code
+				return exitErr.ExitCode()
+			}
 			return 1
 		}
 		return runcmd.ProcessState.ExitCode()
