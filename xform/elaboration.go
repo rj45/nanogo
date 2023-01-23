@@ -192,17 +192,45 @@ func index(val *ir.Value) int {
 		return 0
 	}
 
-	elem := val.Type.(*types.Basic)
+	if val.NumArgs() != 2 {
+		return 0
+	}
 
-	size := sizes.Sizeof(elem)
+	arg0 := val.Arg(0)
 
-	sizeval := val.Func().IntConst(size)
+	basic, ok := arg0.Type.(*types.Basic)
+	if !ok {
+		return 0
+	}
 
-	mulval := val.Func().NewValue(op.Mul, types.Typ[types.Int], val.Arg(1), sizeval)
-	val.Block().InsertInstr(val.Index(), mulval)
+	if basic.Kind() != types.String {
+		return 0
+	}
 
-	val.Op = op.Add
-	val.ReplaceArg(1, mulval)
+	indexArg := val.Arg(1)
+
+	// a string is a tuple of an address and length
+	bd := ir.BuildBefore(val)
+
+	if arg0.Op == op.Global {
+		bd = bd.Op(op.Add, arg0.Type, arg0, reg.GP)
+		arg0 = bd.PrevVal()
+	}
+
+	// load the address
+	bd = bd.Op(op.Load, types.Typ[types.Uintptr], arg0, 0)
+	address := bd.PrevVal()
+
+	if indexArg.Op.IsConst() {
+		ir.BuildReplacement(val).
+			Op(op.Load, val.Type, address, indexArg)
+		return 1
+	}
+
+	bd = bd.Op(op.Add, address.Type, address, indexArg)
+
+	ir.BuildReplacement(val).
+		Op(op.Load, val.Type, bd.PrevVal(), 0)
 
 	return 1
 }
