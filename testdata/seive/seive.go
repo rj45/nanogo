@@ -51,4 +51,8 @@ nextnum:
 		println(x)
 	}
 	println(num)
+
+	if num != 3511 {
+		panic(num)
+	}
 }
