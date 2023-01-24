@@ -8,8 +8,8 @@ import (
 	"go/types"
 	"regexp"
 
-	"github.com/rj45/nanogo/ir/op"
 	"github.com/rj45/nanogo/ir2"
+	"github.com/rj45/nanogo/ir2/op"
 )
 
 type typedToken struct {
@@ -59,7 +59,7 @@ func (p *Parser) parseInstr() {
 			defs = list
 			list = nil
 
-		case token.SUB, token.INT, token.IDENT, token.XOR, token.PERIOD, token.RANGE:
+		case token.SUB, token.INT, token.IDENT, token.XOR, token.PERIOD, token.RANGE, token.IF, token.RETURN:
 			p.unscan()
 
 			if last.tok == token.ILLEGAL {
@@ -128,7 +128,7 @@ func (p *Parser) parseVar() typedToken {
 		return typedToken{
 			tok: token.PERIOD, lit: blkname, typ: nil, glob: true, block: true, args: args}
 
-	case token.IDENT, token.RANGE:
+	case token.IDENT, token.RANGE, token.IF, token.RETURN:
 		next, _ := p.scan()
 		p.unscan()
 		var typ types.Type

@@ -101,7 +101,7 @@ func (p *Parser) parseBlock() {
 			p.unscan()
 			return
 
-		case token.IDENT:
+		case token.IDENT, token.IF, token.RETURN:
 			p.unscan()
 			p.parseInstr()
 
