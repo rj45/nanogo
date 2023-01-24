@@ -6,8 +6,8 @@ import (
 	"go/types"
 	"log"
 
-	"github.com/rj45/nanogo/ir/op"
 	"github.com/rj45/nanogo/ir2"
+	"github.com/rj45/nanogo/ir2/op"
 	"golang.org/x/tools/go/ssa"
 )
 
@@ -25,13 +25,13 @@ func (fe *FrontEnd) translateInstrs(irBlock *ir2.Block, ssaBlock *ssa.BasicBlock
 		switch ins := instr.(type) {
 		case *ssa.DebugRef:
 		case *ssa.If:
-			opcode = op.If2
+			opcode = op.If
 		case *ssa.Jump:
-			opcode = op.Jump2
+			opcode = op.Jump
 		case *ssa.Return:
-			opcode = op.Return2
+			opcode = op.Return
 		case *ssa.Panic:
-			opcode = op.Panic2
+			opcode = op.Panic
 		case *ssa.Phi:
 			fe.translateBlockParams(irBlock, ins)
 		case *ssa.Store:

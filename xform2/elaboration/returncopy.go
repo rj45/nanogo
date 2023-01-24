@@ -1,15 +1,15 @@
 package elaboration
 
 import (
-	"github.com/rj45/nanogo/ir/op"
 	"github.com/rj45/nanogo/ir/reg"
 	"github.com/rj45/nanogo/ir2"
+	"github.com/rj45/nanogo/ir2/op"
 	"github.com/rj45/nanogo/xform2"
 )
 
 var _ = xform2.Register(returnCopy,
 	xform2.OnlyPass(xform2.Elaboration),
-	xform2.OnOp(op.Return2),
+	xform2.OnOp(op.Return),
 	xform2.Once(),
 )
 

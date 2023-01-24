@@ -19,10 +19,10 @@ type Arch interface {
 	Name() string
 }
 
-var arch Arch
+// var arch Arch
 
 func SetArch(a Arch) {
-	arch = a
+	// arch = a
 }
 
 type FrontEnd struct {

@@ -3,9 +3,9 @@ package elaboration
 import (
 	"go/types"
 
-	"github.com/rj45/nanogo/ir/op"
 	"github.com/rj45/nanogo/ir/reg"
 	"github.com/rj45/nanogo/ir2"
+	"github.com/rj45/nanogo/ir2/op"
 	"github.com/rj45/nanogo/xform2"
 )
 

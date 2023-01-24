@@ -19,6 +19,8 @@ type Instr struct {
 }
 
 // Op describes an operation (instruction) type
+// Note: Implementations of Op should attempt to be uint8 type,
+// since this is optimized by Go.
 type Op interface {
 	String() string
 	IsCall() bool
@@ -28,8 +30,7 @@ type Op interface {
 	IsSink() bool
 }
 
-// Index returns the index in the Block's
-// Instr list
+// Index returns the index in the Block's Instr list
 func (in *Instr) Index() int {
 	if in.blk.instrs[in.index] != in {
 		log.Panicf("bad index on %v", in)
@@ -37,6 +38,8 @@ func (in *Instr) Index() int {
 	return in.index
 }
 
+// LineNo returns the line number in the original Go source code,
+// or 0 if that's not known
 func (in *Instr) LineNo() int {
 	fset := in.fn.pkg.prog.FileSet
 	pos := fset.Position(in.Pos)
