@@ -6,10 +6,21 @@ import (
 
 // Block is a collection of Instrs which is a basic block
 // in a control flow graph. The last Instr of a block must
-// be a control flow Instr. A block may begin with one or more
-// Phi Instrs, and all Phis should be at the start of the Block.
-// Blocks can have Preds and Succs for the blocks that
-// come before or after in the control flow graph respectively.
+// be a control flow Instr. Blocks can have Preds and Succs
+// for the blocks that come before or after in the control
+// flow graph respectively.
+//
+// Blocks are also `User`s in that they are like instructions
+// and can Def (define) values for use inside the block that act
+// like block parameters, similar to a function call. They
+// also have Args which are used as parameters to any successor
+// blocks.
+//
+// This system of blocks having parameters is instead of having
+// Phi instructions. This is similar to Cranelift, and Cranelift
+// has some good docs on how this works. But this is _not_ an
+// extended basic block (EBB), there is only one exit from the
+// block (excluding function calls).
 type Block struct {
 	User
 
