@@ -204,51 +204,6 @@ func (fe *FrontEnd) translateInstrs(irBlock *ir2.Block, ssaBlock *ssa.BasicBlock
 	fe.translateBlockArgs(irBlock, ssaBlock)
 }
 
-func (fe *FrontEnd) translateBlockParams(block *ir2.Block, phi *ssa.Phi) {
-	param := block.Func().NewValue(phi.Type())
-	block.AddDef(param)
-
-	fe.val2val[phi] = param
-}
-
-func (fe *FrontEnd) translateBlockArgs(irBlock *ir2.Block, ssaBlock *ssa.BasicBlock) {
-	// for each succ block
-	for _, succ := range ssaBlock.Succs {
-		pred := 0
-		for i, p := range succ.Preds {
-			if p == ssaBlock {
-				pred = i
-			}
-		}
-
-		if succ.Preds[pred] != ssaBlock {
-			panic("not found")
-		}
-
-		// scan through each phi in that succ block
-		for _, instr := range succ.Instrs {
-			phi, ok := instr.(*ssa.Phi)
-			if !ok {
-				break
-			}
-
-			// pick out the arg for the current pred block
-			ssaVal := phi.Edges[pred]
-			arg := fe.val2val[ssaVal]
-
-			if con, ok := ssaVal.(*ssa.Const); ok {
-				arg = irBlock.Func().ValueFor(phi.Type(), con.Value)
-			}
-
-			if arg == nil {
-				log.Panicf("Can't find val for %s %T in phi %s in block %s", ssaVal, ssaVal, phi, irBlock)
-			}
-
-			irBlock.InsertArg(-1, arg)
-		}
-	}
-}
-
 func (fe *FrontEnd) translateArgs(block *ir2.Block, irInstr *ir2.Instr, ssaInstr ssa.Instruction) {
 	var valarr [10]*ssa.Value
 	vals := ssaInstr.Operands(valarr[:0])

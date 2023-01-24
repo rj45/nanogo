@@ -40,16 +40,32 @@ func (fe *FrontEnd) translateFunc(irFunc *ir2.Func, ssaFunc *ssa.Function) {
 
 		fe.blockmap[ssaBlock] = irBlock
 
+		prevCritBlockNum := len(fe.critBlocks) - 1
+
+		// reserve blocks for breaking critical edges
+		if len(ssaBlock.Succs) > 1 {
+			for _, succ := range ssaBlock.Succs {
+				if len(succ.Preds) > 1 {
+					irBlock := irFunc.NewBlock()
+					irFunc.InsertBlock(-1, irBlock)
+
+					fe.critBlocks = append(fe.critBlocks, critBlock{
+						blk:  irBlock,
+						from: ssaBlock,
+						to:   succ,
+					})
+				}
+			}
+		}
+
 		fe.translateInstrs(irBlock, ssaBlock)
 
-		// for _, succ := range ssaBlock.Succs {
-		// 	if len(ssaBlock.Succs) > 1 && len(succ.Preds) > 1 {
-		// 		irBlock := irFunc.NewBlock()
-		// 		irFunc.InsertBlock(-1, irBlock)
-
-		// 		irBlock.InsertInstr(-1, irFunc.NewInstr(op.Jump, nil))
-		// 	}
-		// }
+		for i := prevCritBlockNum; i < len(fe.critBlocks) && i >= 0; i++ {
+			if fe.critBlocks[i].blk.NumInstrs() > 0 {
+				continue
+			}
+			fe.critBlocks[i].blk.InsertInstr(-1, irFunc.NewInstr(op.Jump, nil))
+		}
 	}
 
 	// todo: if this panic never happens, maybe placeholders not necessary?
@@ -65,12 +81,32 @@ func (fe *FrontEnd) translateFunc(irFunc *ir2.Func, ssaFunc *ssa.Function) {
 		for _, succ := range block.Succs {
 			found := false
 
+			for _, crit := range fe.critBlocks {
+				if crit.from == block && crit.to == succ {
+					irBlock.AddSucc(crit.blk)
+					crit.blk.AddPred(irBlock)
+					// todo: handle block params?
+					found = true
+					break
+				}
+			}
+
 			if !found {
 				irBlock.AddSucc(fe.blockmap[succ])
 			}
 		}
 		for _, pred := range block.Preds {
 			found := false
+
+			for _, crit := range fe.critBlocks {
+				if crit.from == pred && crit.to == block {
+					irBlock.AddPred(crit.blk)
+					crit.blk.AddSucc(irBlock)
+					// todo: handle block params?
+					found = true
+					break
+				}
+			}
 
 			if !found {
 				irBlock.AddPred(fe.blockmap[pred])

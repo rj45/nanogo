@@ -289,6 +289,7 @@ func (in *Instr) Emit(out io.Writer, dec Decorator) {
 
 					if argn >= len(in.blk.args) {
 						log.Panicf("missing args on block args: %v  defs: %v", in.blk.args, succ.defs)
+						continue
 					}
 
 					arg := in.blk.args[argn]

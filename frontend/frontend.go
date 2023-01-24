@@ -35,7 +35,18 @@ type FrontEnd struct {
 	val2val   map[ssa.Value]*ir2.Value
 	blockmap  map[*ssa.BasicBlock]*ir2.Block
 
+	critBlocks []critBlock
+
 	placeholders map[string]ssa.Value
+}
+
+// for keeping track of blocks inserted to break critical edges
+// but have not yet been wired up
+type critBlock struct {
+	blk *ir2.Block
+
+	from *ssa.BasicBlock
+	to   *ssa.BasicBlock
 }
 
 func NewFrontEnd(dir string, patterns ...string) (*FrontEnd, error) {
