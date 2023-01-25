@@ -42,10 +42,22 @@ func (fe *FrontEnd) translateFunc(irFunc *ir2.Func, ssaFunc *ssa.Function) {
 
 		prevCritBlockNum := len(fe.critBlocks) - 1
 
+		// any block that returns has an implicit successor
+		extraSucc := 0
+		if _, ok := ssaBlock.Instrs[len(ssaBlock.Instrs)-1].(*ssa.Return); ok {
+			extraSucc = 1
+		}
+
 		// reserve blocks for breaking critical edges
-		if len(ssaBlock.Succs) > 1 {
+		if (len(ssaBlock.Succs) + extraSucc) > 1 {
 			for _, succ := range ssaBlock.Succs {
-				if len(succ.Preds) > 1 {
+				// the entry block has an implicit Pred
+				extraPred := 0
+				if succ.Index == 0 {
+					extraPred = 1
+				}
+
+				if (len(succ.Preds) + extraPred) > 1 {
 					irBlock := irFunc.NewBlock()
 					irFunc.InsertBlock(-1, irBlock)
 
