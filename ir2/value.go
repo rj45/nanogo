@@ -107,6 +107,12 @@ func (val *Value) IsDefinedByOp(op Op) bool {
 	return val.def.Instr().Op == op
 }
 
+// NeedsReg indicates if this Value should be allocated
+// a register
+func (val *Value) NeedsReg() bool {
+	return !val.IsConst() && !val.IsBlock()
+}
+
 // stg is the storage for a value
 type stg interface {
 	Location() Location

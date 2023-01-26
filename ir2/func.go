@@ -52,6 +52,10 @@ func (fn *Func) Package() *Package {
 	return fn.pkg
 }
 
+func (fn *Func) NumValues() int {
+	return len(fn.idValues)
+}
+
 // ValueForID returns the Value for the ID
 func (fn *Func) ValueForID(v ID) *Value {
 	return fn.idValues[v&idMask]

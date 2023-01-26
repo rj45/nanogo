@@ -21,6 +21,7 @@ import (
 	"github.com/rj45/nanogo/ir2/parseir"
 	"github.com/rj45/nanogo/parser"
 	"github.com/rj45/nanogo/regalloc"
+	"github.com/rj45/nanogo/regalloc2"
 	"github.com/rj45/nanogo/xform"
 	"github.com/rj45/nanogo/xform2"
 
@@ -157,6 +158,14 @@ func Compile(outname, dir string, patterns []string, mode Mode) int {
 			xform2.Transform(xform2.Elaboration, fn)
 
 			w.WritePhase("elaboration", "elaboration")
+
+			ra := regalloc2.NewRegAlloc(fn)
+			err = ra.Allocate()
+			regalloc2.WriteGraphvizCFG(ra)
+			regalloc2.DumpLivenessChart(ra)
+			if err != nil {
+				log.Fatal(err)
+			}
 		}
 
 		fe.Program().Emit(finalout, ir2.SSAString{})

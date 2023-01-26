@@ -21,14 +21,10 @@ type RegAlloc struct {
 
 	blockInfo []blockInfo
 
-	// translation table for values that were spilled and later reloaded
-	spillReloads map[*ir.Value]*ir.Value
-
 	liveThroughCalls map[*ir.Value]bool
 }
 
 type blockInfo struct {
-	// map[instr][]args
 	kills    map[*ir.Value][]*ir.Value
 	blkKills map[*ir.Value]bool
 
@@ -43,14 +39,11 @@ type blockInfo struct {
 
 func NewRegAlloc(fn *ir.Func) *RegAlloc {
 	return &RegAlloc{
-		Func:         fn,
-		spillReloads: make(map[*ir.Value]*ir.Value),
+		Func: fn,
 	}
 }
 
 func (ra *RegAlloc) Allocate(fn *ir.Func) reg.Reg {
-	// ra.alloc.scan()
-
 	ra.liveScan()
 	ra.colour()
 

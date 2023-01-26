@@ -6,6 +6,7 @@ import (
 	"go/token"
 	"io"
 	"os"
+	"strings"
 
 	"github.com/rj45/nanogo/ir2"
 )
@@ -54,6 +55,36 @@ func NewParser(filename string, r io.Reader, prog *ir2.Program, trace bool) (*Pa
 	s.Init(file, buf, errs.Add, 0)
 
 	return &Parser{fset: fset, s: s, errs: errs, prog: prog, trace: trace}, nil
+}
+
+// ParseString parses an IR listing and returns the func for that listing, which
+// is useful in tests. Note, if the `text` doesn't contain `func main:` then a
+// template is used to put the `text` into the main function, useful for
+// reducing boilerplate.
+func ParseString(text string) (*ir2.Func, error) {
+	prog := &ir2.Program{}
+
+	fullText := fmt.Sprintf(`
+		package main "test"
+		func main:
+		%s
+	`, text)
+
+	if strings.Contains(text, "func main:") {
+		fullText = text
+	}
+
+	parser, err := NewParser("test.ngir", strings.NewReader(fullText), prog, false)
+	if err != nil {
+		return nil, err
+	}
+
+	err = parser.Parse()
+	if err != nil {
+		return nil, err
+	}
+
+	return prog.Func("main__main"), nil
 }
 
 func (p *Parser) Parse() error {

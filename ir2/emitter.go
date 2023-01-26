@@ -310,7 +310,7 @@ func (in *Instr) Emit(out io.Writer, dec Decorator) {
 func (in *Instr) LongString() string {
 	buf := &bytes.Buffer{}
 	in.Emit(buf, SSAString{})
-	return buf.String()
+	return strings.TrimSpace(buf.String())
 }
 
 func (val *Value) String() string {

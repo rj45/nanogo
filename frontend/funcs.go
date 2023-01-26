@@ -97,7 +97,6 @@ func (fe *FrontEnd) translateFunc(irFunc *ir2.Func, ssaFunc *ssa.Function) {
 				if crit.from == block && crit.to == succ {
 					irBlock.AddSucc(crit.blk)
 					crit.blk.AddPred(irBlock)
-					// todo: handle block params?
 					found = true
 					break
 				}
@@ -114,7 +113,6 @@ func (fe *FrontEnd) translateFunc(irFunc *ir2.Func, ssaFunc *ssa.Function) {
 				if crit.from == pred && crit.to == block {
 					irBlock.AddPred(crit.blk)
 					crit.blk.AddSucc(irBlock)
-					// todo: handle block params?
 					found = true
 					break
 				}

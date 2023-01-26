@@ -113,7 +113,7 @@ func (it *BlockIter) Next() bool {
 
 // Prev decrements the position and returns whether that was successful
 func (it *BlockIter) Prev() bool {
-	if it.insIdx <= 0 {
+	if it.insIdx < 0 {
 		return false
 	}
 
