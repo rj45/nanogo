@@ -90,30 +90,51 @@ func DumpLivenessChart(ra *RegAlloc) {
 
 	it := ra.fn.InstrIter()
 	var blk *ir2.Block
+	num := uint32(0)
 
-	num := 0
 	for ; it.HasNext(); it.Next() {
-		fmt.Fprintln(html, "<tr>")
+		newblock := false
 		if it.Block() != blk {
 			if blk != nil {
-				fmt.Fprintln(html, "<tr><td colspan=\"3\">out:")
+				fmt.Fprintf(html, "<tr><td colspan=\"%d\">out:\n", 3)
 				for id := range ra.info[blk.Index()].liveOuts {
 					fmt.Fprint(html, " ", id.ValueIn(ra.fn).String())
 				}
 				fmt.Fprintln(html, "</td></tr>")
 			}
 			blk = it.Block()
-			fmt.Fprintln(html, "<tr><td colspan=\"3\">in:")
+			fmt.Fprintf(html, "<tr><td colspan=\"%d\">in:\n", 3)
 			for id := range ra.info[blk.Index()].liveIns {
 				fmt.Fprint(html, " ", id.ValueIn(ra.fn).String())
 			}
 			fmt.Fprintln(html, "</td></tr>")
 
-			fmt.Fprintln(html, "<td rowspan=\"", blk.NumInstrs()*2, "\">", blk.String(), "</td>")
-
+			newblock = true
 		}
-		fmt.Fprintln(html, "<td>", num, "</td><td rowspan=\"2\">", it.Instr().LongString(), "</td></tr>")
+
+		fmt.Fprintln(html, "<tr>")
+
+		if newblock {
+			fmt.Fprintln(html, "<td rowspan=\"", blk.NumInstrs()*2, "\">", blk.String(), "</td>")
+		}
+		fmt.Fprintln(html, "<td>", num, "</td>")
+		fmt.Fprintln(html, "<td rowspan=\"2\">")
+		fmt.Fprintln(html, it.Instr().LongString())
+
+		for _, thing := range ra.liveRanges {
+			if thing.start == num || thing.start == num+1 {
+				fmt.Fprintf(html, "s:%s ", thing.val.ValueIn(ra.fn))
+			}
+			if thing.end == num || thing.end == num+1 {
+				fmt.Fprintf(html, "e:%s ", thing.val.ValueIn(ra.fn))
+			}
+		}
+
+		fmt.Fprintln(html, "</td>")
+		fmt.Fprintln(html, "</tr>")
+
 		num++
+
 		fmt.Fprintln(html, "<tr><td>", num, "</td></tr>")
 		num++
 	}

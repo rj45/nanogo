@@ -13,7 +13,6 @@ type RegAlloc struct {
 	info []blockInfo
 
 	liveRanges []interval
-	lrTree     *intervalTree
 }
 
 type blockInfo struct {
@@ -80,6 +79,9 @@ func (ra *RegAlloc) Allocate() error {
 	if err := ra.liveInOutScan(); err != nil {
 		return err
 	}
+
+	ra.buildBlockRanges()
+	ra.buildLiveRanges()
 
 	return nil
 }

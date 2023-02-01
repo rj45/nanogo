@@ -7,10 +7,3 @@ type interval struct {
 	start uint32
 	end   uint32
 }
-
-type intervalTree struct {
-	mid       uint32
-	less      *intervalTree
-	gtr       *intervalTree
-	intervals []*interval
-}
