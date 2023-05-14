@@ -13,6 +13,8 @@ type RegAlloc struct {
 	info []blockInfo
 
 	liveRanges []interval
+
+	iGraph iGraph
 }
 
 type blockInfo struct {
