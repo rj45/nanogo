@@ -96,18 +96,29 @@ func DumpLivenessChart(ra *RegAlloc) {
 		newblock := false
 		if it.Block() != blk {
 			if blk != nil {
-				fmt.Fprintf(html, "<tr><td colspan=\"%d\">out:\n", 3)
+				fmt.Fprintf(html, "<tr><td colspan=\"%d\">out:\n", 4)
 				for id := range ra.info[blk.Index()].liveOuts {
 					fmt.Fprint(html, " ", id.ValueIn(ra.fn).String())
 				}
 				fmt.Fprintln(html, "</td></tr>")
 			}
 			blk = it.Block()
-			fmt.Fprintf(html, "<tr><td colspan=\"%d\">in:\n", 3)
+			fmt.Fprintf(html, "<tr><td colspan=\"%d\">in:\n", 4)
 			for id := range ra.info[blk.Index()].liveIns {
 				fmt.Fprint(html, " ", id.ValueIn(ra.fn).String())
 			}
 			fmt.Fprintln(html, "</td></tr>")
+
+			fmt.Fprintf(html, "<tr><td colspan=\"%d\">%s(", 4, blk)
+			for i, val := range blk.Defs() {
+				if i != 0 {
+					fmt.Fprint(html, ", ")
+				}
+				fmt.Fprintf(html, "%s", val)
+			}
+			fmt.Fprintln(html, "):</td></tr>")
+
+			blk.Args()
 
 			newblock = true
 		}
@@ -118,24 +129,38 @@ func DumpLivenessChart(ra *RegAlloc) {
 			fmt.Fprintln(html, "<td rowspan=\"", blk.NumInstrs()*2, "\">", blk.String(), "</td>")
 		}
 		fmt.Fprintln(html, "<td>", num, "</td>")
-		fmt.Fprintln(html, "<td rowspan=\"2\">")
-		fmt.Fprintln(html, it.Instr().LongString())
 
-		for _, thing := range ra.liveRanges {
-			if thing.start == num || thing.start == num+1 {
-				fmt.Fprintf(html, "s:%s ", thing.val.ValueIn(ra.fn))
+		fmt.Fprint(html, "<td>")
+		for _, rng := range ra.liveRanges {
+			if rng.start == num {
+				fmt.Fprintf(html, "s:%s ", rng.val.ValueIn(ra.fn))
 			}
-			if thing.end == num || thing.end == num+1 {
-				fmt.Fprintf(html, "e:%s ", thing.val.ValueIn(ra.fn))
+			if rng.end == num {
+				fmt.Fprintf(html, "e:%s ", rng.val.ValueIn(ra.fn))
 			}
 		}
+		fmt.Fprint(html, "</td>")
+
+		fmt.Fprintln(html, "<td rowspan=\"2\">")
+		fmt.Fprintln(html, it.Instr().LongString())
 
 		fmt.Fprintln(html, "</td>")
 		fmt.Fprintln(html, "</tr>")
 
 		num++
 
-		fmt.Fprintln(html, "<tr><td>", num, "</td></tr>")
+		fmt.Fprintln(html, "<tr><td>", num, "</td>")
+		fmt.Fprint(html, "<td>")
+		for _, rng := range ra.liveRanges {
+			if rng.start == num {
+				fmt.Fprintf(html, "s:%s ", rng.val.ValueIn(ra.fn))
+			}
+			if rng.end == num {
+				fmt.Fprintf(html, "e:%s ", rng.val.ValueIn(ra.fn))
+			}
+		}
+		fmt.Fprint(html, "</td>")
+		fmt.Println("</tr>")
 		num++
 	}
 
