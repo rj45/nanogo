@@ -3,6 +3,7 @@
 /*.bin
 *.dot
 *.out
+/*.pdf
 testresults/
 
 dist/

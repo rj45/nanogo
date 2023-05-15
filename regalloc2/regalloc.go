@@ -85,5 +85,7 @@ func (ra *RegAlloc) Allocate() error {
 	ra.buildBlockRanges()
 	ra.buildLiveRanges()
 
+	ra.buildInterferenceGraph()
+
 	return nil
 }

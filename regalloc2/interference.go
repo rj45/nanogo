@@ -22,6 +22,75 @@ type iNode struct {
 	colour uint16
 }
 
+func (ra *RegAlloc) buildInterferenceGraph() {
+	ig := &ra.iGraph
+
+	ig.nodes = nil
+	ig.valNode = make(map[ir2.ID]iNodeID)
+
+	// initialize the list of nodes
+	for _, rng := range ra.liveRanges {
+		if _, found := ig.valNode[rng.val]; !found {
+			ig.nodes = append(ig.nodes, iNode{
+				val: rng.val,
+			})
+
+			// storing the index since a pointer would change
+			// as we append to the above array and the array
+			// gets reallocated
+			ig.valNode[rng.val] = iNodeID(len(ig.nodes) - 1)
+		}
+
+		node := &ig.nodes[ig.valNode[rng.val]]
+		node.intervals = append(node.intervals, rng)
+	}
+
+	// for each pair of live ranges
+	for i, rngI := range ra.liveRanges {
+		for j, rngJ := range ra.liveRanges {
+			if i == j {
+				continue
+			}
+
+			// check if the live ranges overlap
+			if rngI.start < rngJ.end && rngI.end > rngJ.start {
+				idI := ig.valNode[rngI.val]
+				nodeI := &ig.nodes[idI]
+
+				idJ := ig.valNode[rngJ.val]
+				nodeJ := &ig.nodes[idJ]
+
+				// if the node hasn't been seen in a previous live range
+				if _, found := nodeI.interferes[idJ]; !found {
+					// add it to the interferences list
+					nodeI.interferences = append(nodeI.interferences, idJ)
+
+					if nodeI.interferes == nil {
+						nodeI.interferes = make(map[iNodeID]struct{})
+					}
+
+					// and the interferes map
+					nodeI.interferes[idJ] = struct{}{}
+				}
+
+				// and also with nodeJ
+				if _, found := nodeJ.interferes[idI]; !found {
+					// add it to the interferences list
+					nodeJ.interferences = append(nodeJ.interferences, idI)
+
+					if nodeJ.interferes == nil {
+						nodeJ.interferes = make(map[iNodeID]struct{})
+					}
+
+					// and the interferes map
+					nodeJ.interferes[idI] = struct{}{}
+				}
+			}
+		}
+	}
+
+}
+
 const noColour uint16 = 0
 
 func (nd *iNode) pickColour(ig *iGraph) {
@@ -75,64 +144,4 @@ func (nd *iNode) pickColour(ig *iGraph) {
 			return
 		}
 	}
-}
-
-func (ra *RegAlloc) buildInterferenceGraph() {
-	ig := &ra.iGraph
-
-	ig.nodes = nil
-
-	// initialize the list of nodes
-	for _, rng := range ra.liveRanges {
-		if _, found := ig.valNode[rng.val]; !found {
-			ig.nodes = append(ig.nodes, iNode{
-				val: rng.val,
-			})
-
-			// storing the index since a pointer would change
-			// as we append to the above array and the array
-			// gets reallocated
-			ig.valNode[rng.val] = iNodeID(len(ig.nodes) - 1)
-		}
-
-		node := &ig.nodes[ig.valNode[rng.val]]
-		node.intervals = append(node.intervals, rng)
-	}
-
-	// for each pair of live ranges
-	for i, rngI := range ra.liveRanges {
-		for j, rngJ := range ra.liveRanges {
-			if i == j {
-				continue
-			}
-
-			// check if the live ranges overlap
-			if rngI.start < rngJ.end && rngI.end > rngJ.start {
-				idI := ig.valNode[rngI.val]
-				nodeI := &ig.nodes[idI]
-
-				idJ := ig.valNode[rngJ.val]
-				nodeJ := &ig.nodes[idJ]
-
-				// if the node hasn't been seen in a previous live range
-				if _, found := nodeI.interferes[idJ]; !found {
-					// add it to the interferences list
-					nodeI.interferences = append(nodeI.interferences, idJ)
-
-					// and the interferes map
-					nodeI.interferes[idJ] = struct{}{}
-				}
-
-				// and also with nodeJ
-				if _, found := nodeJ.interferes[idI]; !found {
-					// add it to the interferences list
-					nodeJ.interferences = append(nodeJ.interferences, idI)
-
-					// and the interferes map
-					nodeJ.interferes[idI] = struct{}{}
-				}
-			}
-		}
-	}
-
 }

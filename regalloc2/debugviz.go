@@ -70,6 +70,31 @@ func WriteGraphvizCFG(ra *RegAlloc) {
 	fmt.Fprintln(dot, "}")
 }
 
+// WriteGraphvizInterferenceGraph emits a Graphviz dot file of the Interference Graph
+func WriteGraphvizInterferenceGraph(ra *RegAlloc) {
+	dot, _ := os.Create(ra.fn.Name + ".igraph.dot")
+	defer dot.Close()
+
+	fmt.Fprintln(dot, "graph G {")
+	// fmt.Fprintln(dot, "labeljust=l;")
+	// fmt.Fprintln(dot, "node [shape=record, fontname=\"Noto Mono\", labeljust=l];")
+
+	edges := map[string]bool{}
+
+	for _, nodeA := range ra.iGraph.nodes {
+		for _, nodeBid := range nodeA.interferences {
+			nodeB := ra.iGraph.nodes[nodeBid]
+			if !edges[nodeB.val.IDString()+"--"+nodeA.val.IDString()] {
+				edge := nodeA.val.IDString() + "--" + nodeB.val.IDString()
+				fmt.Fprintf(dot, "%s;\n", edge)
+				edges[edge] = true
+			}
+		}
+	}
+
+	fmt.Fprintln(dot, "}")
+}
+
 func DumpLivenessChart(ra *RegAlloc) {
 	html, _ := os.Create(ra.fn.Name + ".liveness.html")
 	defer html.Close()
@@ -160,7 +185,7 @@ func DumpLivenessChart(ra *RegAlloc) {
 			}
 		}
 		fmt.Fprint(html, "</td>")
-		fmt.Println("</tr>")
+		fmt.Fprintln(html, "</tr>")
 		num++
 	}
 
