@@ -82,6 +82,9 @@ func WriteGraphvizInterferenceGraph(ra *RegAlloc) {
 	edges := map[string]bool{}
 
 	for _, nodeA := range ra.iGraph.nodes {
+		label := fmt.Sprintf("%s\n%d:%d", nodeA.val.IDString(), nodeA.order, nodeA.colour)
+		fmt.Fprintf(dot, "%s [label=%q];\n", nodeA.val.IDString(), label)
+
 		for _, nodeBid := range nodeA.interferences {
 			nodeB := ra.iGraph.nodes[nodeBid]
 			if !edges[nodeB.val.IDString()+"--"+nodeA.val.IDString()] {
@@ -90,6 +93,7 @@ func WriteGraphvizInterferenceGraph(ra *RegAlloc) {
 				edges[edge] = true
 			}
 		}
+
 	}
 
 	fmt.Fprintln(dot, "}")
@@ -155,17 +159,6 @@ func DumpLivenessChart(ra *RegAlloc) {
 		}
 		fmt.Fprintln(html, "<td>", num, "</td>")
 
-		fmt.Fprint(html, "<td>")
-		for _, rng := range ra.liveRanges {
-			if rng.start == num {
-				fmt.Fprintf(html, "s:%s ", rng.val.ValueIn(ra.fn))
-			}
-			if rng.end == num {
-				fmt.Fprintf(html, "e:%s ", rng.val.ValueIn(ra.fn))
-			}
-		}
-		fmt.Fprint(html, "</td>")
-
 		fmt.Fprintln(html, "<td rowspan=\"2\">")
 		fmt.Fprintln(html, it.Instr().LongString())
 
@@ -175,16 +168,6 @@ func DumpLivenessChart(ra *RegAlloc) {
 		num++
 
 		fmt.Fprintln(html, "<tr><td>", num, "</td>")
-		fmt.Fprint(html, "<td>")
-		for _, rng := range ra.liveRanges {
-			if rng.start == num {
-				fmt.Fprintf(html, "s:%s ", rng.val.ValueIn(ra.fn))
-			}
-			if rng.end == num {
-				fmt.Fprintf(html, "e:%s ", rng.val.ValueIn(ra.fn))
-			}
-		}
-		fmt.Fprint(html, "</td>")
 		fmt.Fprintln(html, "</tr>")
 		num++
 	}

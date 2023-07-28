@@ -3,6 +3,7 @@ package regalloc2
 import (
 	"errors"
 
+	"github.com/rj45/nanogo/ir/reg"
 	"github.com/rj45/nanogo/ir2"
 	"github.com/rj45/nanogo/ir2/op"
 )
@@ -12,26 +13,20 @@ type RegAlloc struct {
 
 	info []blockInfo
 
-	liveRanges []interval
-
 	iGraph iGraph
 }
 
 type blockInfo struct {
-	interval
-
 	liveIns  map[ir2.ID]struct{}
 	liveOuts map[ir2.ID]struct{}
 }
 
 func NewRegAlloc(fn *ir2.Func) *RegAlloc {
 	info := make([]blockInfo, fn.NumBlocks())
-	liveRanges := make([]interval, fn.NumValues())
 
 	return &RegAlloc{
-		fn:         fn,
-		info:       info,
-		liveRanges: liveRanges,
+		fn:   fn,
+		info: info,
 	}
 }
 
@@ -82,10 +77,34 @@ func (ra *RegAlloc) Allocate() error {
 		return err
 	}
 
-	ra.buildBlockRanges()
-	ra.buildLiveRanges()
-
 	ra.buildInterferenceGraph()
+	ra.iGraph.pickColours()
+	ra.assignRegisters()
 
 	return nil
+}
+
+var regList []reg.Reg
+
+func (ra *RegAlloc) assignRegisters() bool {
+	if regList == nil {
+		regList = append(regList, reg.ArgRegs...)
+		regList = append(regList, reg.TempRegs...)
+		regList = append(regList, reg.SavedRegs...)
+	}
+
+	for id := range ra.iGraph.nodes {
+		node := &ra.iGraph.nodes[id]
+
+		// colour zero is "noColour", so subtract one
+		regIndex := int(node.colour - 1)
+
+		if regIndex >= len(regList) {
+			return false
+		}
+
+		node.val.ValueIn(ra.fn).SetReg(regList[regIndex])
+	}
+
+	return true
 }

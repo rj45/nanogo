@@ -164,6 +164,9 @@ func (val *Value) Reg() reg.Reg {
 
 // SetReg puts the value in the specified register.
 func (val *Value) SetReg(reg reg.Reg) {
+	if !val.NeedsReg() {
+		panic("assigned reg to non-reg value")
+	}
 	val.stg = regStg{reg}
 }
 

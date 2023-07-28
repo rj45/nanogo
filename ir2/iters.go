@@ -36,6 +36,9 @@ type Iter interface {
 	// Insert inserts an instruction at the cursor position and increments the position
 	Insert(op Op, typ types.Type, args ...interface{}) *Instr
 
+	// InsertAfter inserts after an instruction at the cursor position
+	InsertAfter(op Op, typ types.Type, args ...interface{}) *Instr
+
 	// Remove will remove the instruction at the current position and decrement the position,
 	// returning the removed instruction.
 	// NOTE: this only removes the instruction from the Block, it does not Unlink() it from
@@ -148,6 +151,17 @@ func (it *BlockIter) Insert(op Op, typ types.Type, args ...interface{}) *Instr {
 
 	it.blk.InsertInstr(it.insIdx, instr)
 	it.Next()
+
+	it.changed = true
+
+	return instr
+}
+
+// InsertAfter inserts after an instruction at the cursor position
+func (it *BlockIter) InsertAfter(op Op, typ types.Type, args ...interface{}) *Instr {
+	instr := it.blk.fn.NewInstr(op, typ, args...)
+
+	it.blk.InsertInstr(it.insIdx+1, instr)
 
 	it.changed = true
 
