@@ -234,26 +234,34 @@ func (ig *iGraph) pickColours() {
 const noColour uint16 = 0
 
 func (nd *iNode) pickColour(ig *iGraph) {
+	if nd.colour != noColour {
+		// already coloured
+		return
+	}
+
 	// first try to pick a move colour if that colour doesn't
 	// interfere with any others
 	for _, mv := range nd.moves {
 		moveColour := ig.nodes[mv].colour
-		// if the move node has already been assigned a colour
-		if moveColour > noColour {
-			// check if that colour interferes with any neighbors
-			interferes := false
-			for _, nb := range nd.interferences {
-				if ig.nodes[nb].colour == moveColour {
-					interferes = true
-					break
-				}
-			}
 
-			// if it doesn't interfere, then choose that colour
-			if !interferes {
-				nd.colour = moveColour
-				return
+		// skip if the move node has not already been assigned a colour
+		if moveColour == noColour || moveColour == dontColour {
+			continue
+		}
+
+		// check if that colour interferes with any neighbors
+		interferes := false
+		for nb := range nd.interferes {
+			if ig.nodes[nb].colour == moveColour {
+				interferes = true
+				break
 			}
+		}
+
+		// if it doesn't interfere, then choose that colour
+		if !interferes {
+			nd.colour = moveColour
+			return
 		}
 	}
 
@@ -262,7 +270,7 @@ func (nd *iNode) pickColour(ig *iGraph) {
 		interferes := false
 
 		// for each neighbor in the interferences
-		for _, nb := range nd.interferences {
+		for nb := range nd.interferes {
 			// if the neighbor already has this colour
 			if ig.nodes[nb].colour == colour {
 				// then it interferes and we can't use it

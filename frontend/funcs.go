@@ -1,6 +1,7 @@
 package frontend
 
 import (
+	"github.com/rj45/nanogo/ir/reg"
 	"github.com/rj45/nanogo/ir2"
 	"github.com/rj45/nanogo/ir2/op"
 	"golang.org/x/tools/go/ssa"
@@ -28,13 +29,23 @@ func (fe *FrontEnd) translateFunc(irFunc *ir2.Func, ssaFunc *ssa.Function) {
 
 		if bn == 0 {
 			for i, param := range ssaFunc.Params {
-				instr := irFunc.NewInstr(op.Parameter, param.Type(), i)
+				blkdef := irBlock.Func().NewValue(param.Type())
+				irBlock.AddDef(blkdef)
+
+				if i < len(reg.ArgRegs) {
+					blkdef.SetReg(reg.ArgRegs[i])
+				} else {
+					blkdef.SetParamSlot(i - len(reg.ArgRegs))
+				}
+
+				instr := irFunc.NewInstr(op.Copy, param.Type(), blkdef)
 				irBlock.InsertInstr(-1, instr)
 
 				instr.Pos = getPos(param)
+				val := instr.Def(0)
 
 				fe.val2instr[param] = instr
-				fe.val2val[param] = instr.Def(0)
+				fe.val2val[param] = val
 			}
 		}
 

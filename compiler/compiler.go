@@ -173,6 +173,8 @@ func Compile(outname, dir string, patterns []string, mode Mode) int {
 			for _, err := range errs {
 				log.Printf("verification error: %s\n", err)
 			}
+
+			w.WritePhase("regalloc", "regalloc")
 		}
 
 		fe.Program().Emit(finalout, ir2.SSAString{})

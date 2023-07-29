@@ -1,6 +1,7 @@
 package elaboration
 
 import (
+	"github.com/rj45/nanogo/ir/reg"
 	"github.com/rj45/nanogo/ir2"
 	"github.com/rj45/nanogo/ir2/op"
 	"github.com/rj45/nanogo/xform2"
@@ -24,7 +25,8 @@ func copyBlockArgs(it ir2.Iter) {
 		for d := 0; d < succ.NumDefs(); d++ {
 			arg := blk.Arg(offset + d)
 
-			if !arg.NeedsReg() {
+			// if it doesn't need a register, or it's been pre-assigned a fixed register
+			if !arg.NeedsReg() || (arg.InReg() && arg.Reg() != reg.None) {
 				// insert a copy before the final jump
 				instr := it.Insert(op.Copy, arg.Type, arg)
 

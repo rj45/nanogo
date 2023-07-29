@@ -39,8 +39,8 @@ func Verify(fn *ir2.Func) []error {
 	// calculate the initial live regs for the first block
 	firstblk := fn.Block(0)
 	firstlive := make([]ir2.ID, len(regList))
-	for a := 0; a < firstblk.NumArgs(); a++ {
-		arg := firstblk.Arg(a)
+	for d := 0; d < firstblk.NumDefs(); d++ {
+		arg := firstblk.Def(d)
 		firstlive[regIndex[arg.Reg()]] = arg.ID
 	}
 
@@ -135,6 +135,7 @@ func Verify(fn *ir2.Func) []error {
 			succlive := make([]ir2.ID, len(regList))
 			copy(succlive, live)
 
+			// write all to zero before we write the actual ones so we don't clobber them
 			for d := 0; d < succ.NumDefs(); d++ {
 				def := succ.Def(d)
 				arg := blk.Arg(argoffset + d)
@@ -146,6 +147,10 @@ func Verify(fn *ir2.Func) []error {
 					regidx := regIndex[arg.Reg()]
 					succlive[regidx] = 0
 				}
+			}
+
+			for d := 0; d < succ.NumDefs(); d++ {
+				def := succ.Def(d)
 
 				regidx := regIndex[def.Reg()]
 				succlive[regidx] = def.ID

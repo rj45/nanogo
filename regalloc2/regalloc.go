@@ -2,6 +2,7 @@ package regalloc2
 
 import (
 	"errors"
+	"fmt"
 
 	"github.com/rj45/nanogo/ir/reg"
 	"github.com/rj45/nanogo/ir2"
@@ -78,15 +79,21 @@ func (ra *RegAlloc) Allocate() error {
 	}
 
 	ra.buildInterferenceGraph()
+	ra.preColour()
 	ra.iGraph.pickColours()
-	ra.assignRegisters()
+	if err := ra.assignRegisters(); err != nil {
+		return err
+	}
 
 	return nil
 }
 
 var regList []reg.Reg
 
-func (ra *RegAlloc) assignRegisters() bool {
+const dontColour = 0xffff
+
+// preColour finds all the values with already assigned registers and sets their colour to them
+func (ra *RegAlloc) preColour() {
 	if regList == nil {
 		regList = append(regList, reg.ArgRegs...)
 		regList = append(regList, reg.TempRegs...)
@@ -96,17 +103,50 @@ func (ra *RegAlloc) assignRegisters() bool {
 	for id := range ra.iGraph.nodes {
 		node := &ra.iGraph.nodes[id]
 
+		val := node.val.ValueIn(ra.fn)
+		if val.InReg() && val.Reg() != reg.None {
+			found := false
+			for i, reg := range regList {
+				if val.Reg() == reg {
+					node.colour = uint16(i + 1)
+					found = true
+					break
+				}
+			}
+
+			if !found {
+				// mark node not to be coloured
+				node.colour = dontColour
+			}
+		}
+	}
+}
+
+var ErrTooManyRequiredRegisters = errors.New("too many required registers")
+
+func (ra *RegAlloc) assignRegisters() error {
+	for id := range ra.iGraph.nodes {
+		node := &ra.iGraph.nodes[id]
+
+		if node.colour == dontColour {
+			continue
+		}
+
 		// colour zero is "noColour", so subtract one
 		regIndex := int(node.colour - 1)
 
 		if regIndex >= len(regList) {
-			panic("failed to assign registers!")
-			// return false
+			return ErrTooManyRequiredRegisters
 		}
 
 		val := node.val.ValueIn(ra.fn)
+
+		if val.InReg() && val.Reg() != reg.None && val.Reg() != regList[regIndex] {
+			panic(fmt.Sprintf("setting pre-set %s id %d reg %s to %s", ra.fn.Name, val.ID, val, regList[regIndex]))
+		}
+
 		val.SetReg(regList[regIndex])
 	}
 
-	return true
+	return nil
 }
