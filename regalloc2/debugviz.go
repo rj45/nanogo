@@ -20,13 +20,8 @@ func WriteGraphvizCFG(ra *RegAlloc) {
 	for bn := 0; bn < ra.fn.NumBlocks(); bn++ {
 		blk := ra.fn.Block(bn)
 
-		// info := &ra.blockInfo[blk.ID()]
-
 		for i := 0; i < blk.NumPreds(); i++ {
 			pred := blk.Pred(i)
-			// pinfo := &ra.blockInfo[pred.ID()]
-			// outs := maptolist(pinfo.liveOuts) + " - " + maptolist(pinfo.phiOuts[blk])
-			// ins := maptolist(info.liveIns) + " - " + maptolist(info.phiIns[pred])
 			fmt.Fprintf(dot, "%s -> %s;\n", pred, blk)
 		}
 
@@ -35,29 +30,8 @@ func WriteGraphvizCFG(ra *RegAlloc) {
 		for i := 0; i < blk.NumInstrs(); i++ {
 			instr := blk.Instr(i)
 
-			kills := ""
-
-			// for i, kill := range info.kills[instr] {
-			// 	if i != 0 {
-			// 		kills += " "
-			// 	}
-			// 	kills += kill.IDString()
-			// }
-
-			label += fmt.Sprintf("%s [%s]\\l", instr.LongString(), kills)
+			label += fmt.Sprintf("%s\\l", instr.LongString())
 		}
-
-		// first := true
-		// kills := ""
-		// for kill := range info.blkKills {
-		// 	if !first {
-		// 		kills += " "
-		// 	}
-		// 	first = false
-		// 	kills += kill.IDString()
-		// }
-
-		// label += fmt.Sprintf("%s [%s]\\l" /* blk.OpString()*/, "", kills)
 
 		label = strings.ReplaceAll(label, "\"", "\\\"")
 		label = strings.ReplaceAll(label, "{", "\\{")
@@ -76,8 +50,6 @@ func WriteGraphvizInterferenceGraph(ra *RegAlloc) {
 	defer dot.Close()
 
 	fmt.Fprintln(dot, "graph G {")
-	// fmt.Fprintln(dot, "labeljust=l;")
-	// fmt.Fprintln(dot, "node [shape=record, fontname=\"Noto Mono\", labeljust=l];")
 
 	edges := map[string]bool{}
 
@@ -175,4 +147,192 @@ func DumpLivenessChart(ra *RegAlloc) {
 	fmt.Fprintln(html, "</table>")
 	fmt.Fprintln(html, "</body>")
 	fmt.Fprintln(html, "</html>")
+}
+
+func WriteGraphvizLivenessGraph(ra *RegAlloc) {
+	fn := ra.fn
+
+	dot, _ := os.Create(ra.fn.Name + ".vfg.dot")
+	defer dot.Close()
+
+	fmt.Fprintln(dot, "digraph G {")
+	fmt.Fprintln(dot, "node [fontname=\"Noto Mono\", shape=rect];")
+
+	for b := 0; b < fn.NumBlocks(); b++ {
+		blk := fn.Block(b)
+		info := &ra.info[blk.Index()]
+
+		fmt.Fprintf(dot, "subgraph cluster_%s {\n", blk.String())
+
+		fmt.Fprintf(dot, "label=\"%s\";\n", blk.String())
+		fmt.Fprintln(dot, "labeljust=l;")
+		fmt.Fprintln(dot, "color=black;")
+
+		fmt.Fprintln(dot, "node [shape=plaintext];")
+
+		srcs := make(map[ir2.ID]string)
+		var lastStr string
+
+		inname := fmt.Sprintf("in_%s", blk)
+		ins := maptorecordsrc(fn, inname, info.liveIns, srcs)
+
+		for d := 0; d < blk.NumDefs(); d++ {
+			def := blk.Def(d)
+			ins += fmt.Sprintf("<td port=\"%s\">%s:%s</td>", def.IDString(), def.IDString(), def.Reg().String())
+			srcs[def.ID] = fmt.Sprintf("%s:%s", inname, def.IDString())
+		}
+
+		fmt.Fprintf(dot, "%s [label=<<table border=\"0\" cellborder=\"1\" cellspacing=\"0\"><tr><td port=\"in\">%s in</td>%s</tr></table>>];\n", inname, blk, ins)
+
+		for i := 0; i < blk.NumPreds(); i++ {
+			pred := blk.Pred(i)
+			fmt.Fprintf(dot, "out_%s_%s:out:s -> %s:in:n;\n", pred, blk, inname)
+			lastStr = inname
+		}
+
+		if blk.NumInstrs() > 0 && lastStr != "" {
+			// force the instructions to be in order
+			fmt.Fprintf(dot, "%s -> %s_%s [weight=100, style=invis];\n", lastStr, blk, blk.Instr(0).IDString())
+		}
+
+		for i := 0; i < blk.NumInstrs(); i++ {
+			instr := blk.Instr(i)
+
+			edges := ""
+			name := fmt.Sprintf("%s_%s", blk, instr.IDString())
+			lastStr = name
+
+			label := ""
+			for d := 0; d < instr.NumDefs(); d++ {
+				def := instr.Def(d)
+				if def.NeedsReg() {
+					label += fmt.Sprintf("<td port=\"%s\">%s</td>", def.IDString(), valname(def))
+				}
+				srcs[def.ID] = fmt.Sprintf("%s:%s", name, def.IDString())
+			}
+
+			label += fmt.Sprintf("<td>%s</td>", instr.Op)
+			for j := 0; j < instr.NumArgs(); j++ {
+				arg := instr.Arg(j)
+
+				// killed := false
+				// for _, kill := range info.kills[instr] {
+				// 	if kill == arg {
+				// 		killed = true
+				// 		break
+				// 	}
+				// }
+
+				arglabel := valname(arg)
+				// if killed {
+				// 	arglabel = "[" + arglabel + "]"
+				// }
+
+				label += fmt.Sprintf("<td port=\"%s\">%s</td>", arg.IDString(), arglabel)
+
+				if arg.NeedsReg() {
+					edges += fmt.Sprintf("%s:s -> %s:%s:n;\n", srcs[arg.ID], name, arg.IDString())
+				}
+
+				// chain arrows through uses
+				srcs[arg.ID] = fmt.Sprintf("%s:%s", name, arg.IDString())
+			}
+
+			fmt.Fprintf(dot, "%s [label=<<table border=\"0\" cellborder=\"1\" cellspacing=\"0\"><tr>%s</tr></table>>];\n", name, label)
+
+			fmt.Fprint(dot, edges)
+
+			if i < blk.NumInstrs()-1 {
+				// force the instructions to be in order
+				fmt.Fprintf(dot, "%s -> %s_%s [weight=100, style=invis];\n", name, blk, blk.Instr(i+1).IDString())
+			}
+		}
+
+		// emit block control instruction
+		// {
+		// 	name := fmt.Sprintf("%s_ctrl", blk)
+		// 	label := ""
+
+		// 	var edges string
+		// 	label += fmt.Sprintf("<td>%s</td>", blk.Op)
+
+		// 	for i := 0; i < blk.NumControls(); i++ {
+		// 		arg := blk.Control(i)
+
+		// 		arglabel := valname(arg)
+		// 		if info.blkKills[arg] {
+		// 			arglabel = "[" + arglabel + "]"
+		// 		}
+
+		// 		label += fmt.Sprintf("<td port=\"%s\">%s</td>", arg.IDString(), arglabel)
+
+		// 		if arg.NeedsReg() {
+		// 			edges += fmt.Sprintf("%s:s -> %s:%s:n;\n", srcs[arg], name, arg.IDString())
+		// 		}
+
+		// 		// chain arrows through uses
+		// 		srcs[arg] = fmt.Sprintf("%s:%s", name, arg.IDString())
+		// 	}
+
+		// 	fmt.Fprintf(dot, "%s [label=<<table border=\"0\" cellborder=\"1\" cellspacing=\"0\"><tr>%s</tr></table>>];\n", name, label)
+		// 	fmt.Fprint(dot, edges)
+
+		// 	if blk.NumInstrs() > 0 {
+		// 		// force the instructions to be in order
+		// 		fmt.Fprintf(dot, "%s -> %s [weight=100, style=invis];\n", lastStr, name)
+		// 	}
+		// 	lastStr = name
+		// }
+
+		for i := 0; i < blk.NumSuccs(); i++ {
+			succ := blk.Succ(i)
+			sinfo := &ra.info[succ.Index()]
+
+			outs := maptorecord(fn, sinfo.liveIns)
+			// if len(info.phiOuts[succ]) > 0 {
+			// 	outs += maptorecord(info.phiOuts[succ])
+			// }
+
+			fmt.Fprintf(dot, "out_%s_%s [label=<<table border=\"0\" cellborder=\"1\" cellspacing=\"0\"><tr><td port=\"out\">%s out</td>%s</tr></table>>];\n", blk, succ, blk, outs)
+			for v := range sinfo.liveIns {
+				fmt.Fprintf(dot, "%s -> out_%s_%s:%s;\n", srcs[v], blk, succ, v.IDString())
+			}
+			// for v := range info.phiOuts[succ] {
+			// 	fmt.Fprintf(dot, "%s -> out_%s_%s:%s;\n", srcs[v], blk, succ, v.IDString())
+			// }
+
+			// force the instructions to be in order
+			fmt.Fprintf(dot, "%s -> out_%s_%s [weight=100, style=invis];\n", lastStr, blk, succ)
+		}
+
+		fmt.Fprintln(dot, "}")
+	}
+
+	fmt.Fprintln(dot, "}")
+}
+
+func valname(val *ir2.Value) string {
+	if val.NeedsReg() {
+		return fmt.Sprintf("%s:%s", val.IDString(), val.Reg())
+	}
+	return val.String()
+}
+
+func maptorecord(fn *ir2.Func, l map[ir2.ID]struct{}) string {
+	ret := ""
+	for v := range l {
+		val := v.ValueIn(fn)
+		ret += fmt.Sprintf("<td port=\"%s\">%s:%s</td>", val.IDString(), val.IDString(), val.Reg().String())
+	}
+	return ret
+}
+
+func maptorecordsrc(fn *ir2.Func, prefix string, l map[ir2.ID]struct{}, src map[ir2.ID]string) string {
+	ret := ""
+	for v := range l {
+		val := v.ValueIn(fn)
+		ret += fmt.Sprintf("<td port=\"%s\">%s:%s</td>", val.IDString(), val.IDString(), val.Reg().String())
+		src[v] = fmt.Sprintf("%s:%s", prefix, val.IDString())
+	}
+	return ret
 }

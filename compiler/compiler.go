@@ -165,6 +165,7 @@ func Compile(outname, dir string, patterns []string, mode Mode) int {
 			regalloc2.WriteGraphvizCFG(ra)
 			regalloc2.DumpLivenessChart(ra)
 			regalloc2.WriteGraphvizInterferenceGraph(ra)
+			regalloc2.WriteGraphvizLivenessGraph(ra)
 			if err != nil {
 				log.Fatal(err)
 			}
