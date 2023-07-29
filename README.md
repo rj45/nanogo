@@ -4,7 +4,9 @@
 
 ## Status
 
-Note: this is a work in progress! Currently the following should work:
+Currently a major refactor (well more like rewrite) is in progress to switch to a new and improved IR. Along with it the tranforms in xform are also getting a revamp. The new code is in ___2 packages but the old code is still there and should still work.
+
+This is a work in progress! Currently the following should work:
 
 - built in `print()` and `println()`
 - word-sized operations (`int` and `uint`)
@@ -12,10 +14,11 @@ Note: this is a work in progress! Currently the following should work:
 - memory mapped I/O using `unsafe`
 - extern funcs with assembly snippets (useful if you have I/O instructions)
 
-Also, only [rj32](https://github.com/rj45/rj32) and [A32](https://github.com/Artentus/a32emu) are supported, but if you would like assistance adding your CPU, open an issue.
+Also, only [rj32](https://github.com/rj45/rj32) and [A32](https://github.com/Artentus/a32emu) are supported, but if you would like assistance adding your CPU, open an issue. The key things needed to support a new CPU are a fully working emulator (that works on mac, linux and windows, arm and x86), and an assembler (customasm is preferred).
+
 ## What is it?
 
-This compiler will take a Go package, read in all the packages it depends on in the usual way Go programs work, and compile all the code down into assembler in a style that is compatible with [customasm](https://github.com/hlorenzi/customasm).
+This compiler will take a Go package, read in all the packages it depends on in the usual way Go programs work, and compile all the code down into assembly in a style that is compatible with [customasm](https://github.com/hlorenzi/customasm).
 
 As of this writing, customasm does not support linking, so a single large assembly file is produced. A "CPU Def" file can be included which configures the assembly language, as well as the memory layout with `#bank`s.
 
@@ -117,13 +120,9 @@ Some effort was put in to make this easy. See [the retargeting documentation](do
 
 ## Contributing
 
-Contributions are welcome!
+Contributions are welcome! If you spot a bug or an error, and have some time, submit a PR. Otherwise an issue is awesome. Typo fixes or docs are even welcome!
 
-Please open an issue if you intend to submit a PR if you want to make sure the contribution would be welcome beforehand. This is optional, but recommended if you're going to spend more than a few hours on it.
-
-For PRs, please at least describe the purpose of the PR, and a brief explanation of what changes you made and why. Why is quite important, and will serve as documentation for others.
-
-Contributions of your own architecture are welcome, but please ensure you have a working customasm cpudef and a publicly accessible emulator with install instructions. Other documentation on how your architecture works is also quite useful for those maintaining it as features are added.
+Contributions of your own architecture are welcome! See [the retargeting documentation](docs/retargeting.md).
 
 Please be kind to one another and put effort into determining a kind way to share criticism.
 
@@ -135,10 +134,10 @@ If you do fork this project, all I ask is that the LICENSE file be kept intact a
 
 ## License
 
-Copyright (c) 2021 rj45 ([github.com/rj45](https://github.com/rj45))
+Copyright (c) 2021-2023 Ryan "rj45" Sanche ([github.com/rj45](https://github.com/rj45))
 
 Licensed under the MIT License (MIT), see [LICENSE](./LICENSE).
 
-Some parts Copyrighted by the Go Authors, under a BSD like license, see [Go's LICENSE](https://github.com/golang/go/blob/666fc173c02ff3004ac9ef867aa4eec7e243dde3/LICENSE).
+Some parts Copyrighted by the Go Authors, under a BSD like license, see [Go's LICENSE](https://github.com/golang/go/blob/666fc173c02ff3004ac9ef867aa4eec7e243dde3/LICENSE). Files with this license are marked in the header.
 
-Some parts Copyrighted by the TinyGo Authors, under a BSD like license, see [TinyGo's LICENSE](./LICENSE.tinygo).
+Some parts Copyrighted by the TinyGo Authors, under a BSD like license, see [TinyGo's LICENSE](./LICENSE.tinygo). Files with this license are marked in the header.
