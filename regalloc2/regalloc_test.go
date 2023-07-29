@@ -10,7 +10,7 @@ import (
 func TestCriticalEdgeFinder_withNoCriticalEdges(t *testing.T) {
 	fn, err := parseir.ParseString(`
 	.b0:
-  	v0:bool = parameter 0
+  		v0:bool = parameter 0
 		v1:int = parameter 1
 		v2:int = parameter 2
 		if v0, .b1, .b2
@@ -40,7 +40,7 @@ func TestCriticalEdgeFinder_withNoCriticalEdges(t *testing.T) {
 func TestCriticalEdgeFinder_withCriticalEdges(t *testing.T) {
 	fn, err := parseir.ParseString(`
 	.b0:
-  	v0:bool = parameter 0
+  		v0:bool = parameter 0
 		v1:int = parameter 1
 		v2:int = parameter 2
 		if v0, .b3, .b2

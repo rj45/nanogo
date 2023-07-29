@@ -1,6 +1,8 @@
 package regalloc2
 
-import "github.com/rj45/nanogo/ir2"
+import (
+	"github.com/rj45/nanogo/ir2"
+)
 
 type iNodeID uint32
 
@@ -139,6 +141,10 @@ func (ra *RegAlloc) buildInterferenceGraph() {
 					// def is now no longer live
 					delete(live, def.ID)
 
+					// make sure the node is in the graph, even if there's no
+					// other live values at the time
+					addNode(def.ID)
+
 					// make sure all live vars are marked as interfering
 					for id := range live {
 						addEdge(def.ID, id)
@@ -199,9 +205,7 @@ func (ig *iGraph) findPerfectEliminationOrder() []iNodeID {
 
 		// remove node from unmarked list. Order doesn't matter
 		// so the faster way of removing an item from the slice works.
-		if len(unmarked)-1 >= 0 {
-			unmarked[maxI] = unmarked[len(unmarked)-1]
-		}
+		unmarked[maxI] = unmarked[len(unmarked)-1]
 		unmarked = unmarked[:len(unmarked)-1]
 
 		// mark the node

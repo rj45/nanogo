@@ -70,9 +70,6 @@ func (ra *RegAlloc) liveInOutScan() error {
 		}
 
 		// for each instruction in reverse order
-
-		it := blk.InstrIter()
-		it.Last()
 		for in := blk.NumInstrs() - 1; in >= 0; in-- {
 			instr := blk.Instr(in)
 

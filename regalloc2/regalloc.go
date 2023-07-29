@@ -100,10 +100,12 @@ func (ra *RegAlloc) assignRegisters() bool {
 		regIndex := int(node.colour - 1)
 
 		if regIndex >= len(regList) {
-			return false
+			panic("failed to assign registers!")
+			// return false
 		}
 
-		node.val.ValueIn(ra.fn).SetReg(regList[regIndex])
+		val := node.val.ValueIn(ra.fn)
+		val.SetReg(regList[regIndex])
 	}
 
 	return true

@@ -22,6 +22,7 @@ import (
 	"github.com/rj45/nanogo/parser"
 	"github.com/rj45/nanogo/regalloc"
 	"github.com/rj45/nanogo/regalloc2"
+	"github.com/rj45/nanogo/regalloc2/verify"
 	"github.com/rj45/nanogo/xform"
 	"github.com/rj45/nanogo/xform2"
 
@@ -166,6 +167,10 @@ func Compile(outname, dir string, patterns []string, mode Mode) int {
 			regalloc2.WriteGraphvizInterferenceGraph(ra)
 			if err != nil {
 				log.Fatal(err)
+			}
+			errs := verify.Verify(fn)
+			for _, err := range errs {
+				log.Printf("verification error: %s\n", err)
 			}
 		}
 
