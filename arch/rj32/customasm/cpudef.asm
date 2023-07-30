@@ -1,5 +1,3 @@
-#bits 16
-
 ; special label for nil pointers
 nil = 0
 
@@ -95,7 +93,7 @@ nil = 0
   }
   fmt_ri6 {op:op}, {rd:reg}, {value}           => {
     assert(value >= (1<<5) || value < -(1<<5))
-    asm { imm value } @
+    asm { imm {value} } @
     rd`4 @ value`6         @ op`4 @ 0b11
   }
 
@@ -105,7 +103,7 @@ nil = 0
   }
   fmt_ri8 {op:op}, {rd:reg}, {value}           => {
     assert(value >= (1<<7) || value < -(1<<7))
-    asm { imm value } @
+    asm { imm {value} } @
     rd`4 @ value`8         @ op`1 @ 0b001
   }
 
@@ -115,7 +113,7 @@ nil = 0
   }
   fmt_i11 {op:op}, {value}                     => {
     assert(value >= (1<<10) || value < -(1<<10))
-    asm { imm value } @
+    asm { imm {value} } @
     value`11               @ op`1 @ 0b0101
   }
 
@@ -125,7 +123,7 @@ nil = 0
   }
   fmt_ls  {op:op}, {rd:reg}, {rs:reg}, {value} => {
     assert(value >= (1<<4) || value < 0)
-    asm { imm value } @
+    asm { imm {value} } @
     rd`4 @ rs`4 @ value`4  @ op`2 @ 0b10
   }
 
@@ -142,51 +140,51 @@ nil = 0
 
   return                             => asm { jump ra }
 
-  move   {rd:reg}, {value}           => asm { fmt_ri8 movei, {rd}, value }
+  move   {rd:reg}, {value}           => asm { fmt_ri8 movei, {rd}, {value} }
   move   {rd:reg}, {rs:reg}          => asm { fmt_rr move, {rd}, {rs} }
 
-  imm    {value}                     => asm { fmt_i12 value[15:4] }
-  jump   {value}                     => asm { fmt_i11 jumpi, value - pc - 1 }
+  imm    {value}                     => asm { fmt_i12 {value}[15:4] }
+  jump   {value}                     => asm { fmt_i11 jumpi, {value} - pc - 1 }
   jump   {rd:reg}                    => asm { fmt_rr jump, {rd}, {rd} }
-  call   {value}                     => asm { fmt_i11 calli, value - pc - 1 }
+  call   {value}                     => asm { fmt_i11 calli, {value} - pc - 1 }
 
-  load   {rd:reg}, [{rs:reg}, {imm}] => asm { fmt_ls load, {rd}, {rs}, imm }
-  store  [{rs:reg}, {imm}], {rd:reg} => asm { fmt_ls store, {rd}, {rs}, imm }
-  loadb  {rd:reg}, [{rs:reg}, {imm}] => asm { fmt_ls loadb, {rd}, {rs}, imm }
-  storeb [{rs:reg}, {imm}], {rd:reg} => asm { fmt_ls storeb, {rd}, {rs}, imm }
+  load   {rd:reg}, [{rs:reg}, {imm}] => asm { fmt_ls load, {rd}, {rs}, {imm} }
+  store  [{rs:reg}, {imm}], {rd:reg} => asm { fmt_ls store, {rd}, {rs}, {imm} }
+  loadb  {rd:reg}, [{rs:reg}, {imm}] => asm { fmt_ls loadb, {rd}, {rs}, {imm} }
+  storeb [{rs:reg}, {imm}], {rd:reg} => asm { fmt_ls storeb, {rd}, {rs}, {imm} }
 
-  add    {rd:reg}, {value}           => asm { fmt_ri6 addi   , {rd}, value }
-  add    {rd:reg}, {rs:reg}          => asm { fmt_rr  add    , {rd}, {rs} }
-  sub    {rd:reg}, {value}           => asm { fmt_ri6 subi   , {rd}, value }
-  sub    {rd:reg}, {rs:reg}          => asm { fmt_rr  sub    , {rd}, {rs} }
-  addc   {rd:reg}, {value}           => asm { fmt_ri6 addci  , {rd}, value }
-  addc   {rd:reg}, {rs:reg}          => asm { fmt_rr  addc   , {rd}, {rs} }
-  subc   {rd:reg}, {value}           => asm { fmt_ri6 subci  , {rd}, value }
-  subc   {rd:reg}, {rs:reg}          => asm { fmt_rr  subc   , {rd}, {rs} }
-  xor    {rd:reg}, {value}           => asm { fmt_ri6 xori   , {rd}, value }
-  xor    {rd:reg}, {rs:reg}          => asm { fmt_rr  xor    , {rd}, {rs} }
-  and    {rd:reg}, {value}           => asm { fmt_ri6 andi   , {rd}, value }
-  and    {rd:reg}, {rs:reg}          => asm { fmt_rr  and    , {rd}, {rs} }
-  or     {rd:reg}, {value}           => asm { fmt_ri6 ori    , {rd}, value }
-  or     {rd:reg}, {rs:reg}          => asm { fmt_rr  or     , {rd}, {rs} }
-  shl    {rd:reg}, {value}           => asm { fmt_ri6 shli   , {rd}, value }
-  shl    {rd:reg}, {rs:reg}          => asm { fmt_rr  shl    , {rd}, {rs} }
-  shr    {rd:reg}, {value}           => asm { fmt_ri6 shri   , {rd}, value }
-  shr    {rd:reg}, {rs:reg}          => asm { fmt_rr  shr    , {rd}, {rs} }
-  asr    {rd:reg}, {value}           => asm { fmt_ri6 asri   , {rd}, value }
-  asr    {rd:reg}, {rs:reg}          => asm { fmt_rr  asr    , {rd}, {rs} }
-  if.eq  {rd:reg}, {value}           => asm { fmt_ri6 if.eqi , {rd}, value }
-  if.eq  {rd:reg}, {rs:reg}          => asm { fmt_rr  if.eq  , {rd}, {rs} }
-  if.ne  {rd:reg}, {value}           => asm { fmt_ri6 if.nei , {rd}, value }
-  if.ne  {rd:reg}, {rs:reg}          => asm { fmt_rr  if.ne  , {rd}, {rs} }
-  if.lt  {rd:reg}, {value}           => asm { fmt_ri6 if.lti , {rd}, value }
-  if.lt  {rd:reg}, {rs:reg}          => asm { fmt_rr  if.lt  , {rd}, {rs} }
-  if.ge  {rd:reg}, {value}           => asm { fmt_ri6 if.gei , {rd}, value }
-  if.ge  {rd:reg}, {rs:reg}          => asm { fmt_rr  if.ge  , {rd}, {rs} }
-  if.ult {rd:reg}, {value}           => asm { fmt_ri6 if.ulti, {rd}, value }
-  if.ult {rd:reg}, {rs:reg}          => asm { fmt_rr  if.ult , {rd}, {rs} }
-  if.uge {rd:reg}, {value}           => asm { fmt_ri6 if.ugei, {rd}, value }
-  if.uge {rd:reg}, {rs:reg}          => asm { fmt_rr  if.uge , {rd}, {rs} }
+  add    {rd:reg}, {value}           => asm { fmt_ri6 addi, {rd}, {value} }
+  add    {rd:reg}, {rs:reg}          => asm { fmt_rr  add, {rd}, {rs} }
+  sub    {rd:reg}, {value}           => asm { fmt_ri6 subi, {rd}, {value} }
+  sub    {rd:reg}, {rs:reg}          => asm { fmt_rr  sub, {rd}, {rs} }
+  addc   {rd:reg}, {value}           => asm { fmt_ri6 addci, {rd}, {value} }
+  addc   {rd:reg}, {rs:reg}          => asm { fmt_rr  addc, {rd}, {rs} }
+  subc   {rd:reg}, {value}           => asm { fmt_ri6 subci, {rd}, {value} }
+  subc   {rd:reg}, {rs:reg}          => asm { fmt_rr  subc, {rd}, {rs} }
+  xor    {rd:reg}, {value}           => asm { fmt_ri6 xori, {rd}, {value} }
+  xor    {rd:reg}, {rs:reg}          => asm { fmt_rr  xor, {rd}, {rs} }
+  and    {rd:reg}, {value}           => asm { fmt_ri6 andi, {rd}, {value} }
+  and    {rd:reg}, {rs:reg}          => asm { fmt_rr  and, {rd}, {rs} }
+  or     {rd:reg}, {value}           => asm { fmt_ri6 ori, {rd}, {value} }
+  or     {rd:reg}, {rs:reg}          => asm { fmt_rr  or, {rd}, {rs} }
+  shl    {rd:reg}, {value}           => asm { fmt_ri6 shli, {rd}, {value} }
+  shl    {rd:reg}, {rs:reg}          => asm { fmt_rr  shl, {rd}, {rs} }
+  shr    {rd:reg}, {value}           => asm { fmt_ri6 shri, {rd}, {value} }
+  shr    {rd:reg}, {rs:reg}          => asm { fmt_rr  shr, {rd}, {rs} }
+  asr    {rd:reg}, {value}           => asm { fmt_ri6 asri, {rd}, {value} }
+  asr    {rd:reg}, {rs:reg}          => asm { fmt_rr  asr, {rd}, {rs} }
+  if.eq  {rd:reg}, {value}           => asm { fmt_ri6 if.eqi, {rd}, {value} }
+  if.eq  {rd:reg}, {rs:reg}          => asm { fmt_rr  if.eq, {rd}, {rs} }
+  if.ne  {rd:reg}, {value}           => asm { fmt_ri6 if.nei, {rd}, {value} }
+  if.ne  {rd:reg}, {rs:reg}          => asm { fmt_rr  if.ne, {rd}, {rs} }
+  if.lt  {rd:reg}, {value}           => asm { fmt_ri6 if.lti, {rd}, {value} }
+  if.lt  {rd:reg}, {rs:reg}          => asm { fmt_rr  if.lt, {rd}, {rs} }
+  if.ge  {rd:reg}, {value}           => asm { fmt_ri6 if.gei, {rd}, {value} }
+  if.ge  {rd:reg}, {rs:reg}          => asm { fmt_rr  if.ge, {rd}, {rs} }
+  if.ult {rd:reg}, {value}           => asm { fmt_ri6 if.ulti, {rd}, {value} }
+  if.ult {rd:reg}, {rs:reg}          => asm { fmt_rr  if.ult, {rd}, {rs} }
+  if.uge {rd:reg}, {value}           => asm { fmt_ri6 if.ugei, {rd}, {value} }
+  if.uge {rd:reg}, {rs:reg}          => asm { fmt_rr  if.uge, {rd}, {rs} }
 
   ; pseudoinstructions
   load   {rd:reg}, [{rs:reg}]  => asm { load {rd}, [{rs}, 0] }
@@ -205,17 +203,17 @@ nil = 0
   }
 
   ; other names for these instructions
-  if.lo  {rd:reg}, {value}     => asm { if.ult {rd}, value }
+  if.lo  {rd:reg}, {value}     => asm { if.ult {rd}, {value} }
   if.lo  {rd:reg}, {rs:reg}    => asm { if.ult {rd}, {rs} }
-  if.hs  {rd:reg}, {value}     => asm { if.uge {rd}, value }
+  if.hs  {rd:reg}, {value}     => asm { if.uge {rd}, {value} }
   if.hs  {rd:reg}, {rs:reg}    => asm { if.uge {rd}, {rs} }
 
   ; variants
-  if.gt  {rd:reg}, {value}     => asm { if.ge  {rd}, value+1 }
+  if.gt  {rd:reg}, {value}     => asm { if.ge  {rd}, {value}+1 }
   if.gt  {rd:reg}, {rs:reg}    => asm { if.lt  {rs}, {rd} }
-  if.le  {rd:reg}, {value}     => asm { if.lt  {rd}, value-1 }
+  if.le  {rd:reg}, {value}     => asm { if.lt  {rd}, {value}-1 }
   if.le  {rd:reg}, {rs:reg}    => asm { if.ge  {rs}, {rd} }
-  if.ugt  {rd:reg}, {value}    => asm { if.uge {rd}, value+1 }
+  if.ugt  {rd:reg}, {value}    => asm { if.uge {rd}, {value}+1 }
   if.ugt  {rd:reg}, {rs:reg}   => asm { if.ult {rs}, {rd} }
   if.ule  {rd:reg}, {value}    => {
     assert(value == 0)
@@ -223,7 +221,7 @@ nil = 0
   }
   if.ule  {rd:reg}, {value}    => {
     assert(value > 0)
-    asm { if.ult {rd}, value-1 }
+    asm { if.ult {rd}, {value}-1 }
   }
   if.ule  {rd:reg}, {rs:reg}   => asm { if.uge {rs}, {rd} }
 

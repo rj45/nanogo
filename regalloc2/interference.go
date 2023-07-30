@@ -23,6 +23,11 @@ type iNode struct {
 	order  uint16
 }
 
+// buildInterferenceGraph takes the liveness information and builds a
+// graph where nodes in the graph represent variables, and edges between
+// the nodes represent variables that are live at the same time, in other
+// words, variables that interfere with one another. This is done in order
+// to aide in colouring the graph with non-interfering registers.
 func (ra *RegAlloc) buildInterferenceGraph() {
 	ig := &ra.iGraph
 
@@ -174,7 +179,12 @@ func (ra *RegAlloc) buildInterferenceGraph() {
 }
 
 // findPerfectEliminationOrder finds the perfect elimination order by
-// using the max cardinality search algorithm
+// using the max cardinality search algorithm. This is done because
+// the graph should be chordal thanks to SSA. Chordal graphs can
+// be optimally coloured in reverse perfect elimination order.
+// There are other alorithms that could find the PEO as well,
+// such as lexographic breadth first search. This seemed simpler
+// though it may be slower (not sure).
 func (ig *iGraph) findPerfectEliminationOrder() []iNodeID {
 	marked := make(map[iNodeID]struct{})
 	output := make([]iNodeID, 0, len(ig.nodes))

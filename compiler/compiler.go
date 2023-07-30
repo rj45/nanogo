@@ -173,6 +173,9 @@ func Compile(outname, dir string, patterns []string, mode Mode) int {
 			for _, err := range errs {
 				log.Printf("verification error: %s\n", err)
 			}
+			if len(errs) > 0 {
+				log.Fatalln("verification failed")
+			}
 
 			w.WritePhase("regalloc", "regalloc")
 		}

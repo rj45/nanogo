@@ -22,6 +22,8 @@ type blockInfo struct {
 	liveOuts map[ir2.ID]struct{}
 }
 
+// NewRegAlloc returns a new register allocator, ready to have
+// the registers allocated for the given function.
 func NewRegAlloc(fn *ir2.Func) *RegAlloc {
 	info := make([]blockInfo, fn.NumBlocks())
 
@@ -73,6 +75,24 @@ func (ra *RegAlloc) CheckInput() error {
 
 // Allocate will run the allocator and assign a physical
 // register or stack slot to each Value that needs one.
+//
+// This uses a graph colouring algorithm designed for use on SSA
+// code. The SSA code should have copies added for block
+// defs/args such that the allocator is free to choose different
+// registers as it crosses that boundary. Attemps will be
+// made to strongly prefer choosing the same register accross
+// a copy and across block args/defs to minimize the number
+// of copies in the resultant code.
+//
+// A simpler algorithm is chosen rather than a fast algorithm
+// because this can easily be a very complex peice of code and
+// simpler code is easier to ensure is correct. It's extremely
+// important that the register allocator produces correct code
+// or else pretty much anything can happen.
+//
+// To that end, there is a verifier in the verify sub-package
+// which will double check the work of the alocator. See that
+// code for more information on how it works.
 func (ra *RegAlloc) Allocate() error {
 	if err := ra.liveInOutScan(); err != nil {
 		return err

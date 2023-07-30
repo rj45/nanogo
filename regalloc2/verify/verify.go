@@ -17,10 +17,20 @@ var ErrNoRegAssigned = errors.New("no register assigned to a variable")
 var ErrWrongValueInReg = errors.New("attempt to read wrong value from register")
 var ErrMissingCopy = errors.New("missing copy of block parameter")
 
-// Verify executes the function symbolically tracking which values are
+// Verify executes the function symbolically, tracking which values are
 // in which registers. Each block is executed with each permutation of
 // input values, which are hashed to ensure the block isn't executed
 // twice with the same input parameters, so that it will eventually halt.
+//
+// This verifier tries not to rely on liveness analysis and tries to
+// execute the code from the beginning to the end in order to be very
+// different from the way the register allocator works, thus increasing
+// the likelihood of catching bugs.
+//
+// This verifier wasn't really designed to be fast, since it probably
+// won't need to run in production. It's mainly for catching bugs in
+// tests / development. But if tests end up slow, this could be
+// optimized.
 func Verify(fn *ir2.Func) []error {
 	var errs []error
 
