@@ -2,7 +2,7 @@ package regalloc2
 
 import (
 	"errors"
-	"fmt"
+	"log"
 
 	"github.com/rj45/nanogo/ir/reg"
 	"github.com/rj45/nanogo/ir2"
@@ -126,6 +126,10 @@ func (ra *RegAlloc) preColour() {
 		node := &ra.iGraph.nodes[id]
 
 		val := node.val.ValueIn(ra.fn)
+		if val == nil {
+			continue
+		}
+
 		if val.InReg() && val.Reg() != reg.None {
 			found := false
 			for i, reg := range regList {
@@ -150,6 +154,12 @@ func (ra *RegAlloc) assignRegisters() error {
 	for id := range ra.iGraph.nodes {
 		node := &ra.iGraph.nodes[id]
 
+		val := node.val.ValueIn(ra.fn)
+
+		if val == nil {
+			continue
+		}
+
 		if node.colour == dontColour {
 			continue
 		}
@@ -161,13 +171,18 @@ func (ra *RegAlloc) assignRegisters() error {
 			return ErrTooManyRequiredRegisters
 		}
 
-		val := node.val.ValueIn(ra.fn)
-
 		if val.InReg() && val.Reg() != reg.None && val.Reg() != regList[regIndex] {
-			panic(fmt.Sprintf("setting pre-set %s id %d reg %s to %s", ra.fn.Name, val.ID, val, regList[regIndex]))
+			log.Panicf("setting pre-set %s id %d reg %s to %s", ra.fn.Name, val.ID, val, regList[regIndex])
 		}
 
 		val.SetReg(regList[regIndex])
+
+		for _, id := range node.merged {
+			val := id.ValueIn(ra.fn)
+			if val.NeedsReg() {
+				val.SetReg(regList[regIndex])
+			}
+		}
 	}
 
 	return nil

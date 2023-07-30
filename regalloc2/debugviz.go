@@ -57,7 +57,7 @@ func WriteGraphvizInterferenceGraph(ra *RegAlloc) {
 		label := fmt.Sprintf("%s\n%d:%d", nodeA.val.IDString(), nodeA.order, nodeA.colour)
 		fmt.Fprintf(dot, "%s [label=%q];\n", nodeA.val.IDString(), label)
 
-		for _, nodeBid := range nodeA.interferences {
+		for nodeBid := range nodeA.interferes {
 			nodeB := ra.iGraph.nodes[nodeBid]
 			if !edges[nodeB.val.IDString()+"--"+nodeA.val.IDString()] {
 				edge := nodeA.val.IDString() + "--" + nodeB.val.IDString()

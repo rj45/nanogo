@@ -166,8 +166,8 @@ func Verify(fn *ir2.Func) []error {
 
 				if def.Reg() != arg.Reg() {
 					// todo: when blk parameter copies are implemented uncomment this
-					// errs = append(errs,
-					// 	fmt.Errorf("%w: fn %s from blk %s to blk %s: from arg %s to def %s", ErrMissingCopy, fn.Name, blk, succ, arg, def))
+					errs = append(errs,
+						fmt.Errorf("%w: fn %s from blk %s to blk %s: from arg %s to def %s", ErrMissingCopy, fn.Name, blk, succ, arg, def))
 					regidx := regIndex[arg.Reg()]
 					succlive[regidx] = 0
 				}

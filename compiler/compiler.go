@@ -27,6 +27,7 @@ import (
 	"github.com/rj45/nanogo/xform2"
 
 	_ "github.com/rj45/nanogo/xform2/elaboration"
+	_ "github.com/rj45/nanogo/xform2/lowering"
 )
 
 type Arch interface {
@@ -160,6 +161,10 @@ func Compile(outname, dir string, patterns []string, mode Mode) int {
 			xform2.Transform(xform2.Elaboration, fn)
 
 			w.WritePhase("elaboration", "elaboration")
+
+			xform2.Transform(xform2.Lowering, fn)
+
+			w.WritePhase("lowering", "lowering")
 
 			ra := regalloc2.NewRegAlloc(fn)
 			err = ra.Allocate()
