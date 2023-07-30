@@ -55,6 +55,11 @@ func (ra *RegAlloc) buildInterferenceGraph() {
 		node1ID := addNode(var1)
 		node2ID := addNode(var2)
 
+		if var1 == var2 {
+			// don't add edges between ourself
+			return
+		}
+
 		for _, pair := range [2][2]iNodeID{{node1ID, node2ID}, {node2ID, node1ID}} {
 			node := &ig.nodes[pair[0]]
 			neighbor := pair[1]
@@ -75,6 +80,11 @@ func (ra *RegAlloc) buildInterferenceGraph() {
 	addMove := func(var1 ir2.ID, var2 ir2.ID) {
 		node1ID := addNode(var1)
 		node2ID := addNode(var2)
+
+		if var1 == var2 {
+			// don't add moves between ourself
+			return
+		}
 
 		for _, pair := range [2][2]iNodeID{{node1ID, node2ID}, {node2ID, node1ID}} {
 			node := &ig.nodes[pair[0]]
@@ -140,12 +150,11 @@ func (ra *RegAlloc) buildInterferenceGraph() {
 		for j := blk.NumInstrs() - 1; j >= 0; j-- {
 			instr := blk.Instr(j)
 
+			// all defs interfere with one another, so removing it from the
+			// live set should be done after adding edges
 			for d := 0; d < instr.NumDefs(); d++ {
 				def := instr.Def(d)
 				if def.NeedsReg() {
-					// def is now no longer live
-					delete(live, def.ID)
-
 					// make sure the node is in the graph, even if there's no
 					// other live values at the time
 					addNode(def.ID)
@@ -157,15 +166,24 @@ func (ra *RegAlloc) buildInterferenceGraph() {
 
 					// if it's a move (aka copy)
 					if instr.Op.IsCopy() && instr.Arg(d).NeedsReg() {
-						// add the move between the corressponding defs and args
+						// add the move between the corresponding defs and args
 						addMove(def.ID, instr.Arg(d).ID)
 					}
 				}
 			}
 
+			// now we can remove each def from the live set
+			for d := 0; d < instr.NumDefs(); d++ {
+				def := instr.Def(d)
+				if def.NeedsReg() {
+					// def is now no longer live
+					delete(live, def.ID)
+				}
+			}
+
 			// todo: for calls, make sure all live variables at the call site interfere
 			// with caller saved registers... that is, add some fake pre-coloured nodes
-			// and edges to all live vars
+			// and edges to all live variables
 
 			// mark each used arg as now live
 			for u := 0; u < instr.NumArgs(); u++ {
@@ -182,8 +200,8 @@ func (ra *RegAlloc) buildInterferenceGraph() {
 // using the max cardinality search algorithm. This is done because
 // the graph should be chordal thanks to SSA. Chordal graphs can
 // be optimally coloured in reverse perfect elimination order.
-// There are other alorithms that could find the PEO as well,
-// such as lexographic breadth first search. This seemed simpler
+// There are other algorithms that could find the PEO as well,
+// such as lexicographic breadth first search. This seemed simpler
 // though it may be slower (not sure).
 func (ig *iGraph) findPerfectEliminationOrder() []iNodeID {
 	marked := make(map[iNodeID]struct{})
@@ -279,9 +297,9 @@ func (nd *iNode) pickColour(ig *iGraph) {
 	for colour := uint16(1); ; colour++ {
 		interferes := false
 
-		// for each neighbor in the interferences
+		// for each neighbour in the interferences
 		for nb := range nd.interferes {
-			// if the neighbor already has this colour
+			// if the neighbour already has this colour
 			if ig.nodes[nb].colour == colour {
 				// then it interferes and we can't use it
 				interferes = true

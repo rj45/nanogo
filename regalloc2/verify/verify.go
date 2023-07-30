@@ -46,6 +46,10 @@ func Verify(fn *ir2.Func) []error {
 		}
 	}
 
+	if fn.NumBlocks() < 1 {
+		return nil
+	}
+
 	// calculate the initial live regs for the first block
 	firstblk := fn.Block(0)
 	firstlive := make([]ir2.ID, len(regList))

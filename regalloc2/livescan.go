@@ -126,7 +126,7 @@ func (ra *RegAlloc) liveInOutScan() error {
 	// liveIn set of the entry block should be empty,
 	// otherwise a value is used somewhere that never
 	// got defined
-	if len(ra.info[0].liveIns) > 0 {
+	if len(ra.info) > 0 && len(ra.info[0].liveIns) > 0 {
 		return ErrEntryLiveIns
 	}
 

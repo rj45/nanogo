@@ -129,3 +129,16 @@ func TestCompileToFromIR(t *testing.T) {
 		})
 	}
 }
+
+func TestTryIR2Compile(t *testing.T) {
+	for _, tC := range testCases {
+		t.Run("compiles "+tC.desc, func(t *testing.T) {
+			arch.SetArch("rj32")
+
+			retval := compiler.Compile("-", "../testdata/", []string{tC.filename}, compiler.IR)
+			if retval != 0 {
+				t.Error("did not compile")
+			}
+		})
+	}
+}

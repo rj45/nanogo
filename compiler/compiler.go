@@ -93,6 +93,7 @@ var _ io.WriteCloser = nopWriteCloser{}
 
 var dump = flag.String("dump", "", "Dump a function to ssa.html")
 var trace = flag.Bool("trace", false, "debug program with tracing info")
+var debug = flag.Bool("debug", false, "dump debug html/dot files")
 
 func Compile(outname, dir string, patterns []string, mode Mode) int {
 	log.SetFlags(log.Lshortfile)
@@ -162,10 +163,13 @@ func Compile(outname, dir string, patterns []string, mode Mode) int {
 
 			ra := regalloc2.NewRegAlloc(fn)
 			err = ra.Allocate()
-			regalloc2.WriteGraphvizCFG(ra)
-			regalloc2.DumpLivenessChart(ra)
-			regalloc2.WriteGraphvizInterferenceGraph(ra)
-			regalloc2.WriteGraphvizLivenessGraph(ra)
+			if *debug {
+				regalloc2.WriteGraphvizCFG(ra)
+				regalloc2.DumpLivenessChart(ra)
+				regalloc2.WriteGraphvizInterferenceGraph(ra)
+				regalloc2.WriteGraphvizLivenessGraph(ra)
+			}
+			w.WritePhase("regalloc", "regalloc")
 			if err != nil {
 				log.Fatal(err)
 			}
@@ -176,8 +180,6 @@ func Compile(outname, dir string, patterns []string, mode Mode) int {
 			if len(errs) > 0 {
 				log.Fatalln("verification failed")
 			}
-
-			w.WritePhase("regalloc", "regalloc")
 		}
 
 		fe.Program().Emit(finalout, ir2.SSAString{})
