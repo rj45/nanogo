@@ -27,7 +27,11 @@ func (fe *FrontEnd) translateFunc(irFunc *ir2.Func, ssaFunc *ssa.Function) {
 
 		irFunc.InsertBlock(-1, irBlock)
 
-		if bn == 0 {
+		if bn == 0 && len(ssaFunc.Params) > 0 {
+			instr := irFunc.NewInstr(op.Copy, irFunc.Sig.Params())
+			irBlock.InsertInstr(-1, instr)
+			instr.Pos = getPos(ssaFunc.Params[0])
+
 			for i, param := range ssaFunc.Params {
 				blkdef := irBlock.Func().NewValue(param.Type())
 				irBlock.AddDef(blkdef)
@@ -38,11 +42,8 @@ func (fe *FrontEnd) translateFunc(irFunc *ir2.Func, ssaFunc *ssa.Function) {
 					blkdef.SetParamSlot(i - len(reg.ArgRegs))
 				}
 
-				instr := irFunc.NewInstr(op.Copy, param.Type(), blkdef)
-				irBlock.InsertInstr(-1, instr)
-
-				instr.Pos = getPos(param)
-				val := instr.Def(0)
+				instr.InsertArg(-1, blkdef)
+				val := instr.Def(i)
 
 				fe.val2instr[param] = instr
 				fe.val2val[param] = val
