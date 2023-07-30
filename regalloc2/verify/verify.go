@@ -112,6 +112,16 @@ func Verify(fn *ir2.Func) []error {
 				}
 			}
 
+			if instr.Op.IsCall() {
+				// all arg and temp registers are clobbered in a call
+				for _, list := range [][]reg.Reg{reg.ArgRegs, reg.TempRegs} {
+					for _, reg := range list {
+						regidx := regIndex[reg]
+						live[regidx] = 0
+					}
+				}
+			}
+
 			// for each def in the instruction that needs a register
 			for d := 0; d < instr.NumDefs(); d++ {
 				def := instr.Def(d)

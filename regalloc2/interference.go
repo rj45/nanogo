@@ -1,6 +1,8 @@
 package regalloc2
 
 import (
+	"fmt"
+
 	"github.com/rj45/nanogo/ir2"
 )
 
@@ -21,6 +23,8 @@ type iNode struct {
 
 	colour uint16
 	order  uint16
+
+	callerSaved bool
 }
 
 // buildInterferenceGraph takes the liveness information and builds a
@@ -35,12 +39,11 @@ func (ra *RegAlloc) buildInterferenceGraph() {
 	ig.valNode = make(map[ir2.ID]iNodeID)
 
 	addNode := func(id ir2.ID) iNodeID {
-		nodeID, found := ig.valNode[id]
-
 		if !id.ValueIn(ra.fn).NeedsReg() {
 			panic("attempt to add non reg value: " + id.ValueIn(ra.fn).IDString())
 		}
 
+		nodeID, found := ig.valNode[id]
 		if !found {
 			nodeID = iNodeID(len(ig.nodes))
 			ig.nodes = append(ig.nodes, iNode{
@@ -48,6 +51,7 @@ func (ra *RegAlloc) buildInterferenceGraph() {
 			})
 			ig.valNode[id] = nodeID
 		}
+
 		return nodeID
 	}
 
@@ -181,9 +185,16 @@ func (ra *RegAlloc) buildInterferenceGraph() {
 				}
 			}
 
-			// todo: for calls, make sure all live variables at the call site interfere
-			// with caller saved registers... that is, add some fake pre-coloured nodes
-			// and edges to all live variables
+			// at a call site, any variables live across the call site must not be
+			// assigned to caller saved registers, otherwise the variable should be
+			// spilled which is handled separately
+			if instr.Op.IsCall() {
+				for id := range live {
+					node := &ig.nodes[ig.valNode[id]]
+					node.callerSaved = true
+					fmt.Println("marking val", node.val.ValueIn(ra.fn), "in val", node.val, "as caller saved in", ra.fn.Name)
+				}
+			}
 
 			// mark each used arg as now live
 			for u := 0; u < instr.NumArgs(); u++ {
@@ -286,15 +297,24 @@ func (nd *iNode) pickColour(ig *iGraph) {
 			}
 		}
 
-		// if it doesn't interfere, then choose that colour
-		if !interferes {
+		// if it doesn't interfere  and the move colour is caller saved if it needs to be
+		if !interferes && (!nd.callerSaved || moveColour >= savedStart) {
+			// then choose that colour
 			nd.colour = moveColour
 			return
 		}
 	}
 
+	// if the node must be in caller saved registers, then start it there rather
+	// than at 1 where the callee saved registers are
+	start := uint16(1)
+	if nd.callerSaved {
+		fmt.Println("starting node", nd.val, "in callee saved regs")
+		start = savedStart
+	}
+
 	// find the lowest numbered colour that doesn't interfere
-	for colour := uint16(1); ; colour++ {
+	for colour := start; ; colour++ {
 		interferes := false
 
 		// for each neighbour in the interferences

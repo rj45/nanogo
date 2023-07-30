@@ -109,6 +109,7 @@ func (ra *RegAlloc) Allocate() error {
 }
 
 var regList []reg.Reg
+var savedStart uint16
 
 const dontColour = 0xffff
 
@@ -117,6 +118,7 @@ func (ra *RegAlloc) preColour() {
 	if regList == nil {
 		regList = append(regList, reg.ArgRegs...)
 		regList = append(regList, reg.TempRegs...)
+		savedStart = uint16(len(regList) + 1)
 		regList = append(regList, reg.SavedRegs...)
 	}
 

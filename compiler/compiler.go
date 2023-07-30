@@ -178,7 +178,7 @@ func Compile(outname, dir string, patterns []string, mode Mode) int {
 				log.Printf("verification error: %s\n", err)
 			}
 			if len(errs) > 0 {
-				log.Fatalln("verification failed")
+				log.Fatal("verification failed")
 			}
 		}
 
