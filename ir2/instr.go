@@ -72,7 +72,9 @@ func (in *Instr) update(op Op, typ types.Type, args []interface{}) {
 	for i, a := range args {
 		if list, ok := a.([]*Value); ok {
 			for _, a := range list {
-				in.ReplaceArg(i+offset, a)
+				if i+offset >= len(in.args) || a != in.args[i+offset] {
+					in.ReplaceArg(i+offset, a)
+				}
 				offset++
 			}
 			offset--
@@ -81,7 +83,9 @@ func (in *Instr) update(op Op, typ types.Type, args []interface{}) {
 
 		arg := in.fn.ValueFor(typ, a)
 
-		in.ReplaceArg(i+offset, arg)
+		if i+offset >= len(in.args) || arg != in.args[i+offset] {
+			in.ReplaceArg(i+offset, arg)
+		}
 	}
 
 	for len(in.args) > (len(args) + offset) {

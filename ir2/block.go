@@ -76,6 +76,29 @@ func (blk *Block) AddSucc(succ *Block) {
 	blk.succs = append(blk.succs, succ)
 }
 
+// SwapSuccs swaps the successors, useful for inverting `If`
+func (blk *Block) SwapSuccs() {
+	if len(blk.succs) != 2 {
+		panic("tried to swap a block without 2 succs")
+	}
+
+	// need to rearrange args
+	numfirst := len(blk.succs[0].defs)
+	numsecond := len(blk.succs[1].defs)
+	newargs := make([]*Value, len(blk.args))
+	for i := 0; i < numsecond; i++ {
+		newargs[i] = blk.args[i+numfirst]
+	}
+	for i := 0; i < numfirst; i++ {
+		newargs[numsecond+i] = blk.args[i]
+	}
+	blk.args = newargs
+
+	old := blk.succs[1]
+	blk.succs[1] = blk.succs[0]
+	blk.succs[0] = old
+}
+
 // Unlink removes the Block from the pred/succ
 // lists of surrounding Blocks
 func (blk *Block) Unlink() {

@@ -26,8 +26,11 @@ import (
 	"github.com/rj45/nanogo/xform"
 	"github.com/rj45/nanogo/xform2"
 
+	_ "github.com/rj45/nanogo/xform2/cleanup"
 	_ "github.com/rj45/nanogo/xform2/elaboration"
+	_ "github.com/rj45/nanogo/xform2/legalization"
 	_ "github.com/rj45/nanogo/xform2/lowering"
+	_ "github.com/rj45/nanogo/xform2/simplification"
 )
 
 type Arch interface {
@@ -159,12 +162,16 @@ func Compile(outname, dir string, patterns []string, mode Mode) int {
 			w.WritePhase("initial", "initial")
 
 			xform2.Transform(xform2.Elaboration, fn)
-
 			w.WritePhase("elaboration", "elaboration")
 
-			xform2.Transform(xform2.Lowering, fn)
+			xform2.Transform(xform2.Simplification, fn)
+			w.WritePhase("simplification", "simplification")
 
+			xform2.Transform(xform2.Lowering, fn)
 			w.WritePhase("lowering", "lowering")
+
+			xform2.Transform(xform2.Legalization, fn)
+			w.WritePhase("legalization", "legalization")
 
 			ra := regalloc2.NewRegAlloc(fn)
 			err = ra.Allocate()
@@ -185,6 +192,9 @@ func Compile(outname, dir string, patterns []string, mode Mode) int {
 			if len(errs) > 0 {
 				log.Fatal("verification failed")
 			}
+
+			xform2.Transform(xform2.CleanUp, fn)
+			w.WritePhase("cleanup", "cleanup")
 		}
 
 		fe.Program().Emit(finalout, ir2.SSAString{})

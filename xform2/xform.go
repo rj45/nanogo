@@ -14,7 +14,7 @@ const (
 	Elaboration Pass = iota
 	Simplification
 	Lowering
-	Legalize
+	Legalization
 	CleanUp
 
 	NumPasses
