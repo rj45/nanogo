@@ -2,36 +2,37 @@ package op
 
 //go:generate go run github.com/dmarkham/enumer -type=Op -transform title-lower
 
+type def uint16
 
-type def struct {
-	Sink    bool
-	Compare bool
-	Const   bool
-	ClobArg bool
-	Copy    bool
-	Commute bool
-}
+const (
+	sink def = 1 << iota
+	compare
+	constant
+	move
+	commute
+	branch
+)
 
 type Op uint8
 
 func (op Op) IsCompare() bool {
-	return opDefs[op].Compare
+	return opDefs[op]&compare != 0
 }
 
 func (op Op) IsSink() bool {
-	return opDefs[op].Sink
+	return opDefs[op]&sink != 0
 }
 
 func (op Op) IsConst() bool {
-	return opDefs[op].Const
+	return opDefs[op]&constant != 0
 }
 
 func (op Op) IsCopy() bool {
-	return opDefs[op].Copy
+	return opDefs[op]&move != 0
 }
 
 func (op Op) IsCommutative() bool {
-	return opDefs[op].Commute
+	return opDefs[op]&commute != 0
 }
 
 func (op Op) IsCall() bool {
@@ -39,7 +40,11 @@ func (op Op) IsCall() bool {
 }
 
 func (op Op) ClobbersArg() bool {
-	return opDefs[op].ClobArg && twoOperand
+	return false
+}
+
+func (op Op) IsBranch() bool {
+	return opDefs[op]&branch != 0
 }
 
 func (op Op) Opposite() Op {
@@ -134,38 +139,23 @@ const (
 )
 
 var opDefs = [...]def{
-	Builtin:      {Const: true},
-	Const:        {Const: true},
-	Copy:         {Copy: true},
-	Func:         {Const: true},
-	Global:       {Const: true},
-	Reg:          {Copy: true},
-	Store:        {Sink: true},
-	Add:          {ClobArg: true, Commute: true},
-	Sub:          {ClobArg: true},
-	Mul:          {Commute: true},
-	And:          {ClobArg: true, Commute: true},
-	Or:           {ClobArg: true, Commute: true},
-	Xor:          {ClobArg: true, Commute: true},
-	ShiftLeft:    {ClobArg: true},
-	ShiftRight:   {ClobArg: true},
-	Equal:        {Compare: true, Commute: true},
-	NotEqual:     {Compare: true, Commute: true},
-	Less:         {Compare: true},
-	LessEqual:    {Compare: true},
-	Greater:      {Compare: true},
-	GreaterEqual: {Compare: true},
-	Negate:       {ClobArg: true},
-	Invert:       {ClobArg: true},
-	NumOps:       {}, // make sure array is large enough
+	Builtin:      constant,
+	Const:        constant,
+	Copy:         move,
+	Func:         constant,
+	Global:       constant,
+	Reg:          move,
+	Store:        sink,
+	Add:          commute,
+	Mul:          commute,
+	And:          commute,
+	Or:           commute,
+	Xor:          commute,
+	Equal:        compare | commute,
+	NotEqual:     compare | commute,
+	Less:         compare,
+	LessEqual:    compare,
+	Greater:      compare,
+	GreaterEqual: compare,
+	NumOps:       0, // make sure array is large enough
 }
-
-type Arch interface {
-	IsTwoOperand() bool
-}
-
-func SetArch(a Arch) {
-	twoOperand = a.IsTwoOperand()
-}
-
-var twoOperand bool

@@ -7,8 +7,8 @@ import (
 	"io"
 	"strings"
 
-	"github.com/rj45/nanogo/ir/op"
 	"github.com/rj45/nanogo/ir2"
+	"github.com/rj45/nanogo/ir2/op"
 )
 
 // IRDecorator emits an IRDecorator version of the IR

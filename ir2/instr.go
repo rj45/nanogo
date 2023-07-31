@@ -28,6 +28,8 @@ type Op interface {
 	IsCopy() bool
 	IsCommutative() bool
 	IsSink() bool
+	ClobbersArg() bool
+	IsBranch() bool
 }
 
 // Index returns the index in the Block's Instr list
