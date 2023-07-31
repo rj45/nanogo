@@ -12,14 +12,3 @@ const (
 )
 
 var activeTags []bool
-
-type Arch interface {
-	XformTags() []Tag
-}
-
-func SetArch(a Arch) {
-	activeTags = make([]bool, NumTags)
-	for _, tag := range a.XformTags() {
-		activeTags[tag] = true
-	}
-}

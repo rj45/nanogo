@@ -12,6 +12,7 @@ import (
 	"github.com/rj45/nanogo/parser"
 	"github.com/rj45/nanogo/sizes"
 	"github.com/rj45/nanogo/xform"
+	"github.com/rj45/nanogo/xform2"
 )
 
 const defaultArch = "rj32"
@@ -25,6 +26,7 @@ type Architecture interface {
 	xform.Arch
 	parser.Arch
 	frontend.Arch
+	xform2.Arch
 }
 
 var arch Architecture
@@ -60,4 +62,5 @@ func SetArch(name string) {
 	xform.SetArch(arch)
 	parser.SetArch(arch)
 	frontend.SetArch(arch)
+	xform2.SetArch(arch)
 }
