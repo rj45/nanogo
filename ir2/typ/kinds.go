@@ -10,7 +10,7 @@ const (
 
 type Kind uint8
 
-//go:generate enumer -type=Kind -transform lower -output types_enumer.go
+//go:generate go run github.com/dmarkham/enumer -type=Kind -transform lower -output types_enumer.go
 
 const (
 	Invalid Kind = iota

@@ -4,7 +4,7 @@ import (
 	"github.com/rj45/nanogo/ir"
 )
 
-//go:generate enumer -type=Pass
+//go:generate go run github.com/dmarkham/enumer -type=Pass
 
 type Pass int
 

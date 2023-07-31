@@ -2,7 +2,7 @@ package rj32
 
 import "github.com/rj45/nanogo/ir/reg"
 
-//go:generate enumer -type=Reg -transform lower
+//go:generate go run github.com/dmarkham/enumer -type=Reg -transform lower
 
 type Reg uint
 

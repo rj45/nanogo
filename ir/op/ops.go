@@ -1,6 +1,6 @@
 package op
 
-//go:generate enumer -type=Op -transform title-lower
+//go:generate go run github.com/dmarkham/enumer -type=Op -transform title-lower
 
 type Def struct {
 	Op      Op

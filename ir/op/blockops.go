@@ -1,6 +1,6 @@
 package op
 
-//go:generate enumer -type=BlockOp -transform title-lower
+//go:generate go run github.com/dmarkham/enumer -type=BlockOp -transform title-lower
 
 type BlockOp int
 

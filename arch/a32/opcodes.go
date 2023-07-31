@@ -10,7 +10,7 @@ import (
 
 type Opcode int
 
-//go:generate enumer -type=Opcode -transform lower
+//go:generate go run github.com/dmarkham/enumer -type=Opcode -transform lower
 
 const (
 	// Natively implemented instructions

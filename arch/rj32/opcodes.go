@@ -10,7 +10,7 @@ import (
 
 type Opcode int
 
-//go:generate enumer -type=Opcode -transform snake
+//go:generate go run github.com/dmarkham/enumer -type=Opcode -transform snake
 
 const (
 	// Natively implemented instructions
