@@ -45,6 +45,9 @@ var emptyInstr = &Instr{}
 // Instr returns either the Instr or an empty Instr to
 // cut down on having to check IsInstr() everywhere.
 func (use *User) Instr() *Instr {
+	if use == nil {
+		return emptyInstr
+	}
 	if use.IsInstr() {
 		return use.InstrIn(use.fn)
 	}
@@ -77,6 +80,25 @@ func (use *User) AddDef(val *Value) *Value {
 	use.defs = append(use.defs, val)
 	val.def = use
 	return val
+}
+
+// RemoveDef removes the value from the defs list
+func (use *User) RemoveDef(def *Value) {
+	index := -1
+	for i, d := range use.defs {
+		if d == def {
+			index = i
+			break
+		}
+	}
+
+	if index < 0 {
+		panic("attempt to remove non-existant def")
+	}
+
+	def.def = nil
+
+	use.defs = append(use.defs[:index], use.defs[index+1:]...)
 }
 
 // updateDef updates an existing def or adds one if necessary

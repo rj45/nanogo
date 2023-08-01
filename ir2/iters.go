@@ -45,6 +45,10 @@ type Iter interface {
 	// any uses.
 	Remove() *Instr
 
+	// RemoveInstr removes an instruction from anywhere and will adjust the iterator position
+	// appropriately
+	RemoveInstr(instr *Instr)
+
 	// Update updates the instruction at the cursor position
 	Update(op Op, typ types.Type, args ...interface{}) *Instr
 
@@ -116,7 +120,7 @@ func (it *BlockIter) Next() bool {
 
 // Prev decrements the position and returns whether that was successful
 func (it *BlockIter) Prev() bool {
-	if it.insIdx < 0 {
+	if it.insIdx <= 0 {
 		return false
 	}
 
@@ -126,7 +130,7 @@ func (it *BlockIter) Prev() bool {
 
 // HasPrev returns whether Prev() will succeed
 func (it *BlockIter) HasPrev() bool {
-	return it.insIdx >= 0 // todo: there is a bug here
+	return it.insIdx > 0 // todo: there is a bug here
 }
 
 // Last fast forwards to the end of the block
@@ -182,6 +186,25 @@ func (it *BlockIter) Remove() *Instr {
 	it.changed = true
 
 	return instr
+}
+
+// RemoveInstr removes an instruction from the middle of the block somewhere, making
+// sure to adjust the iterator position appropriately
+func (it *BlockIter) RemoveInstr(instr *Instr) {
+	it.changed = true
+
+	index := instr.Index()
+	if instr.blk != it.blk {
+		// instruction is in a different block, defer to that one
+		instr.blk.RemoveInstr(instr)
+		return
+	}
+
+	// todo: replace with RemoveInstrAt()?
+	it.blk.RemoveInstr(instr)
+	if it.insIdx >= index {
+		it.Prev()
+	}
 }
 
 // Update updates the instruction at the cursor position

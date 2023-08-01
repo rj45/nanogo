@@ -2,6 +2,7 @@ package rj32
 
 import (
 	"go/types"
+	"log"
 
 	"github.com/rj45/nanogo/ir2"
 	"github.com/rj45/nanogo/ir2/op"
@@ -46,6 +47,7 @@ var branchesUnsigned = map[op.Op]Opcode{
 
 func translate(it ir2.Iter) {
 	instr := it.Instr()
+	originalOp := instr.Op
 	switch instr.Op {
 	// case op.Copy:
 	// 	if instr.NumArgs() == 1 {
@@ -75,6 +77,10 @@ func translate(it ir2.Iter) {
 		}
 	case op.If:
 		compare := instr.Arg(0).Def().Instr()
+		if !compare.IsCompare() {
+			log.Panicf("expecting if to have compare, but instead had: %s", compare.LongString())
+		}
+
 		typ := compare.Arg(0).Type.Underlying()
 		branchOp := branchesSigned[compare.Op.(op.Op)]
 		if basic, ok := typ.(*types.Basic); ok {
@@ -83,9 +89,21 @@ func translate(it ir2.Iter) {
 				branchOp = branchesUnsigned[compare.Op.(op.Op)]
 			}
 		}
-		instr.Update(branchOp, nil, compare.Args())
+		if branchOp == 0 {
+			log.Panicf("failed to translate compare %s", compare.Op.(op.Op))
+		}
+		it.Update(branchOp, nil, compare.Args())
 		if compare.Def(0).NumUses() == 0 {
-			compare.Block().RemoveInstr(compare)
+			it.RemoveInstr(compare)
 		}
 	}
+	if it.Instr() == nil {
+		log.Panicf("translating %s from %s left iter in bad state", originalOp, instr.LongString())
+	}
+}
+
+func translateCopies(it ir2.Iter) {
+	instr := it.Instr()
+
+	it.Update(Move, instr.Def(0).Type, instr.Args())
 }

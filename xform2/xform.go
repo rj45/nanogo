@@ -2,6 +2,7 @@ package xform2
 
 import (
 	"fmt"
+	"log"
 	"reflect"
 	"runtime"
 
@@ -16,6 +17,7 @@ const (
 	Lowering
 	Legalization
 	CleanUp
+	Finishing
 
 	NumPasses
 )
@@ -93,11 +95,22 @@ func Transform(pass Pass, fn *ir2.Func) {
 			op := it.Instr().Op
 			for _, xform := range opXforms[op] {
 				perform(xform, iter)
+
+				if iter.Instr() == nil {
+					log.Panicf("xform %s in pass %v left iter in nil state", xform.name, pass)
+				}
+
+				if iter.Instr().Op != op {
+					break
+				}
 			}
 
 			// run the xforms that always run
 			for _, xform := range otherXforms {
 				perform(xform, iter)
+				if iter.Instr() == nil {
+					log.Panicf("xform %s in pass %v left iter in nil state", xform.name, pass)
+				}
 			}
 		}
 

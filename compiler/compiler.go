@@ -195,6 +195,9 @@ func Compile(outname, dir string, patterns []string, mode Mode) int {
 
 			xform2.Transform(xform2.CleanUp, fn)
 			w.WritePhase("cleanup", "cleanup")
+
+			xform2.Transform(xform2.Finishing, fn)
+			w.WritePhase("finishing", "finishing")
 		}
 
 		fe.Program().Emit(finalout, ir2.SSAString{})

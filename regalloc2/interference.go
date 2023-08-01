@@ -220,6 +220,7 @@ func (ra *RegAlloc) buildInterferenceGraph() {
 
 				live[arg.ID] = struct{}{}
 
+				ig.dbg("%s: merging %s -- %s", ra.fn.Name, def, arg)
 				merge(def.ID, arg.ID)
 
 				// if def.NeedsReg() {
@@ -286,7 +287,7 @@ func (ra *RegAlloc) buildInterferenceGraph() {
 				for id := range live {
 					node := &ig.nodes[ig.valNode[id]]
 					node.callerSaved = true
-					ig.dbg("%s:marking val", ra.fn.Name, node.val.ValueIn(ra.fn), "in val", node.val, "as caller saved")
+					ig.dbg(ra.fn.Name, ": marking val", node.val.ValueIn(ra.fn), "in val", node.val, "as caller saved")
 				}
 			}
 
@@ -421,7 +422,7 @@ func (nd *iNode) pickColour(ig *iGraph) {
 	// than at 1 where the callee saved registers are
 	start := uint16(1)
 	if nd.callerSaved {
-		fmt.Println("starting node", nd.val, "in callee saved regs")
+		ig.dbg("starting node %s in callee saved regs", nd.val)
 		start = savedStart
 	}
 
