@@ -4,6 +4,7 @@ import (
 	"log"
 	"strings"
 
+	"github.com/rj45/nanogo/asm2"
 	"github.com/rj45/nanogo/codegen"
 	"github.com/rj45/nanogo/compiler"
 	"github.com/rj45/nanogo/frontend"
@@ -27,6 +28,7 @@ type Architecture interface {
 	parser.Arch
 	frontend.Arch
 	xform2.Arch
+	asm2.Arch
 }
 
 var arch Architecture
@@ -63,4 +65,5 @@ func SetArch(name string) {
 	parser.SetArch(arch)
 	frontend.SetArch(arch)
 	xform2.SetArch(arch)
+	asm2.SetArch(arch)
 }

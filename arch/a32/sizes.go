@@ -30,3 +30,7 @@ func (cpuArch) BasicSizes() [17]byte {
 func (cpuArch) RuneSize() int {
 	return runeSize
 }
+
+func (cpuArch) MinAddressableBits() int {
+	return 8
+}

@@ -11,11 +11,13 @@ import "go/types"
 type Arch interface {
 	BasicSizes() [17]byte
 	RuneSize() int
+	MinAddressableBits() int
 }
 
 func SetArch(a Arch) {
 	basicSizes = a.BasicSizes()
 	runeSize = a.RuneSize()
+	minAddressableBits = a.MinAddressableBits()
 }
 
 // sizes of basic types
@@ -24,8 +26,15 @@ var basicSizes = [17]byte{}
 // size of rune
 var runeSize = 0
 
+// size of min addressable unit in bits
+var minAddressableBits = 0
+
 func WordSize() int64 {
 	return int64(basicSizes[types.Uintptr])
+}
+
+func MinAddressableBits() int {
+	return minAddressableBits
 }
 
 func Sizeof(T types.Type) int64 {

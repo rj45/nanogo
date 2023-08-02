@@ -103,6 +103,9 @@ func translate(it ir2.Iter) {
 		it.Update(Load, instr.Def(0).Type, instr.Args())
 	case op.Store:
 		it.Update(Store, nil, instr.Args())
+	case op.Call:
+		instr.Op = Call
+		it.Changed()
 	default:
 		// if _, ok := instr.Op.(op.Op); ok {
 		// 	log.Panicf("Unknown instruction: %s", instr.LongString())

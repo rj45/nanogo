@@ -26,6 +26,11 @@ var runeSize = 1
 func (cpuArch) BasicSizes() [17]byte {
 	return basicSizes
 }
+
 func (cpuArch) RuneSize() int {
 	return runeSize
+}
+
+func (cpuArch) MinAddressableBits() int {
+	return 16
 }

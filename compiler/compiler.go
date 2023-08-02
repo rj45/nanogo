@@ -11,6 +11,7 @@ import (
 	"path/filepath"
 	"strings"
 
+	"github.com/rj45/nanogo/asm2"
 	"github.com/rj45/nanogo/codegen"
 	"github.com/rj45/nanogo/codegen/asm"
 	"github.com/rj45/nanogo/frontend"
@@ -200,7 +201,8 @@ func Compile(outname, dir string, patterns []string, mode Mode) int {
 			w.WritePhase("finishing", "finishing")
 		}
 
-		fe.Program().Emit(finalout, ir2.SSAString{})
+		// fe.Program().Emit(finalout, ir2.SSAString{})
+		asm2.Emit(finalout, asm2.CustomASM{}, fe.Program())
 
 		return 0
 	}
