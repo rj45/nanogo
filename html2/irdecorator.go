@@ -11,7 +11,7 @@ import (
 	"github.com/rj45/nanogo/ir2/op"
 )
 
-// IRDecorator emits an IRDecorator version of the IR
+// IRDecorator emits an HTML version of the IR
 type IRDecorator struct {
 	Asm bool
 }

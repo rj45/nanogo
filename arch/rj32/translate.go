@@ -49,10 +49,8 @@ func translate(it ir2.Iter) {
 	instr := it.Instr()
 	originalOp := instr.Op
 	switch instr.Op {
-	// case op.Copy:
-	// 	if instr.NumArgs() == 1 {
-	// 		it.Update(Move, nil, instr.Args())
-	// 	}
+	case op.Copy:
+		// copy is done in the finishing stage, after register allocation
 	case op.Return, op.Jump:
 		it.Update(directTranslate[instr.Op.(op.Op)], nil, instr.Args())
 	case op.Add, op.Sub, op.And, op.Or, op.Xor, op.ShiftLeft:
@@ -75,6 +73,11 @@ func translate(it ir2.Iter) {
 		if instr.NumArgs() == 1 && instr.Arg(0).Reg() == instr.Def(0).Reg() {
 			it.Update(oneOperandTranslations[instr.Op.(op.Op)], nil, instr.Args())
 		}
+	case op.Equal, op.NotEqual, op.Less, op.LessEqual, op.Greater, op.GreaterEqual:
+		def := instr.Def(0)
+		if def.NumUses() > 1 || def.Use(0).Instr().Op != op.If {
+			log.Panicf("Lone comparison not tied to If %s", instr.LongString())
+		}
 	case op.If:
 		compare := instr.Arg(0).Def().Instr()
 		if !compare.IsCompare() {
@@ -96,6 +99,14 @@ func translate(it ir2.Iter) {
 		if compare.Def(0).NumUses() == 0 {
 			it.RemoveInstr(compare)
 		}
+	case op.Load:
+		it.Update(Load, instr.Def(0).Type, instr.Args())
+	case op.Store:
+		it.Update(Store, nil, instr.Args())
+	default:
+		// if _, ok := instr.Op.(op.Op); ok {
+		// 	log.Panicf("Unknown instruction: %s", instr.LongString())
+		// }
 	}
 	if it.Instr() == nil {
 		log.Panicf("translating %s from %s left iter in bad state", originalOp, instr.LongString())

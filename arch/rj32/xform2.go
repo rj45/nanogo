@@ -6,7 +6,7 @@ import (
 )
 
 func (cpuArch) XformTags2() []xform2.Tag {
-	return nil
+	return []xform2.Tag{xform2.LoadStoreOffset}
 }
 
 func (cpuArch) RegisterXforms() {
