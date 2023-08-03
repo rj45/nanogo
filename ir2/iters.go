@@ -248,11 +248,13 @@ func (it *CrossBlockIter) HasNext() bool {
 		return false
 	}
 
-	if (it.blkIdx + 1) < len(it.fn.blocks) {
+	lastBlock := len(it.fn.blocks) - 1
+
+	if it.blkIdx < lastBlock {
 		return true
 	}
 
-	return (it.blkIdx + 1) < len(it.blk.instrs)
+	return it.blkIdx == lastBlock && it.insIdx < len(it.blk.instrs)
 }
 
 // Next increments the position and returns whether that was successful

@@ -1,7 +1,6 @@
 package xform2
 
 import (
-	"fmt"
 	"log"
 	"reflect"
 	"runtime"
@@ -83,8 +82,15 @@ func Register(fn func(ir2.Iter), options ...Option) int {
 }
 
 func Transform(pass Pass, fn *ir2.Func) {
-	active, opXforms, otherXforms := activeXforms(pass, fn)
+	active, opXforms, anyOnceXforms, otherXforms := activeXforms(pass, fn)
 	tries := 0
+
+	// do the transforms operating on any op and only once first
+	for _, xform := range anyOnceXforms {
+		it := fn.InstrIter()
+		var iter ir2.Iter = it
+		perform(xform, iter)
+	}
 
 	for {
 		it := fn.InstrIter()
@@ -120,7 +126,7 @@ func Transform(pass Pass, fn *ir2.Func) {
 
 		tries++
 		if tries > 1000 {
-			panic(fmt.Sprintf("transforms do not terminate: pass: %d active: %v", pass, active))
+			log.Panicf("transforms do not terminate: pass: %d active: %v", pass, active)
 		}
 	}
 }
@@ -136,9 +142,10 @@ func perform(xform *desc, it ir2.Iter) {
 }
 
 // activeXforms determines the active xform functions for the current pass and tags
-func activeXforms(pass Pass, fn *ir2.Func) ([]string, map[ir2.Op][]*desc, []*desc) {
+func activeXforms(pass Pass, fn *ir2.Func) ([]string, map[ir2.Op][]*desc, []*desc, []*desc) {
 	var active []string
 	opXforms := make(map[ir2.Op][]*desc)
+	var anyOnceXforms []*desc
 	var otherXforms []*desc
 
 next:
@@ -162,11 +169,13 @@ next:
 
 		if xf.op != nil {
 			opXforms[xf.op] = append(opXforms[xf.op], &xformers[i])
+		} else if xf.once {
+			anyOnceXforms = append(anyOnceXforms, &xformers[i])
 		} else {
 			otherXforms = append(otherXforms, &xformers[i])
 		}
 		active = append(active, xf.name)
 	}
 
-	return active, opXforms, otherXforms
+	return active, opXforms, anyOnceXforms, otherXforms
 }
