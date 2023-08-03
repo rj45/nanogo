@@ -34,7 +34,10 @@ func copyBlockArgs(it ir2.Iter) {
 		arg := blk.Arg(a)
 
 		definstr := arg.Def()
-		if definstr == nil || definstr.ID.InstrIn(blk.Func()) == nil || definstr.ID.InstrIn(blk.Func()).Op != op.Copy {
+		if definstr == nil ||
+			definstr.ID.InstrIn(blk.Func()) == nil ||
+			definstr.ID.InstrIn(blk.Func()).Op != op.Copy ||
+			definstr.Block() != blk {
 			allCopied = false
 		}
 	}
