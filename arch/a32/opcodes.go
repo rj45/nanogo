@@ -81,6 +81,10 @@ func (op Opcode) IsCall() bool {
 	return op == CALL
 }
 
+func (op Opcode) IsReturn() bool {
+	return op == RET
+}
+
 type def struct {
 	fmt Fmt
 	op  op.Op

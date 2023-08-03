@@ -47,6 +47,10 @@ func (op Op) IsBranch() bool {
 	return opDefs[op]&branch != 0
 }
 
+func (op Op) IsReturn() bool {
+	return op == Return
+}
+
 func (op Op) Opposite() Op {
 	switch op {
 	case Equal:

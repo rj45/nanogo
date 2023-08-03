@@ -5,6 +5,8 @@ import (
 	"go/types"
 	"log"
 	"sort"
+
+	"github.com/rj45/nanogo/ir/reg"
 )
 
 // Func is a collection of Blocks, which comprise
@@ -89,6 +91,10 @@ func (fn *Func) ValueFor(typ types.Type, v interface{}) *Value {
 		if v != nil && len(v.defs) == 1 {
 			return v.defs[0]
 		}
+	case reg.Reg:
+		val := fn.NewValue(types.Typ[types.Int])
+		val.SetReg(v)
+		return val
 	}
 
 	con := ConstFor(v)

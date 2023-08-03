@@ -29,6 +29,7 @@ import (
 
 	_ "github.com/rj45/nanogo/xform2/cleanup"
 	_ "github.com/rj45/nanogo/xform2/elaboration"
+	_ "github.com/rj45/nanogo/xform2/finishing"
 	_ "github.com/rj45/nanogo/xform2/legalization"
 	_ "github.com/rj45/nanogo/xform2/lowering"
 	_ "github.com/rj45/nanogo/xform2/simplification"

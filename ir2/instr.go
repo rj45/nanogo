@@ -30,6 +30,7 @@ type Op interface {
 	IsSink() bool
 	ClobbersArg() bool
 	IsBranch() bool
+	IsReturn() bool
 }
 
 // Index returns the index in the Block's Instr list

@@ -167,6 +167,9 @@ next:
 			}
 		}
 
+		// reactivate once per function
+		xformers[i].disabled = false
+
 		if xf.op != nil {
 			opXforms[xf.op] = append(opXforms[xf.op], &xformers[i])
 		} else if xf.once {

@@ -100,6 +100,10 @@ func (op Opcode) ClobbersArg() bool {
 	return opDefs[op].flags&clobbers != 0
 }
 
+func (op Opcode) IsReturn() bool {
+	return op == Return
+}
+
 type flags uint16
 
 const (
