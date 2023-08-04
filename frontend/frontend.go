@@ -15,16 +15,6 @@ import (
 	"golang.org/x/tools/go/types/typeutil"
 )
 
-type Arch interface {
-	Name() string
-}
-
-// var arch Arch
-
-func SetArch(a Arch) {
-	// arch = a
-}
-
 type FrontEnd struct {
 	prog     *ir2.Program
 	members  []ssa.Member

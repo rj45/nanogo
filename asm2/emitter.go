@@ -6,6 +6,7 @@ import (
 	"strings"
 
 	"github.com/rj45/nanogo/ir2"
+	"github.com/rj45/nanogo/ir2/op"
 	"github.com/rj45/nanogo/sizes"
 )
 
@@ -112,6 +113,7 @@ func (emit *Emitter) fn(fn *ir2.Func) {
 	}
 
 	emit.comment("func %s(%s)%s", fn.FullName, strings.Join(pstrs, ", "), resstr)
+	emit.line("%s:", fn.FullName)
 
 	for b := 0; b < fn.NumBlocks(); b++ {
 		blk := fn.Block(b)
@@ -121,6 +123,27 @@ func (emit *Emitter) fn(fn *ir2.Func) {
 
 		for i := 0; i < blk.NumInstrs(); i++ {
 			instr := blk.Instr(i)
+
+			if instr.Op == op.InlineAsm {
+				asm, ok := ir2.StringValue(instr.Arg(0).Const())
+				if !ok {
+					panic("expected string on InlineAsm instruction")
+				}
+				for _, line := range strings.Split(asm, "\n") {
+					if line == "" {
+						continue
+					}
+					if strings.HasSuffix(line, ":") {
+						emit.indent = ""
+						emit.line("%s", line)
+						emit.indent = "    "
+					} else {
+						emit.line("%s", line)
+					}
+				}
+
+				continue
+			}
 
 			defs := make([]string, 0, instr.NumDefs())
 			for d := 0; d < instr.NumDefs(); d++ {

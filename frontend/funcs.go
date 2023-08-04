@@ -10,7 +10,7 @@ import (
 func (fe *FrontEnd) translateFunc(irFunc *ir2.Func, ssaFunc *ssa.Function) {
 	if ssaFunc.Blocks == nil {
 		// extern function
-		// handleExternFunc(irFunc, ssaFunc)
+		handleExternAssembly(irFunc, ssaFunc)
 		return
 	}
 
