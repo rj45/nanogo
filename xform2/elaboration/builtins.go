@@ -5,6 +5,7 @@ import (
 
 	"github.com/rj45/nanogo/ir2"
 	"github.com/rj45/nanogo/ir2/op"
+	"github.com/rj45/nanogo/sizes"
 	"github.com/rj45/nanogo/xform2"
 )
 
@@ -19,6 +20,10 @@ func builtins(it ir2.Iter) {
 
 	builtin, _ := ir2.StringValue(instr.Arg(0).Const())
 	switch builtin {
+	case "len":
+		// length is always at memory location of string/slice plus 1*wordSize
+		//ir.BuildReplacement(val).Op(op.Load, val.Type, val.Arg(1), 1*sizes.WordSize())
+		instr.Update(op.Load, instr.Def(0).Type, instr.Arg(1), int(1*sizes.WordSize()))
 	case "print", "println":
 		runtime := fn.Package().Program().Package("runtime")
 		printspace := runtime.Func("printspace")
