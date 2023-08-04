@@ -5,6 +5,7 @@ import (
 	"go/token"
 	"go/types"
 	"log"
+	"strings"
 
 	"github.com/rj45/nanogo/ir2"
 	"github.com/rj45/nanogo/ir2/op"
@@ -84,6 +85,8 @@ func (fe *FrontEnd) translateInstrs(irBlock *ir2.Block, ssaBlock *ssa.BasicBlock
 		case *ssa.FieldAddr:
 			opcode = op.FieldAddr
 			con = ir2.ConstFor(ins.Field)
+		case *ssa.Index:
+			opcode = op.Index
 		case *ssa.Range:
 			opcode = op.Range
 		case *ssa.Next:
@@ -246,6 +249,17 @@ func (fe *FrontEnd) translateArgs(block *ir2.Block, irInstr *ir2.Instr, ssaInstr
 
 			case *ssa.Builtin:
 				arg = con.Name()
+				if arg == "print" || arg == "println" {
+					// make sure runtime print functions
+					// get loaded
+					pkg := block.Func().Package()
+					pkg = pkg.Program().Package("runtime")
+					for _, fn := range pkg.Funcs() {
+						if strings.HasPrefix(fn.Name, "print") {
+							fn.Referenced = true
+						}
+					}
+				}
 
 			case *ssa.Global:
 				pkg := block.Func().Package()

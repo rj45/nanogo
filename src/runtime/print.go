@@ -14,6 +14,10 @@ func printnl() {
 	putc('\n')
 }
 
+func printspace() {
+	putc(' ')
+}
+
 func printrune(x rune) {
 	putc(byte(x))
 }
