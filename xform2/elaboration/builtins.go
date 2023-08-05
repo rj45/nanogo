@@ -45,6 +45,14 @@ func builtins(it ir2.Iter) {
 			pfunc.Referenced = true
 			it.Insert(op.Call, nil, pfuncval, arg)
 		}
+
+		if builtin == "println" {
+			printnl := runtime.Func("printnl")
+			printnl.Referenced = true
+			pfuncval := fn.ValueFor(printnl.Sig, printnl)
+			it.Insert(op.Call, nil, pfuncval)
+		}
+
 		if it.Instr().Op != op.CallBuiltin {
 			log.Panicf("in wrong loc")
 		}
