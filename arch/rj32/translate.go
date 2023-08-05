@@ -99,10 +99,8 @@ func translate(it ir2.Iter) {
 		if compare.Def(0).NumUses() == 0 {
 			it.RemoveInstr(compare)
 		}
-	case op.Load:
-		it.Update(Load, instr.Def(0).Type, instr.Args())
-	case op.Store:
-		it.Update(Store, nil, instr.Args())
+	case op.Load, op.Store:
+		translateLoadStore(it)
 	case op.Call:
 		instr.Op = Call
 		it.Changed()
@@ -113,6 +111,21 @@ func translate(it ir2.Iter) {
 	}
 	if it.Instr() == nil {
 		log.Panicf("translating %s from %s left iter in bad state", originalOp, instr.LongString())
+	}
+}
+
+// translateLoadStore mainly translates the function pro-/epilogue
+func translateLoadStore(it ir2.Iter) {
+	instr := it.Instr()
+	switch instr.Op {
+	case op.Add:
+		if instr.NumArgs() == 2 && instr.Def(0).Reg() == instr.Arg(0).Reg() {
+			it.Update(Add, nil, instr.Args())
+		}
+	case op.Load:
+		it.Update(Load, instr.Def(0).Type, instr.Args())
+	case op.Store:
+		it.Update(Store, nil, instr.Args())
 	}
 }
 

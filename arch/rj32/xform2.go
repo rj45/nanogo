@@ -10,6 +10,11 @@ func (cpuArch) XformTags2() []xform2.Tag {
 }
 
 func (cpuArch) RegisterXforms() {
-	xform2.Register(translate, xform2.OnlyPass(xform2.Lowering))
-	xform2.Register(translateCopies, xform2.OnlyPass(xform2.Finishing), xform2.OnOp(op.Copy))
+	xform2.Register(translate,
+		xform2.OnlyPass(xform2.Lowering))
+	xform2.Register(translateCopies,
+		xform2.OnlyPass(xform2.Finishing),
+		xform2.OnOp(op.Copy))
+	xform2.Register(translateLoadStore,
+		xform2.OnlyPass(xform2.Finishing))
 }
