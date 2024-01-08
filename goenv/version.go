@@ -50,7 +50,8 @@ func GetGorootVersion(goroot string) (major, minor int, err error) {
 // can have some variations (for beta releases, for example).
 func GorootVersionString(goroot string) (string, error) {
 	if data, err := ioutil.ReadFile(filepath.Join(goroot, "VERSION")); err == nil {
-		return string(data), nil
+		lines := strings.Split(string(data), "\n")
+		return lines[0], nil
 
 	} else if data, err := ioutil.ReadFile(filepath.Join(
 		goroot, "src", "runtime", "internal", "sys", "zversion.go")); err == nil {
