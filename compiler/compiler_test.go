@@ -2,6 +2,7 @@ package compiler_test
 
 import (
 	"bytes"
+	"fmt"
 	"testing"
 
 	"github.com/rj45/nanogo/arch"
@@ -60,6 +61,7 @@ var testCases = []struct {
 func TestCompilerForRj32(t *testing.T) {
 	for _, tC := range testCases {
 		t.Run("runs "+tC.desc+" on rj32", func(t *testing.T) {
+			fmt.Println("Testing", tC.desc, "on rj32")
 			arch.SetArch("rj32")
 			result := compiler.Compile("-", "../testdata/", []string{tC.filename}, compiler.Assemble|compiler.Run)
 			if result != 0 {

@@ -204,6 +204,10 @@ func getGoroot() string {
 // isGoroot checks whether the given path looks like a GOROOT.
 func isGoroot(goroot string) bool {
 	_, err := os.Stat(filepath.Join(goroot, "src", "runtime", "internal", "sys", "zversion.go"))
+	if err == nil {
+		return true
+	}
+	_, err = os.Stat(filepath.Join(goroot, "src", "internal", "buildcfg", "zbootstrap.go"))
 	return err == nil
 }
 

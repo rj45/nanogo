@@ -6,6 +6,7 @@
 package goenv
 
 import (
+	"bytes"
 	"errors"
 	"fmt"
 	"io"
@@ -50,8 +51,8 @@ func GetGorootVersion(goroot string) (major, minor int, err error) {
 // can have some variations (for beta releases, for example).
 func GorootVersionString(goroot string) (string, error) {
 	if data, err := ioutil.ReadFile(filepath.Join(goroot, "VERSION")); err == nil {
-		return string(data), nil
-
+		lines := bytes.Split(data, []byte("\n"))
+		return string(lines[0]), nil
 	} else if data, err := ioutil.ReadFile(filepath.Join(
 		goroot, "src", "runtime", "internal", "sys", "zversion.go")); err == nil {
 
@@ -62,7 +63,16 @@ func GorootVersionString(goroot string) (string, error) {
 		}
 
 		return string(matches[1]), nil
+	} else if data, err := ioutil.ReadFile(filepath.Join(
+		goroot, "src", "internal", "buildcfg", "zbootstrap.go")); err == nil {
 
+		r := regexp.MustCompile("const version = `(.*)`")
+		matches := r.FindSubmatch(data)
+		if len(matches) != 2 {
+			return "", errors.New("Invalid go version output:\n" + string(data))
+		}
+
+		return string(matches[1]), nil
 	} else {
 		return "", err
 	}

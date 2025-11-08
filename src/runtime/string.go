@@ -19,6 +19,7 @@ type stringIterator struct {
 }
 
 // Return true iff the strings match.
+//
 //go:nobounds
 func stringEqual(x, y string) bool {
 	if len(x) != len(y) {
@@ -33,6 +34,7 @@ func stringEqual(x, y string) bool {
 }
 
 // Return true iff x < y.
+//
 //go:nobounds
 func stringLess(x, y string) bool {
 	l := len(x)
